@@ -1,5 +1,7 @@
-import AdminLoginScreen from "./public/(pages)/home/_components/admin-login-screen";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-    return <AdminLoginScreen />;
-}
+const Page = () => {
+  redirect("/admin/dashboard");
+};
+
+export default Page;
