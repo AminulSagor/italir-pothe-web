@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, LogOut } from "lucide-react";
-import { adminNavigation } from "../../constant/navigation";
+import { adminNavigation } from "../../../constant/navigation";
+import Image from "next/image";
+import { IMAGE } from "@/constant/image.path";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +15,18 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
+  const [openMenus, setOpenMenus] = useState<string[]>([
+    "Revenue & Analytics",
+    "Final Exam Manager",
+  ]);
+
+  const toggleMenu = (title: string) => {
+    setOpenMenus((prev) =>
+      prev.includes(title)
+        ? prev.filter((item) => item !== title)
+        : [...prev, title],
+    );
+  };
 
   return (
     <>
@@ -30,13 +45,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         }`}
       >
         <div className="flex items-center gap-2 px-6 py-6">
-          <div className="flex size-8 items-center justify-center rounded-full bg-[#75FF33] font-bold text-[#00552E]">
-            I
-          </div>
+          <Image src={IMAGE.logo} width={25} height={100} alt="logo" />
           <h1 className="font-bold">ItalirPothe</h1>
         </div>
 
-        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-6">
+        <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {adminNavigation.map((group) => (
             <div key={group.title}>
               <p className="mb-3 px-3 font-semibold uppercase text-white/50">
@@ -47,36 +60,53 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = item.href === pathname;
+                  const hasChildren = Boolean(item.children?.length);
+                  const isMenuOpen = openMenus.includes(item.title);
 
-                  if (item.children?.length) {
+                  if (hasChildren) {
                     return (
                       <div key={item.title}>
-                        <div className="flex items-center justify-between rounded-2xl px-3 py-2 text-white/85">
+                        <button
+                          type="button"
+                          onClick={() => toggleMenu(item.title)}
+                          className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-white/85 transition hover:bg-white/10 hover:text-white"
+                        >
                           <div className="flex items-center gap-3">
                             <Icon className="size-4" />
                             <span>{item.title}</span>
                           </div>
-                          <ChevronDown className="size-4" />
-                        </div>
 
-                        <div className="ml-7 mt-1 space-y-1">
-                          {item.children.map((child) => {
-                            const isChildActive = child.href === pathname;
+                          <ChevronDown
+                            className={`size-4 transition ${
+                              isMenuOpen ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
 
-                            return (
-                              <Link
-                                key={child.href}
-                                href={child.href}
-                                onClick={onClose}
-                                className={`block rounded-xl px-3 py-2 text-white/75 transition hover:bg-white/10 hover:text-white ${
-                                  isChildActive ? "bg-white/10 text-white" : ""
-                                }`}
-                              >
-                                {child.title}
-                              </Link>
-                            );
-                          })}
-                        </div>
+                        {isMenuOpen && (
+                          <div className="ml-7 mt-1 space-y-1">
+                            {item.children?.map((child) => {
+                              const ChildIcon = child.icon;
+                              const isChildActive = child.href === pathname;
+
+                              return (
+                                <Link
+                                  key={child.href}
+                                  href={child.href}
+                                  onClick={onClose}
+                                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-white/75 transition hover:bg-white/10 hover:text-white ${
+                                    isChildActive
+                                      ? "bg-white/10 text-white"
+                                      : ""
+                                  }`}
+                                >
+                                  <ChildIcon className="size-4" />
+                                  <span>{child.title}</span>
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
                     );
                   }

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Italir Pothe",
-  description: "Italir Pothe admin dashboard",
+  description: "Italir Pothe",
 };
 
 export default function RootLayout({

@@ -31,10 +31,12 @@ export const adminNavigation: NavigationGroup[] = [
           {
             title: "Course Performance",
             href: "/admin/revenue-and-analytics/course-performance",
+            icon: ChartNoAxesColumn,
           },
           {
             title: "Package Performance",
             href: "/admin/revenue-and-analytics/package-performance",
+            icon: Package,
           },
         ],
       },
@@ -60,8 +62,14 @@ export const adminNavigation: NavigationGroup[] = [
       },
       {
         title: "Final Exam Manager",
-        href: "/admin/final-exam-manager",
         icon: ClipboardCheck,
+        children: [
+          {
+            title: "Evaluation Center",
+            href: "/admin/final-exam-manager/evaluation-center",
+            icon: ClipboardCheck,
+          },
+        ],
       },
     ],
   },

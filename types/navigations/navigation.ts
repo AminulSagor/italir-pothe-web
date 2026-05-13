@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 export interface NavigationChildItem {
   title: string;
   href: string;
+  icon: LucideIcon;
 }
 
 export interface NavigationItem {
