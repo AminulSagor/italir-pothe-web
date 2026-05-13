@@ -1,4 +1,6 @@
 "use client";
+
+import { useState } from "react";
 import Sidebar from "../../components/layout/sidebar/sidebar";
 import Navbar from "../../components/layout/navbar/navbar";
 
@@ -7,14 +9,14 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
-  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="h-screen overflow-hidden bg-[#F5FAF3] text-black">
       <div className="flex h-full">
         <Sidebar
           isOpen={isSidebarOpen}
-          isCollapsed={isDesktopSidebarCollapsed}
+          onClose={() => setIsSidebarOpen(false)}
         />
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">

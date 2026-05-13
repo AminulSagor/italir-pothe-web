@@ -10,17 +10,10 @@ import { IMAGE } from "@/constant/image.path";
 
 interface SidebarProps {
   isOpen: boolean;
-  isCollapsed: boolean;
   onClose: () => void;
-  onToggleCollapse: () => void;
 }
 
-const Sidebar = ({
-  isOpen,
-  isCollapsed,
-  onClose,
-  onToggleCollapse,
-}: SidebarProps) => {
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const [openMenus, setOpenMenus] = useState<string[]>([
     "Revenue & Analytics",
@@ -42,13 +35,14 @@ const Sidebar = ({
           type="button"
           aria-label="Close sidebar"
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-black/40 md:hidden"
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
         />
       )}
 
       <aside
-        className={`fixed left-0 top-0 z-50 flex h-screen shrink-0 flex-col bg-[#00552E] text-white transition-all duration-300 md:sticky md:top-0 md:translate-x-0 ${isCollapsed ? "w-20" : "w-72"
-          } ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col bg-[#00552E] text-white transition-transform duration-300 lg:static lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex items-center gap-2 px-6 py-6">
           <Image src={IMAGE.logo} width={25} height={100} alt="logo" />
@@ -58,11 +52,9 @@ const Sidebar = ({
         <nav className="flex-1 space-y-6 overflow-y-auto px-4 pb-6 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {adminNavigation.map((group) => (
             <div key={group.title}>
-              {!isCollapsed && (
-                <p className="mb-3 px-3 font-semibold uppercase text-white/50">
-                  {group.title}
-                </p>
-              )}
+              <p className="mb-3 px-3 font-semibold uppercase text-white/50">
+                {group.title}
+              </p>
 
               <div className="space-y-1">
                 {group.items.map((item) => {
@@ -81,7 +73,7 @@ const Sidebar = ({
                         >
                           <div className="flex items-center gap-3">
                             <Icon className="size-4" />
-                            {!isCollapsed && <span>{item.title}</span>}
+                            <span>{item.title}</span>
                           </div>
 
                           <ChevronDown
@@ -124,15 +116,14 @@ const Sidebar = ({
                       key={item.title}
                       href={item.href ?? "#"}
                       onClick={onClose}
-                      title={isCollapsed ? item.title : undefined}
-                      className={`flex items-center rounded-2xl px-3 py-2 transition ${isCollapsed ? "justify-center" : "gap-3"
-                        } ${isActive
+                      className={`flex items-center gap-3 rounded-2xl px-3 py-2 transition ${
+                        isActive
                           ? "bg-[#75FF33] font-semibold text-[#00552E]"
                           : "text-white/85 hover:bg-white/10 hover:text-white"
-                        }`}
+                      }`}
                     >
                       <Icon className="size-4" />
-                      {!isCollapsed && <span>{item.title}</span>}
+                      <span>{item.title}</span>
                     </Link>
                   );
                 })}
@@ -142,26 +133,15 @@ const Sidebar = ({
         </nav>
 
         <div className="p-4">
-          <div
-            className={`flex items-center rounded-2xl bg-white p-3 text-black ${isCollapsed ? "justify-center" : "justify-between"
-              }`}
-          >
-            {!isCollapsed ? (
-              <>
-                <div>
-                  <p className="font-semibold">Marco Rossi</p>
-                  <p className="text-black/60">Master Admin</p>
-                </div>
+          <div className="flex items-center justify-between rounded-2xl bg-white p-3 text-black">
+            <div>
+              <p className="font-semibold">Marco Rossi</p>
+              <p className="text-black/60">Master Admin</p>
+            </div>
 
-                <button type="button" aria-label="Logout">
-                  <LogOut className="size-5 text-red-500" />
-                </button>
-              </>
-            ) : (
-              <div className="flex size-9 items-center justify-center rounded-full bg-[#00552E] text-sm font-bold text-white">
-                MR
-              </div>
-            )}
+            <button type="button" aria-label="Logout">
+              <LogOut className="size-5 text-red-500" />
+            </button>
           </div>
         </div>
       </aside>
