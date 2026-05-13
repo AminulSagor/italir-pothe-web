@@ -7,6 +7,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
+  Network,
   Package,
   ShieldCheck,
   Trophy,
@@ -104,8 +105,18 @@ export const adminNavigation: NavigationGroup[] = [
     title: "Utilities",
     items: [
       {
+        title: "CAF Service",
+        href: "/admin/caf-service",
+        icon: Briefcase,
+      },
+      {
+        title: "Influencer Hub",
+        href: "/admin/influencer-hub",
+        icon: Network,
+      },
+      {
         title: "Notification",
-        href: "/admin/notification",
+        href: "/admin/notification-management",
         icon: Bell,
       },
       {

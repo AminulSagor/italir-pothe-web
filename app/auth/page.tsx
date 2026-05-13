@@ -11,17 +11,17 @@ import {
 
 export default function LogInPage() {
   return (
-    <main className="min-h-screen bg-[#3f3f3f] text-white">
-      <section className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(135deg,#12352b_0%,#6d8377_52%,#006b3d_100%)] px-8 py-8">
+    <main className="h-screen overflow-hidden bg-[#3f3f3f] text-white">
+      <section className="relative h-screen overflow-hidden bg-[radial-gradient(circle_at_25%_20%,rgba(255,255,255,0.22),transparent_28%),linear-gradient(135deg,#12352b_0%,#6d8377_52%,#006b3d_100%)] px-8 py-6">
         <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-emerald-950/35" />
 
-        <div className="relative z-10 grid min-h-[calc(100vh-4rem)] items-center gap-12 lg:grid-cols-2">
+        <div className="relative z-10 grid h-full items-center gap-8 lg:grid-cols-2">
           <div className="text-center">
             <div className="text-left">
               <StatusPill />
             </div>
 
-            <div className="mx-auto mt-10 w-full max-w-[512px]">
+            <div className="mx-auto mt-6 w-full max-w-[420px]">
               <Image
                 src="/images/login-globe.png"
                 alt="Login globe"
@@ -32,11 +32,11 @@ export default function LogInPage() {
               />
             </div>
 
-            <h2 className="mt-10 text-4xl font-bold tracking-tight">
+            <h2 className="mt-6 text-3xl font-bold tracking-tight">
               Admin Command Center
             </h2>
 
-            <p className="mx-auto mt-6 max-w-md text-sm leading-7 text-white/70">
+            <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-white/70">
               Managing the future of the Italir Pothe community. Global
               oversight with localized precision.
             </p>
@@ -54,8 +54,6 @@ export default function LogInPage() {
     </main>
   );
 }
-
-//***** helpers start ****//
 
 function StatusPill() {
   return (
@@ -89,12 +87,12 @@ function LoginInput({
 
 function LoginCard() {
   return (
-    <div className="w-full max-w-[410px] rounded-[2.5rem] bg-white/95 px-9 py-9 shadow-2xl">
-      <div className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-lime-700">
-        <GraduationCap className="size-9 text-lime-200" />
+    <div className="w-full max-w-[390px] rounded-[2rem] bg-white/95 px-8 py-7 shadow-2xl">
+      <div className="mx-auto flex size-14 items-center justify-center rounded-3xl bg-lime-700">
+        <GraduationCap className="size-8 text-lime-200" />
       </div>
 
-      <div className="mt-6 text-center">
+      <div className="mt-5 text-center">
         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
           Access granted only to authorized personnel
         </p>
@@ -103,7 +101,7 @@ function LoginCard() {
         </h1>
       </div>
 
-      <div className="mt-8 space-y-4">
+      <div className="mt-7 space-y-4">
         <LoginInput
           icon={<UserRound size={18} />}
           placeholder="Admin Email / Employee ID"
@@ -125,7 +123,7 @@ function LoginCard() {
         Authenticate & Enter Onboard
       </button>
 
-      <div className="mt-8 border-t border-zinc-200 pt-5">
+      <div className="mt-7 border-t border-zinc-200 pt-5">
         <div className="flex items-center justify-between gap-2 text-[9px] uppercase text-zinc-500">
           <span className="flex items-center gap-1">
             <Shield size={12} /> E2E Encrypted
