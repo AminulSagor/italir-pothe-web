@@ -1,0 +1,65 @@
+import { ModerationQueueItem, ModerationStat } from "./reports-moderation.mock.types";
+
+export const moderationStats: ModerationStat[] = [
+    { id: 1, label: "Total Pending", value: "124", change: "+12%", tone: "green" },
+    { id: 2, label: "Avg. Response", value: "14m", change: "-5%", tone: "red" },
+    { id: 3, label: "Resolved Today", value: "48", change: "+8%", tone: "green" },
+];
+
+export const moderationQueue: ModerationQueueItem[] = [
+    {
+        id: 1,
+        userName: "John Doe",
+        contentType: "Flagged Comment",
+        contentId: "#892",
+        reason: "Inappropriate Lang.",
+        reportedDate: "Oct 24, 2023",
+        reportedTime: "10:45 AM",
+        status: "pending",
+        avatar: "JD",
+    },
+    {
+        id: 2,
+        userName: "Sarah Miller",
+        contentType: "Review",
+        contentId: "#4412",
+        reason: "Spam Report",
+        reportedDate: "Oct 24, 2023",
+        reportedTime: "09:12 AM",
+        status: "processing",
+        avatar: "SM",
+    },
+    {
+        id: 3,
+        userName: "Tom Klein",
+        contentType: "Forum Post",
+        contentId: "#21",
+        reason: "Misinformation",
+        reportedDate: "Oct 23, 2023",
+        reportedTime: "05:30 PM",
+        status: "resolved",
+        avatar: "TK",
+    },
+    {
+        id: 4,
+        userName: "Marco White",
+        contentType: "Direct Message",
+        contentId: "#12",
+        reason: "Harassment",
+        reportedDate: "Oct 24, 2023",
+        reportedTime: "11:02 AM",
+        status: "pending",
+        avatar: "MW",
+    },
+    {
+        id: 5,
+        userName: "Marco White",
+        contentType: "Direct Message",
+        contentId: "#12",
+        reason: "Harassment",
+        reportedDate: "Oct 24, 2023",
+        reportedTime: "11:02 AM",
+        status: "banned",
+        avatar: "MW",
+    },
+];
