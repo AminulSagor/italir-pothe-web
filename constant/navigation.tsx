@@ -67,7 +67,7 @@ export const adminNavigation: NavigationGroup[] = [
         children: [
           {
             title: "Evaluation Center",
-            href: "/admin/final-exam-manager/evaluation-center",
+            href: "/admin/evaluation-center",
             icon: ClipboardCheck,
           },
         ],
