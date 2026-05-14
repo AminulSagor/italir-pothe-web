@@ -4,10 +4,7 @@ import { useState } from "react";
 import { EllipsisVertical, Filter } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-
 import SurvivalTableRow from "./survival-table-row";
-import SurvivalTableMobileCard from "./survival-table-mobile-card";
-
 import EditSituationDialog from "./dialogs/edit-situation-dialog";
 import DeleteSituationDialog from "./dialogs/delete-situation-dialog";
 
@@ -19,7 +16,6 @@ export default function SurvivalSituationsTable() {
     useState<SurvivalSituation | null>(null);
 
   const [editOpen, setEditOpen] = useState(false);
-
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleEditOpen = (situation: SurvivalSituation) => {
@@ -60,26 +56,22 @@ export default function SurvivalSituationsTable() {
           </div>
         </div>
 
-        <div className="hidden overflow-x-auto lg:block">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead className="border-b border-[#EEF2EE] bg-[#FAFCFA]">
               <tr>
                 <th className="px-5 py-4 text-left text-xs font-semibold text-[#5F675F]">
                   ICON
                 </th>
-
                 <th className="px-5 py-4 text-left text-xs font-semibold text-[#5F675F]">
                   SITUATION NAME
                 </th>
-
                 <th className="px-5 py-4 text-left text-xs font-semibold text-[#5F675F]">
                   BENGALI SUBTITLE
                 </th>
-
                 <th className="px-5 py-4 text-left text-xs font-semibold text-[#5F675F]">
                   PDF STATUS
                 </th>
-
                 <th className="px-5 py-4 text-left text-xs font-semibold text-[#5F675F]">
                   ACTIONS
                 </th>
@@ -97,12 +89,6 @@ export default function SurvivalSituationsTable() {
               ))}
             </tbody>
           </table>
-        </div>
-
-        <div className="space-y-4 p-4 lg:hidden">
-          {survivalSituationsMock.map((situation) => (
-            <SurvivalTableMobileCard key={situation.id} situation={situation} />
-          ))}
         </div>
 
         <div className="flex flex-col gap-4 border-t border-[#EEF2EE] px-6 py-5 md:flex-row md:items-center md:justify-between">
@@ -126,17 +112,14 @@ export default function SurvivalSituationsTable() {
             </button>
           </div>
         </div>
-
-        <EditSituationDialog
-          open={editOpen}
-          onClose={() => setEditOpen(false)}
-        />
-
-        <DeleteSituationDialog
-          open={deleteOpen}
-          onClose={() => setDeleteOpen(false)}
-        />
       </Card>
+
+      <EditSituationDialog open={editOpen} onClose={() => setEditOpen(false)} />
+
+      <DeleteSituationDialog
+        open={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+      />
     </>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+
 import Card from "@/components/UI/cards/card";
 
 interface DialogProps {
@@ -13,17 +14,17 @@ interface DialogProps {
 }
 
 const sizeClasses = {
-  sm: "max-w-[360px]",
-  md: "max-w-[430px]",
-  lg: "max-w-[560px]",
-  xl: "max-w-[720px]",
-  "2xl": "max-w-[1020px]",
+  sm: "w-[360px]",
+  md: "w-[430px]",
+  lg: "w-[560px]",
+  xl: "w-[720px]",
+  "2xl": "w-[1020px]",
 };
 
 const positionClasses = {
-  center: "items-center",
-  top: "items-start pt-20",
-  bottom: "items-end pb-20",
+  center: "items-start sm:items-center",
+  top: "items-start",
+  bottom: "items-end",
 };
 
 const Dialog = ({
@@ -39,17 +40,19 @@ const Dialog = ({
   return (
     <div
       onClick={onClose}
-      className={`fixed inset-0 z-[100] flex justify-center bg-black/35 px-4 backdrop-blur-sm ${positionClasses[position]}`}
+      className={`fixed inset-0 z-[100] overflow-x-auto overflow-y-auto bg-black/35 px-4 py-6 backdrop-blur-sm ${positionClasses[position]}`}
     >
-      <Card
-        padding="lg"
-        rounded="3xl"
-        shadow="lg"
-        onClick={(event) => event.stopPropagation()}
-        className={`relative z-10 w-full ${sizeClasses[size]} ${className}`}
-      >
-        {children}
-      </Card>
+      <div className="flex min-h-full min-w-fit justify-center">
+        <Card
+          padding="lg"
+          rounded="3xl"
+          shadow="lg"
+          onClick={(event) => event.stopPropagation()}
+          className={`relative z-10 my-auto max-h-[calc(100vh-48px)] min-w-fit overflow-y-auto ${sizeClasses[size]} ${className}`}
+        >
+          {children}
+        </Card>
+      </div>
     </div>
   );
 };

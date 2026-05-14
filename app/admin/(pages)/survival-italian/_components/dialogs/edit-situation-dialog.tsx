@@ -26,7 +26,7 @@ export default function EditSituationDialog({ open, onClose }: Props) {
         size="2xl"
         className="overflow-hidden p-0"
       >
-        <div className="grid md:grid-cols-[280px_1fr]">
+        <div className="grid overflow-hidden md:grid-cols-[280px_1fr]">
           <VisualIdentityPanel selectedColor="#DCEBF6" />
 
           <div className="relative">
