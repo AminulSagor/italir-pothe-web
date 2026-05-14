@@ -1,7 +1,17 @@
-import React from "react";
+import FinalExamGrid from "./_components/final-exam-grid";
+import FinalExamHeader from "./_components/final-exam-header";
+import FinalExamTabs from "./_components/final-exam-tabs";
 
-const page = () => {
-  return <div>page</div>;
+const FinalExamManagerPage = () => {
+  return (
+    <div className="space-y-8">
+      <FinalExamHeader />
+
+      <FinalExamTabs />
+
+      <FinalExamGrid />
+    </div>
+  );
 };
 
-export default page;
+export default FinalExamManagerPage;
