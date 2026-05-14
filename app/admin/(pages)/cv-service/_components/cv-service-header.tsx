@@ -21,10 +21,12 @@ export default function CVServiceHeader() {
           </Button>
         </Link>
 
-        <Button rounded="full" size="sm">
-          <Settings className="size-4" />
-          Configure Packages
-        </Button>
+        <Link href="/admin/cv-service/packages">
+          <Button rounded="full" size="sm">
+            <Settings className="size-4" />
+            Configure Packages
+          </Button>
+        </Link>
       </div>
     </div>
   );

@@ -89,3 +89,30 @@ export const cvTemplates = [
     status: "Hidden",
   },
 ];
+
+export const cvCreditPackages = [
+  {
+    id: 1,
+    name: "Single Refill",
+    credits: 1,
+    price: "0.99",
+    badge: null,
+    active: false,
+  },
+  {
+    id: 2,
+    name: "Pro Hunter Pack",
+    credits: 5,
+    price: "2.99",
+    badge: "Best Value",
+    active: true,
+  },
+  {
+    id: 3,
+    name: "Career Sprint Pack",
+    credits: 10,
+    price: "4.99",
+    badge: null,
+    active: false,
+  },
+];
