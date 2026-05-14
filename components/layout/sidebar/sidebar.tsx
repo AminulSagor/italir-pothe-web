@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ChevronDown, LogOut } from "lucide-react";
-import { adminNavigation } from "../../../constant/navigation";
-import Image from "next/image";
+
 import { IMAGE } from "@/constant/image.path";
+import { adminNavigation } from "../../../constant/navigation";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -59,45 +60,63 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <div className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = item.href === pathname;
                   const hasChildren = Boolean(item.children?.length);
                   const isMenuOpen = openMenus.includes(item.title);
+                  const isParentActive = item.href === pathname;
+                  const isChildActive = item.children?.some(
+                    (child) => child.href === pathname,
+                  );
 
                   if (hasChildren) {
                     return (
                       <div key={item.title}>
-                        <button
-                          type="button"
-                          onClick={() => toggleMenu(item.title)}
-                          className="flex w-full items-center justify-between rounded-2xl px-3 py-2 text-white/85 transition hover:bg-white/10 hover:text-white"
+                        <div
+                          className={`flex items-center justify-between rounded-2xl transition ${
+                            isParentActive
+                              ? "bg-[#75FF33] font-semibold text-[#00552E]"
+                              : isChildActive
+                                ? "bg-white/10 text-white"
+                                : "text-white/85 hover:bg-white/10 hover:text-white"
+                          }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <Icon className="size-4" />
-                            <span>{item.title}</span>
-                          </div>
+                          <Link
+                            href={item.href ?? "#"}
+                            onClick={onClose}
+                            className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
+                          >
+                            <Icon className="size-4 shrink-0" />
+                            <span className="truncate">{item.title}</span>
+                          </Link>
 
-                          <ChevronDown
-                            className={`size-4 transition ${
-                              isMenuOpen ? "rotate-180" : ""
-                            }`}
-                          />
-                        </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleMenu(item.title)}
+                            aria-label={`Toggle ${item.title}`}
+                            className="flex size-9 shrink-0 items-center justify-center rounded-xl transition hover:bg-white/10"
+                          >
+                            <ChevronDown
+                              className={`size-4 transition ${
+                                isMenuOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </button>
+                        </div>
 
                         {isMenuOpen && (
                           <div className="ml-7 mt-1 space-y-1">
                             {item.children?.map((child) => {
                               const ChildIcon = child.icon;
-                              const isChildActive = child.href === pathname;
+                              const isActive = child.href === pathname;
 
                               return (
                                 <Link
                                   key={child.href}
                                   href={child.href}
                                   onClick={onClose}
-                                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-white/75 transition hover:bg-white/10 hover:text-white ${
-                                    isChildActive
-                                      ? "bg-white/10 text-white"
-                                      : ""
+                                  className={`flex items-center gap-3 rounded-xl px-3 py-2 transition ${
+                                    isActive
+                                      ? "bg-[#75FF33] font-semibold text-[#00552E]"
+                                      : "text-white/75 hover:bg-white/10 hover:text-white"
                                   }`}
                                 >
                                   <ChildIcon className="size-4" />
@@ -117,7 +136,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                       href={item.href ?? "#"}
                       onClick={onClose}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-2 transition ${
-                        isActive
+                        isParentActive
                           ? "bg-[#75FF33] font-semibold text-[#00552E]"
                           : "text-white/85 hover:bg-white/10 hover:text-white"
                       }`}

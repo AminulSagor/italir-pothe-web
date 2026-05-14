@@ -14,6 +14,7 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
+
 import { NavigationGroup } from "../types/navigations/navigation";
 
 export const adminNavigation: NavigationGroup[] = [
@@ -27,6 +28,7 @@ export const adminNavigation: NavigationGroup[] = [
       },
       {
         title: "Revenue & Analytics",
+        href: "/admin/revenue-and-analytics",
         icon: BarChart3,
         children: [
           {
@@ -63,6 +65,7 @@ export const adminNavigation: NavigationGroup[] = [
       },
       {
         title: "Final Exam Manager",
+        href: "/admin/final-exam-manager",
         icon: ClipboardCheck,
         children: [
           {
