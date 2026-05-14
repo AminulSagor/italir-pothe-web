@@ -7,6 +7,7 @@ import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
 
 import { ExamPart } from "@/mock/final-exam-manager/final-exam-setup.types";
+import Link from "next/link";
 
 interface Props {
   part: ExamPart;
@@ -48,7 +49,9 @@ const ExamPartCard = ({ part, variant = "core" }: Props) => {
               </div>
             </div>
 
-            <Button size="lg">Manage 30 Questions</Button>
+            <Link href={`/admin/final-exam-manager/${part.id}/quiz-builder`}>
+              <Button size="lg">Manage 30 Questions</Button>
+            </Link>
           </div>
         </div>
       </Card>

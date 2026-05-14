@@ -19,12 +19,17 @@ import TrueFalseQuestionConfig from "./question-types/true-false-question-config
 import MatchPairQuestionConfig from "./question-types/match-pair-question-config";
 import IdentifyImageQuestionConfig from "./question-types/identify-image-question-config";
 import IdentifyImageMcqQuestionConfig from "./question-types/identify-image-mcq-question-config";
+import FinalExamQuizBuilderHeader from "@/app/admin/(pages)/final-exam-manager/[id]/_components/final-exam-quiz-builder-header";
 
 interface QuizBuilderClientProps {
   data: QuizBuilderMock;
+  headerVariant?: "default" | "final-exam";
 }
 
-export default function QuizBuilderClient({ data }: QuizBuilderClientProps) {
+export default function QuizBuilderClient({
+  data,
+  headerVariant,
+}: QuizBuilderClientProps) {
   const [activeQuestionId, setActiveQuestionId] = useState(1);
 
   const activeQuestion =
@@ -44,7 +49,11 @@ export default function QuizBuilderClient({ data }: QuizBuilderClientProps) {
 
   return (
     <div className="space-y-7">
-      <QuizBuilderHeader />
+      {headerVariant === "final-exam" ? (
+        <FinalExamQuizBuilderHeader />
+      ) : (
+        <QuizBuilderHeader />
+      )}
 
       <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)] xl:items-start">
         <QuizFlowSidebar
