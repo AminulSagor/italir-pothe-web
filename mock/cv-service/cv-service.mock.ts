@@ -1,3 +1,5 @@
+import { IMAGE } from "@/constant/image.path";
+
 export const cvStats = [
   {
     title: "Total CV Revenue",
@@ -58,5 +60,32 @@ export const cvTransactions = [
     amount: "€49.99",
     date: "Oct 23, 2023",
     status: "Pending",
+  },
+];
+
+export const cvTemplates = [
+  {
+    id: 1,
+    title: "The Modern...",
+    category: "Restaurant",
+    plan: "Free",
+    image: IMAGE.cv_templete,
+    status: "Active",
+  },
+  {
+    id: 2,
+    title: "Silicon Valley...",
+    category: "Tech Lead",
+    plan: "Premium",
+    image: IMAGE.cv_templete,
+    status: "Active",
+  },
+  {
+    id: 3,
+    title: "The Boardroom...",
+    category: "Executive",
+    plan: "Free",
+    image: IMAGE.cv_templete,
+    status: "Hidden",
   },
 ];

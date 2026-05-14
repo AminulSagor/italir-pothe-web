@@ -1,6 +1,7 @@
 import { FileText, Settings } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
+import Link from "next/link";
 
 export default function CVServiceHeader() {
   return (
@@ -13,10 +14,12 @@ export default function CVServiceHeader() {
       </p>
 
       <div className="mt-5 flex flex-wrap gap-3">
-        <Button variant="outline" rounded="full" size="sm">
-          <FileText className="size-4" />
-          Manage CV Templates
-        </Button>
+        <Link href="/admin/cv-service/templates">
+          <Button variant="outline" rounded="full" size="sm">
+            <FileText className="size-4" />
+            Manage CV Templates
+          </Button>
+        </Link>
 
         <Button rounded="full" size="sm">
           <Settings className="size-4" />
