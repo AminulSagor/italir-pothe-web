@@ -8,7 +8,7 @@ interface DialogProps {
   onClose: () => void;
   children: ReactNode;
   className?: string;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | "2xl";
   position?: "center" | "top" | "bottom";
 }
 
@@ -17,6 +17,7 @@ const sizeClasses = {
   md: "max-w-[430px]",
   lg: "max-w-[560px]",
   xl: "max-w-[720px]",
+  "2xl": "max-w-[1020px]",
 };
 
 const positionClasses = {
