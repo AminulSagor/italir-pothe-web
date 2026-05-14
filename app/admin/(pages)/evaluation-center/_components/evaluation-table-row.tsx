@@ -1,5 +1,6 @@
 import Button from "@/components/UI/buttons/button";
 import { EvaluationStudent } from "@/mock/evaluation-center/evaluation-center.types";
+import Link from "next/link";
 
 interface Props {
   student: EvaluationStudent;
@@ -61,17 +62,19 @@ export default function EvaluationTableRow({ student }: Props) {
       </td>
 
       <td className="px-4 py-6">
-        <Button
-          size="sm"
-          disabled={student.actionDisabled}
-          className={
-            student.actionDisabled
-              ? "bg-[#EEF0ED] text-[#9BA49D] hover:bg-[#EEF0ED]"
-              : ""
-          }
-        >
-          {student.actionLabel}
-        </Button>
+        <Link href="/admin/evaluation-center/evaluate-student">
+          <Button
+            size="sm"
+            disabled={student.actionDisabled}
+            className={
+              student.actionDisabled
+                ? "bg-[#EEF0ED] text-[#9BA49D] hover:bg-[#EEF0ED]"
+                : ""
+            }
+          >
+            {student.actionLabel}
+          </Button>
+        </Link>
       </td>
     </tr>
   );
