@@ -91,13 +91,15 @@ const ExamPartCard = ({ part, variant = "core" }: Props) => {
           </span>
         </div>
 
-        <button
-          type="button"
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#E8EEE6] py-4 text-sm font-bold text-[#202420]"
-        >
-          <List className="size-5" />
-          Mini-MCQ Manager
-        </button>
+        <Link href={`/admin/final-exam-manager/${part.id}/mini-quiz-manager`}>
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#E8EEE6] py-4 text-sm font-bold text-[#202420]"
+          >
+            <List className="size-5" />
+            Mini-MCQ Manager
+          </button>
+        </Link>
       </div>
     </Accordion>
   );
