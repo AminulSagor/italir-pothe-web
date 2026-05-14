@@ -10,7 +10,7 @@ export default function AiBundlesTable() {
       <div className="mb-7 flex items-center justify-between gap-4">
         <h2 className="text-xl font-bold text-[#202420]">Active AI Bundles</h2>
 
-        <Button className="gap-2 bg-[#58F85F] text-[#006B3F] hover:bg-[#4EEB55]">
+        <Button className="gap-2 bg-[#58F85F] !text-[#006B3F] hover:!bg-[#58F85F]">
           <PlusCircle className="size-4" />
           Add Package
         </Button>
