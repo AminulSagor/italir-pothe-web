@@ -87,7 +87,7 @@ export const adminNavigation: NavigationGroup[] = [
       },
       {
         title: "CV Service Dashboard",
-        href: "/admin/cv-service-dashboard",
+        href: "/admin/cv-service",
         icon: Briefcase,
       },
     ],
