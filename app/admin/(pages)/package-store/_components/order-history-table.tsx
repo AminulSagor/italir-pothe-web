@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Download, Eye } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
@@ -56,6 +57,7 @@ export default function OrderHistoryTable() {
                 <td className="px-4 py-7 text-sm font-bold text-[#006B3F]">
                   {log.orderId}
                 </td>
+
                 <td className="px-4 py-7">
                   <div className="flex items-center gap-3">
                     <Image
@@ -68,11 +70,13 @@ export default function OrderHistoryTable() {
                     <span className="text-sm">{log.customerName}</span>
                   </div>
                 </td>
+
                 <td className="px-4 py-7 text-sm text-[#4F5B52]">
                   {log.packageName}
                 </td>
                 <td className="px-4 py-7 text-sm text-[#4F5B52]">{log.date}</td>
                 <td className="px-4 py-7 text-sm font-bold">{log.amount}</td>
+
                 <td className="px-4 py-7">
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClasses[log.status]}`}
@@ -80,11 +84,16 @@ export default function OrderHistoryTable() {
                     {log.status}
                   </span>
                 </td>
+
                 <td className="px-4 py-7">
                   <div className="flex gap-3">
-                    <button className="flex size-9 items-center justify-center rounded-full bg-[#EEF3EC]">
+                    <Link
+                      href={`/admin/package-store/order-details/${log.orderId.replace("#ORD-", "")}`}
+                      className="flex size-9 items-center justify-center rounded-full bg-[#EEF3EC]"
+                    >
                       <Eye className="size-4" />
-                    </button>
+                    </Link>
+
                     <button className="flex size-9 items-center justify-center rounded-full bg-[#EEF3EC]">
                       <Download className="size-4" />
                     </button>
