@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Pencil, Trash2, BellRing, Play } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
@@ -19,6 +20,8 @@ const badgeClasses = {
 };
 
 const WebinarCard = ({ webinar }: WebinarCardProps) => {
+  const router = useRouter();
+
   return (
     <Card
       rounded="3xl"
@@ -67,7 +70,10 @@ const WebinarCard = ({ webinar }: WebinarCardProps) => {
 
       <div className="flex flex-wrap items-center gap-3">
         {webinar.isLive ? (
-          <Button className="gap-2 px-7">
+          <Button
+            className="gap-2 px-7"
+            onClick={() => router.push("/admin/webinar-directory/pre-stage")}
+          >
             <span>Enter Pre Live Studio</span>
             <Play size={16} />
           </Button>
