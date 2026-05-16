@@ -96,6 +96,11 @@ export const adminNavigation: NavigationGroup[] = [
     title: "Community",
     items: [
       {
+        title: "Webinar Directory",
+        href: "/admin/webinar-directory",
+        icon: Package,
+      },
+      {
         title: "User Directory",
         href: "/admin/user-directory",
         icon: UserRound,
