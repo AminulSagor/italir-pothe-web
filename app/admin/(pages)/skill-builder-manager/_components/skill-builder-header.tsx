@@ -1,6 +1,7 @@
 import { PlusCircle } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
+import Link from "next/link";
 
 export default function SkillBuilderHeader() {
   return (
@@ -16,10 +17,12 @@ export default function SkillBuilderHeader() {
         </p>
       </div>
 
-      <Button size="lg" className="gap-2 px-7 shadow-md">
-        <PlusCircle className="size-5" />
-        Create New Career Track
-      </Button>
+      <Link href="/admin/skill-builder-manager/career-track-studio">
+        <Button size="lg" className="gap-2 px-7 shadow-md">
+          <PlusCircle className="size-5" />
+          Create New Career Track
+        </Button>
+      </Link>
     </div>
   );
 }

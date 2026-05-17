@@ -5,7 +5,6 @@ export default function SkillBuilderManagerPage() {
   return (
     <section className="space-y-10">
       <SkillBuilderHeader />
-
       <CareerTrackGrid />
     </section>
   );
