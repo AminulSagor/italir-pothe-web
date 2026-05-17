@@ -9,7 +9,7 @@ export default function SubjectStatsCard() {
                     <UserRound className="size-5" />
                 </span>
 
-                <h2 className="text-2xl font-bold text-black/90">Subject Stats</h2>
+                <h2 className="text-lg font-bold text-black/90">Subject Stats</h2>
             </div>
 
             <div className="mt-7 flex items-center gap-4">

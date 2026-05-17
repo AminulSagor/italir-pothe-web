@@ -9,7 +9,7 @@ export default function DealLogicForm() {
                 </span>
 
                 <div>
-                    <h1 className="text-2xl font-bold text-deep-green">Deal & Logic</h1>
+                    <h1 className="text-lg font-bold text-deep-green">Deal & Logic</h1>
                     <p className="mt-1 text-sm text-black/55">
                         Configure commissions and coupons
                     </p>

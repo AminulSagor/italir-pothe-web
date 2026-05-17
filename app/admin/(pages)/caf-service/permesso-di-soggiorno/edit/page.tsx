@@ -62,7 +62,7 @@ export default async function EditCafServicePage({
                         </span>
                     </p>
 
-                    <h1 className="mt-3 text-3xl font-bold tracking-tight text-deep-green">
+                    <h1 className="mt-3 text-2xl font-bold tracking-tight text-deep-green">
                         Edit Service Page: Permesso di Soggiorno
                     </h1>
                 </div>

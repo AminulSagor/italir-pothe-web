@@ -17,7 +17,7 @@ export default function ComposerHeader() {
             </button>
 
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-deep-green">
+                <h1 className="text-2xl font-bold tracking-tight text-deep-green">
                     Push Notification Composer
                 </h1>
                 <p className="mt-2 text-sm text-black/55">

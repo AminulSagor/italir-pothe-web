@@ -15,7 +15,7 @@ export default function DevicePreviewCard() {
                     </div>
 
                     <div className="relative z-10 text-center">
-                        <p className="text-4xl font-light leading-none">09:41</p>
+                        <p className="text-2xl font-light leading-none">09:41</p>
                         <p className="mt-2 text-xs font-semibold">Tuesday, October 24</p>
                     </div>
 

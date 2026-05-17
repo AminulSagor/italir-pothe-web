@@ -14,7 +14,7 @@ export default function PartnerProfilePanel() {
                 />
 
                 <div>
-                    <h2 className="text-2xl font-bold text-deep-green">Marco Valeri</h2>
+                    <h2 className="text-lg font-bold text-deep-green">Marco Valeri</h2>
                     <p className="text-sm text-black/55">Global Partner Manager</p>
                 </div>
             </div>

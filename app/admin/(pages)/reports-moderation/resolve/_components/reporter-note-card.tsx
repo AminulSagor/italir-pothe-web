@@ -8,7 +8,7 @@ export default function ReporterNoteCard() {
                     <MessageSquareText className="size-5" />
                 </span>
 
-                <h2 className="text-2xl font-bold leading-tight text-black/90">
+                <h2 className="text-lg font-bold leading-tight text-black/90">
                     Reporter <br /> Note
                 </h2>
             </div>

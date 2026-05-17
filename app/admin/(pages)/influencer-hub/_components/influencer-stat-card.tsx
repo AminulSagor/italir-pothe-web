@@ -21,7 +21,7 @@ export default function InfluencerStatCard({ stat }: InfluencerStatCardProps) {
                 </p>
 
                 <h2
-                    className={`mt-2 text-3xl font-bold ${stat.tone === "orange" ? "text-orange-500" : "text-deep-green"
+                    className={`mt-2 text-2xl font-bold ${stat.tone === "orange" ? "text-orange-500" : "text-deep-green"
                         }`}
                 >
                     {stat.value}

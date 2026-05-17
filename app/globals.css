@@ -1,55 +1,87 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 
-  --primary: #161f1d;
-  --secondary: #0a7c58;
-  --mint-green: #34d399;
-  --dark-green: #25302b;
-  --deep-green: #064e3b;
-  --lime-green: #84cc16;
+    --primary: #161f1d;
+    --secondary: #0a7c58;
+    --mint-green: #34d399;
+    --dark-green: #25302b;
+    --deep-green: #064e3b;
+    --lime-green: #84cc16;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-secondary: var(--secondary);
-  --color-mint-green: var(--mint-green);
-  --color-dark-green: var(--dark-green);
-  --color-deep-green: var(--deep-green);
-  --color-lime-green: var(--lime-green);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
+    --color-mint-green: var(--mint-green);
+    --color-dark-green: var(--dark-green);
+    --color-deep-green: var(--deep-green);
+    --color-lime-green: var(--lime-green);
+
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 * {
-  box-sizing: border-box;
+    box-sizing: border-box;
 }
 
 html,
 body {
-  min-height: 100%;
+    min-height: 100%;
 }
 
 body {
-  margin: 0;
-  background: var(--background);
-  color: var(--foreground);
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
 }
 
 .scrollbar-hide {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;
+    display: none;
 }
 
 button,
 a {
-  cursor: pointer;
+    cursor: pointer;
+}
+
+/* Typography Scale - Industry Best Practice */
+.heading-page {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.heading-section {
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.heading-card {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.text-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.text-body {
+    font-size: 1rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
 }

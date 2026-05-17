@@ -16,7 +16,7 @@ export default function NotificationManagementPage() {
         <div className="space-y-6">
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-deep-green">
+                    <h1 className="text-2xl font-bold tracking-tight text-deep-green">
                         Notification Management
                     </h1>
 
@@ -47,7 +47,7 @@ export default function NotificationManagementPage() {
                             {stat.title}
                         </p>
 
-                        <h2 className="mt-1 text-3xl font-bold text-deep-green">
+                        <h2 className="mt-1 text-2xl font-bold text-deep-green">
                             {stat.value}
                         </h2>
 

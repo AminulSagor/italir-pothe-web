@@ -42,7 +42,7 @@ function Metric({
     return (
         <div>
             <p className="text-sm text-black/50">{label}</p>
-            <p className="mt-1 text-2xl font-light text-black/85">
+            <p className="mt-1 text-lg font-light text-black/85">
                 {value}
                 {helper ? (
                     <span className="ml-2 text-sm font-bold text-green-600">

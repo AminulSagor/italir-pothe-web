@@ -23,7 +23,7 @@ export default function PermanentBanModal({
                         <ShieldCheck className="size-12" />
                     </div>
 
-                    <h2 className="mt-8 text-5xl font-bold leading-tight text-deep-green">
+                    <h2 className="mt-8 text-2xl font-bold leading-tight text-deep-green">
                         Account Successfully Banned
                     </h2>
 
@@ -52,11 +52,11 @@ export default function PermanentBanModal({
                         </div>
                     </div>
 
-                    <h2 className="mt-7 text-center text-4xl font-bold text-black/90">
+                    <h2 className="mt-7 text-center text-2xl font-bold text-black/90">
                         Confirm Permanent Ban
                     </h2>
 
-                    <p className="mx-auto mt-5 max-w-[420px] text-center text-2xl leading-10 text-black/60">
+                    <p className="mx-auto mt-5 max-w-[420px] text-center text-lg leading-6 text-black/60">
                         This action cannot be undone. The user Alex Rivera will lose access
                         to all courses, XP, and community features immediately.
                     </p>
@@ -66,14 +66,14 @@ export default function PermanentBanModal({
                             Violation Summary
                         </p>
 
-                        <p className="mt-3 text-3xl font-medium text-red-800">
+                        <p className="mt-3 text-2xl font-medium text-red-800">
                             Spam Content
                         </p>
                     </div>
 
                     <button
                         onClick={onConfirm}
-                        className="mt-10 flex h-20 w-full items-center justify-center gap-4 rounded-full bg-[#8E1D2C] text-2xl font-medium text-white"
+                        className="mt-10 flex h-20 w-full items-center justify-center gap-4 rounded-full bg-[#8E1D2C] text-lg font-medium text-white"
                     >
                         <Gavel className="size-7" />
                         Confirm & Ban Account
@@ -81,7 +81,7 @@ export default function PermanentBanModal({
 
                     <button
                         onClick={onClose}
-                        className="mt-5 flex h-20 w-full items-center justify-center rounded-full bg-[#DDE3DA] text-2xl font-medium text-black/60"
+                        className="mt-5 flex h-20 w-full items-center justify-center rounded-full bg-[#DDE3DA] text-lg font-medium text-black/60"
                     >
                         Cancel
                     </button>

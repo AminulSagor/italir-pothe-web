@@ -32,7 +32,7 @@ export default function LogInPage() {
               />
             </div>
 
-            <h2 className="mt-6 text-3xl font-bold tracking-tight">
+            <h2 className="mt-6 text-2xl font-bold tracking-tight">
               Admin Command Center
             </h2>
 
@@ -96,7 +96,7 @@ function LoginCard() {
         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-zinc-400">
           Access granted only to authorized personnel
         </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-deep-green">
+        <h1 className="mt-2 text-2xl font-bold tracking-tight text-deep-green">
           Secure Login
         </h1>
       </div>

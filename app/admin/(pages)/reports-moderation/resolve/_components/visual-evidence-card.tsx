@@ -9,7 +9,7 @@ export default function VisualEvidenceCard() {
                         <ImageIcon className="size-5" />
                     </span>
 
-                    <h2 className="text-2xl font-bold text-black/90">Visual Evidence</h2>
+                    <h2 className="text-lg font-bold text-black/90">Visual Evidence</h2>
                 </div>
 
                 <span className="hidden items-center gap-2 rounded-full bg-[#EEF3EC] px-4 py-2 text-xs font-semibold uppercase text-black/35 md:flex">
@@ -20,7 +20,7 @@ export default function VisualEvidenceCard() {
 
             <div className="relative mt-7 rounded-[2rem] border-2 border-dashed border-black/10 bg-[#F7FAF5] p-8">
                 <div className="min-h-[190px] rounded-[2rem] bg-white/70 p-10 shadow-sm blur-[1px]">
-                    <p className="text-2xl font-semibold leading-9 text-black/20">
+                    <p className="text-lg font-semibold leading-6 text-black/20">
                         Describe what happened... (e.g., This user is sending spam links).
                     </p>
                 </div>

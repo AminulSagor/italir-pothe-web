@@ -22,7 +22,7 @@ export default function ModerationStatsGrid() {
                                 {stat.label}
                             </p>
 
-                            <h2 className="mt-2 text-4xl font-bold text-black/90">
+                            <h2 className="mt-2 text-2xl font-bold text-black/90">
                                 {stat.value}
                             </h2>
 
