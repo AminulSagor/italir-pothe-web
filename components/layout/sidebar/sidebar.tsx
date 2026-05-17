@@ -153,9 +153,20 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
         <div className="p-4">
           <div className="flex items-center justify-between rounded-2xl bg-white p-3 text-black">
-            <div>
-              <p className="font-semibold">Marco Rossi</p>
-              <p className="text-black/60">Master Admin</p>
+            <div className="flex items-center gap-3">
+              <div className="relative size-12 overflow-hidden rounded-full">
+                <Image
+                  src={IMAGE.customer}
+                  alt="Marco Rossi"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+
+              <div>
+                <p className="font-semibold">Marco Rossi</p>
+                <p className="text-sm text-black/60">Master Admin</p>
+              </div>
             </div>
 
             <button type="button" aria-label="Logout">
