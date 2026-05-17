@@ -9,7 +9,7 @@ export default function ReportHeader() {
                     <span className="font-semibold text-secondary">Rahim Italy Vlog</span>
                 </p>
 
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-deep-green">
+                <h1 className="mt-2 text-2xl font-bold tracking-tight text-deep-green">
                     Rahim Italy Vlog Report
                 </h1>
             </div>

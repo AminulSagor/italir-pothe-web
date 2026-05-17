@@ -9,7 +9,7 @@ export default function ReportOverviewCard() {
                     <ClipboardList className="size-5" />
                 </span>
 
-                <h2 className="text-2xl font-bold text-black/90">Report Overview</h2>
+                <h2 className="text-lg font-bold text-black/90">Report Overview</h2>
             </div>
 
             <div className="mt-7 grid gap-8 md:grid-cols-[1.2fr_0.8fr_1fr]">

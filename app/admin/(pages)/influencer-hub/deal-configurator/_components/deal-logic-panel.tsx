@@ -31,7 +31,7 @@ export default function DealLogicPanel() {
                 </p>
 
                 <div className="mt-3 flex h-14 items-center justify-between rounded-full border border-secondary/20 bg-white px-6 shadow-sm">
-                    <p className="text-2xl font-bold tracking-[0.18em] text-deep-green">
+                    <p className="text-lg font-bold tracking-[0.18em] text-deep-green">
                         ITALY10
                     </p>
 
@@ -109,10 +109,10 @@ function PercentCard({
             </div>
 
             <div className="mt-4 flex items-end gap-2">
-                <span className="flex size-16 items-center justify-center rounded-full bg-white text-4xl font-bold text-black/85 shadow-sm">
+                <span className="flex size-16 items-center justify-center rounded-full bg-white text-2xl font-bold text-black/85 shadow-sm">
                     {value}
                 </span>
-                <span className="pb-2 text-2xl font-bold text-black/70">%</span>
+                <span className="pb-2 text-lg font-bold text-black/70">%</span>
             </div>
 
             <p className="mt-2 text-sm text-black/45">{helper}</p>

@@ -24,7 +24,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   const isSidebarOnlyPage =
     pathname.includes("/caf-service") ||
     pathname.includes("/influencer-hub") ||
-    pathname.includes("/reports-moderation");
+    pathname.includes("/reports-moderation") ||
+    pathname.includes("/league-gamification") ||
+    pathname.includes("/user-directory");
 
   const hasCustomTopbar = pathname.includes(
     "/caf-service/permesso-di-soggiorno/edit"

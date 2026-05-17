@@ -3,7 +3,7 @@ import { Camera, ChevronUp, CirclePlus, PlayCircle, Video } from "lucide-react";
 export default function PartnerProfileForm() {
     return (
         <div>
-            <h1 className="text-2xl font-bold text-deep-green">Partner Profile</h1>
+            <h1 className="text-lg font-bold text-deep-green">Partner Profile</h1>
             <p className="mt-1 text-sm text-black/55">
                 Manage basic information and identity
             </p>

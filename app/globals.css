@@ -44,3 +44,28 @@ button,
 a {
     cursor: pointer;
 }
+
+/* Typography Scale - Industry Best Practice */
+.heading-page {
+    @apply text-2xl font-bold;
+}
+
+.heading-section {
+    @apply text-lg font-bold;
+}
+
+.heading-card {
+    @apply text-base font-semibold;
+}
+
+.text-label {
+    @apply text-sm font-semibold uppercase;
+}
+
+.text-body {
+    @apply text-base;
+}
+
+.stat-value {
+    @apply text-2xl font-bold;
+}

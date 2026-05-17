@@ -46,7 +46,7 @@ export default function ResolveHeader() {
                 <span className="text-secondary">Case #9921-AR</span>
             </p>
 
-            <h1 className="mt-2 text-4xl font-bold tracking-tight text-deep-green">
+            <h1 className="mt-2 text-2xl font-bold tracking-tight text-deep-green">
                 Resolve Report
             </h1>
         </>

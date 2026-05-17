@@ -16,7 +16,7 @@ export default function AdminActionPanel() {
                         <ShieldCheck className="size-6" />
                     </span>
 
-                    <h2 className="text-2xl font-bold text-black/90">Admin Action</h2>
+                    <h2 className="text-lg font-bold text-black/90">Admin Action</h2>
                 </div>
 
                 <div className="mt-9">
