@@ -14,6 +14,7 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
+
 import { NavigationGroup } from "../types/navigations/navigation";
 
 export const adminNavigation: NavigationGroup[] = [
@@ -27,15 +28,18 @@ export const adminNavigation: NavigationGroup[] = [
       },
       {
         title: "Revenue & Analytics",
+        href: "/admin/revenue-and-analytics",
         icon: BarChart3,
         children: [
           {
             title: "Course Performance",
             href: "/admin/revenue-and-analytics/course-performance",
+            icon: ChartNoAxesColumn,
           },
           {
             title: "Package Performance",
             href: "/admin/revenue-and-analytics/package-performance",
+            icon: Package,
           },
         ],
       },
@@ -63,6 +67,13 @@ export const adminNavigation: NavigationGroup[] = [
         title: "Final Exam Manager",
         href: "/admin/final-exam-manager",
         icon: ClipboardCheck,
+        children: [
+          {
+            title: "Evaluation Center",
+            href: "/admin/evaluation-center",
+            icon: ClipboardCheck,
+          },
+        ],
       },
     ],
   },
@@ -76,7 +87,7 @@ export const adminNavigation: NavigationGroup[] = [
       },
       {
         title: "CV Service Dashboard",
-        href: "/admin/cv-service-dashboard",
+        href: "/admin/cv-service",
         icon: Briefcase,
       },
     ],
@@ -84,6 +95,11 @@ export const adminNavigation: NavigationGroup[] = [
   {
     title: "Community",
     items: [
+      {
+        title: "Webinar Directory",
+        href: "/admin/webinar-directory",
+        icon: Package,
+      },
       {
         title: "User Directory",
         href: "/admin/user-directory",

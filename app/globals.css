@@ -21,6 +21,7 @@
     --color-dark-green: var(--dark-green);
     --color-deep-green: var(--deep-green);
     --color-lime-green: var(--lime-green);
+
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
 }
@@ -40,6 +41,15 @@ body {
     color: var(--foreground);
 }
 
+.scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
 button,
 a {
     cursor: pointer;
@@ -47,25 +57,31 @@ a {
 
 /* Typography Scale - Industry Best Practice */
 .heading-page {
-    @apply text-2xl font-bold;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
 .heading-section {
-    @apply text-lg font-bold;
+    font-size: 1.125rem;
+    font-weight: 700;
 }
 
 .heading-card {
-    @apply text-base font-semibold;
+    font-size: 1rem;
+    font-weight: 600;
 }
 
 .text-label {
-    @apply text-sm font-semibold uppercase;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .text-body {
-    @apply text-base;
+    font-size: 1rem;
 }
 
 .stat-value {
-    @apply text-2xl font-bold;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
