@@ -1,13 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, LogOut } from "lucide-react";
 
 import { IMAGE } from "@/constant/image.path";
 import { adminNavigation } from "../../../constant/navigation";
+import {
+  formatUserRole,
+  getAuthUser,
+  removeAuthUser,
+  type AuthUser,
+} from "@/utils/auth_user_util";
+import { removeToken } from "@/utils/cookies_util";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -16,10 +23,16 @@ interface SidebarProps {
 
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [openMenus, setOpenMenus] = useState<string[]>([
     "Revenue & Analytics",
     "Final Exam Manager",
   ]);
+
+  useEffect(() => {
+    setUser(getAuthUser());
+  }, []);
 
   const toggleMenu = (title: string) => {
     setOpenMenus((prev) =>
@@ -28,6 +41,16 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         : [...prev, title],
     );
   };
+
+  const handleLogout = () => {
+    removeToken();
+    removeAuthUser();
+    onClose();
+    router.replace("/auth");
+  };
+
+  const fullName = user?.fullName || "Admin";
+  const role = formatUserRole(user?.role);
 
   return (
     <>
@@ -153,23 +176,28 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
         <div className="p-4">
           <div className="flex items-center justify-between rounded-2xl bg-white p-3 text-black">
-            <div className="flex items-center gap-3">
-              <div className="relative size-12 overflow-hidden rounded-full">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative size-12 shrink-0 overflow-hidden rounded-full">
                 <Image
                   src={IMAGE.customer}
-                  alt="Marco Rossi"
+                  alt={fullName}
                   fill
                   className="object-cover"
                 />
               </div>
 
-              <div>
-                <p className="font-semibold">Marco Rossi</p>
-                <p className="text-sm text-black/60">Master Admin</p>
+              <div className="min-w-0">
+                <p className="truncate font-semibold">{fullName}</p>
+                <p className="truncate text-sm text-black/60">{role}</p>
               </div>
             </div>
 
-            <button type="button" aria-label="Logout">
+            <button
+              type="button"
+              aria-label="Logout"
+              onClick={handleLogout}
+              className="rounded-xl p-2 transition hover:bg-red-50"
+            >
               <LogOut className="size-5 text-red-500" />
             </button>
           </div>

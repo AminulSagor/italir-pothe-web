@@ -1,12 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-
-type tabs = "upcoming-scheduled" | "live-now" | "past-recordings";
+import type { WebinarDirectoryTab as WebinarDirectoryTabValue } from "@/types/webinar/webinar_type";
 
 type WebinarTab = {
   key: string;
-  value: tabs;
+  value: WebinarDirectoryTabValue;
 };
 
 const WebinarTabs: WebinarTab[] = [
@@ -19,22 +18,26 @@ const WebinarTabs: WebinarTab[] = [
     value: "live-now",
   },
   {
-    key: "Past Recordings",
-    value: "past-recordings",
+    key: "Drafts",
+    value: "draft",
   },
 ];
 
 const WebinarDirectoryTab = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const activeTab = (searchParams.get("tab") as tabs) || "upcoming-scheduled";
+  const rawTab = searchParams.get("tab");
+  const activeTab =
+    rawTab === "past-recordings"
+      ? "draft"
+      : ((rawTab as WebinarDirectoryTabValue) || "upcoming-scheduled");
 
-  const handleChangeTab = (tab: tabs) => {
+  const handleChangeTab = (tab: WebinarDirectoryTabValue) => {
     router.push(`?tab=${tab}`);
   };
 
   return (
-    <div className="items-center gap-4 bg-gray-100 py-3 inline-flex flex-wrap-reverse rounded-full px-3">
+    <div className="inline-flex flex-wrap-reverse items-center gap-4 rounded-full bg-gray-100 px-3 py-3">
       {WebinarTabs.map((tab) => (
         <button
           className={`${tab.value === activeTab && "bg-[#004928] text-white"} rounded-full px-4 py-1 text-base transition-all duration-300`}

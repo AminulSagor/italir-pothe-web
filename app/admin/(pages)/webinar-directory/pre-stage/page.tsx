@@ -1,8 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 
-import WebinarPreviewCard from "./_components/webinar-preview-card";
+import PreStageStudio from "./_components/pre-stage-studio";
 import WebinarDetailsCard from "./_components/webinar-details-card";
-import TechnicalChecklist from "@/app/admin/(pages)/webinar-directory/pre-stage/_components/technical-checklist-card";
 import Link from "next/link";
 
 export default function WebinarPreStagePage() {
@@ -37,10 +36,7 @@ export default function WebinarPreStagePage() {
           </p>
         </div>
 
-        <section className="mb-7 grid gap-7 lg:grid-cols-[1fr_340px]">
-          <WebinarPreviewCard />
-          <TechnicalChecklist />
-        </section>
+        <PreStageStudio />
 
         <WebinarDetailsCard />
       </div>

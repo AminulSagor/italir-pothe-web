@@ -1,26 +1,38 @@
 "use client";
 
-import { useState } from "react";
-
 import Card from "@/components/UI/cards/card";
 
 const audienceOptions = [
   {
     label: "All Users",
     value: "all-users",
+    courseIds: [] as string[],
   },
   {
     label: "Beginner (A1-A2)",
     value: "beginner",
+    courseIds: ["beginner"],
   },
   {
     label: "Intermediate (B1+)",
     value: "intermediate",
+    courseIds: ["intermediate"],
   },
 ];
 
-const AudienceSettingsCard = () => {
-  const [selectedAudience, setSelectedAudience] = useState("all-users");
+type AudienceSettingsCardProps = {
+  courseIds: string[];
+  onCourseIdsChange: (courseIds: string[]) => void;
+};
+
+const AudienceSettingsCard = ({
+  courseIds,
+  onCourseIdsChange,
+}: AudienceSettingsCardProps) => {
+  const selectedAudience =
+    audienceOptions.find(
+      (item) => item.courseIds.join(",") === courseIds.join(","),
+    )?.value || "all-users";
 
   return (
     <Card padding="lg" rounded="3xl" shadow="sm">
@@ -38,7 +50,7 @@ const AudienceSettingsCard = () => {
             <button
               key={item.value}
               type="button"
-              onClick={() => setSelectedAudience(item.value)}
+              onClick={() => onCourseIdsChange(item.courseIds)}
               className={`w-full rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
                 selectedAudience === item.value
                   ? "bg-white text-[#006B3F] shadow-sm"

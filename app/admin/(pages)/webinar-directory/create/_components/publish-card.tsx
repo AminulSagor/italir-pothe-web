@@ -1,15 +1,36 @@
 "use client";
 
-import { useState } from "react";
 import { CalendarCheck2 } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
+import type { WebinarPublishType } from "@/types/webinar/webinar_type";
 
-const PublishCard = () => {
-  const [pushNotification, setPushNotification] = useState(true);
+type PublishCardProps = {
+  publishType: WebinarPublishType;
+  sendNotification: boolean;
+  isSaving: boolean;
+  isEditMode: boolean;
+  onPublishTypeChange: (publishType: WebinarPublishType) => void;
+  onSendNotificationChange: (sendNotification: boolean) => void;
+};
 
-  const [publishType, setPublishType] = useState("schedule");
+const PublishCard = ({
+  publishType,
+  sendNotification,
+  isSaving,
+  isEditMode,
+  onPublishTypeChange,
+  onSendNotificationChange,
+}: PublishCardProps) => {
+  const buttonText = publishType === "schedule" ? "Save & Schedule" : "Save Draft";
+  const actionText = isSaving
+    ? "Saving..."
+    : isEditMode
+      ? publishType === "schedule"
+        ? "Update & Schedule"
+        : "Update Draft"
+      : buttonText;
 
   return (
     <Card padding="lg" rounded="3xl" shadow="sm">
@@ -18,7 +39,7 @@ const PublishCard = () => {
       <div className="mb-6 flex rounded-full bg-[#F3F6F2] p-1">
         <button
           type="button"
-          onClick={() => setPublishType("draft")}
+          onClick={() => onPublishTypeChange("draft")}
           className={`flex-1 rounded-full px-4 py-3 text-sm font-medium transition ${
             publishType === "draft"
               ? "bg-white text-[#202420] shadow-sm"
@@ -30,7 +51,7 @@ const PublishCard = () => {
 
         <button
           type="button"
-          onClick={() => setPublishType("schedule")}
+          onClick={() => onPublishTypeChange("schedule")}
           className={`flex-1 rounded-full px-4 py-3 text-sm font-medium transition ${
             publishType === "schedule"
               ? "bg-white text-[#006B3F] shadow-sm"
@@ -54,22 +75,22 @@ const PublishCard = () => {
 
         <button
           type="button"
-          onClick={() => setPushNotification(!pushNotification)}
+          onClick={() => onSendNotificationChange(!sendNotification)}
           className={`relative h-7 w-12 rounded-full transition ${
-            pushNotification ? "bg-[#67E35B]" : "bg-[#D9E2DA]"
+            sendNotification ? "bg-[#67E35B]" : "bg-[#D9E2DA]"
           }`}
         >
           <span
             className={`absolute top-1 size-5 rounded-full bg-white transition ${
-              pushNotification ? "right-1" : "left-1"
+              sendNotification ? "right-1" : "left-1"
             }`}
           />
         </button>
       </div>
 
-      <Button fullWidth size="lg" className="gap-2">
+      <Button fullWidth size="lg" className="gap-2" type="submit" disabled={isSaving}>
         <CalendarCheck2 className="size-5" />
-        <span>Save & Schedule</span>
+        <span>{actionText}</span>
       </Button>
     </Card>
   );
