@@ -69,6 +69,12 @@ const WebinarCard = ({ webinar, onEdit, onDelete }: WebinarCardProps) => {
   }, []);
 
   const showPreLiveStudioButton = canEnterPreLiveStudio(webinar, now);
+  const studioButtonText =
+    webinar.status === "live" ? "Open Live Studio" : "Enter Pre Live Studio";
+  const studioButtonHref =
+    webinar.status === "live"
+      ? `/admin/webinar-directory/handle?id=${webinar.id}`
+      : `/admin/webinar-directory/pre-stage?id=${webinar.id}`;
   const showPushReminderButton =
     webinar.status === "scheduled" && !webinar.sendNotification;
 
@@ -110,11 +116,9 @@ const WebinarCard = ({ webinar, onEdit, onDelete }: WebinarCardProps) => {
         {showPreLiveStudioButton && (
           <Button
             className="gap-2 px-7"
-            onClick={() =>
-              router.push(`/admin/webinar-directory/pre-stage?id=${webinar.id}`)
-            }
+            onClick={() => router.push(studioButtonHref)}
           >
-            <span>Enter Pre Live Studio</span>
+            <span>{studioButtonText}</span>
             <Play size={16} />
           </Button>
         )}

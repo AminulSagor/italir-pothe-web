@@ -9,8 +9,7 @@ import WebinarContentForm from "./webinar-content-form";
 import { uploadWebinarThumbnail } from "@/service/files/file_upload";
 import {
   createWebinar,
-  getMyDraftWebinars,
-  getMyUpcomingWebinars,
+  getAdminWebinarById,
   updateWebinar,
 } from "@/service/webinar/webinar";
 import type {
@@ -105,21 +104,8 @@ const WebinarFormClient = () => {
         setIsLoading(true);
         setError("");
 
-        const [upcomingResponse, draftsResponse] = await Promise.all([
-          getMyUpcomingWebinars(1, 100),
-          getMyDraftWebinars(1, 100),
-        ]);
-
-        const selectedWebinar = [
-          ...upcomingResponse.webinars,
-          ...draftsResponse.webinars,
-        ].find((item) => item.id === webinarId);
-
-        if (selectedWebinar) {
-          setForm(mapWebinarToFormState(selectedWebinar));
-        } else {
-          setError("Webinar details could not be loaded for editing.");
-        }
+        const selectedWebinar = await getAdminWebinarById(webinarId);
+        setForm(mapWebinarToFormState(selectedWebinar));
       } catch (loadError) {
         setError(getErrorMessage(loadError));
       } finally {

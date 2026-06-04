@@ -1,8 +1,19 @@
-export type WebinarApiStatus = "draft" | "scheduled" | "live" | "completed" | "cancelled";
+export type WebinarApiStatus =
+  | "draft"
+  | "scheduled"
+  | "live"
+  | "completed"
+  | "cancelled";
 
 export type WebinarDirectoryTab = "upcoming-scheduled" | "live-now" | "draft";
 
 export type WebinarPublishType = "draft" | "schedule";
+
+export type WebinarParticipantSpeakingPermission = "granted" | "rejected";
+
+export type WebinarSpeakerRequestPermission = "requested" | "granted" | "rejected";
+
+export type AgoraLiveRole = "publisher" | "subscriber";
 
 export interface WebinarAudienceSettings {
   isForAllUsers: boolean;
@@ -17,6 +28,9 @@ export interface WebinarItem {
   thumbnailImageUrl: string | null;
   sendNotification: boolean;
   status: WebinarApiStatus;
+  agoraChannelName?: string | null;
+  liveStartedAt?: string | null;
+  liveEndedAt?: string | null;
   audienceSettings: WebinarAudienceSettings;
   createdByAdminId: string;
   updatedByAdminId: string | null;
@@ -54,4 +68,53 @@ export interface WebinarPagination {
 export interface WebinarListResponse {
   webinars: WebinarItem[];
   pagination: WebinarPagination;
+}
+
+export interface AgoraTokenResponse {
+  appId: string;
+  channelName: string;
+  uid: number;
+  role: AgoraLiveRole;
+  rtcToken: string;
+  expiresIn: number;
+  expiresAt: number;
+}
+
+export type WebinarHostTokenResponse = AgoraTokenResponse;
+
+export interface WebinarUserItem {
+  userId: string;
+  profilePhoto: string | null;
+  role: string;
+  agoraUid?: number | null;
+  joinedAt?: string | null;
+  leftAt?: string | null;
+  speakingPermission:
+    | WebinarParticipantSpeakingPermission
+    | WebinarSpeakerRequestPermission;
+}
+
+export interface WebinarParticipantsResponse {
+  webinarId: string;
+  participants: WebinarUserItem[];
+  pagination: WebinarPagination;
+}
+
+export interface WebinarSpeakerRequestsResponse {
+  webinarId: string;
+  speakerRequests: WebinarUserItem[];
+  pagination: WebinarPagination;
+}
+
+export interface WebinarSpeakerRequestActionResponse {
+  message: string;
+  participant: WebinarUserItem;
+}
+
+export interface WebinarSocketPayload {
+  webinarId: string;
+  webinar?: WebinarItem;
+  participant?: WebinarUserItem;
+  speakerRequest?: WebinarUserItem;
+  action?: string;
 }

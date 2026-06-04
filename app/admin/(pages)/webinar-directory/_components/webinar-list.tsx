@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import {
   deleteWebinar,
   getMyDraftWebinars,
+  getMyLiveWebinars,
   getMyUpcomingWebinars,
 } from "@/service/webinar/webinar";
 import type {
@@ -96,16 +97,12 @@ const WebinarList = () => {
       setIsLoading(true);
       setError("");
 
-      if (activeTab === "live-now") {
-        setWebinars([]);
-        setPagination(defaultPagination);
-        return;
-      }
-
       const response =
         activeTab === "draft"
           ? await getMyDraftWebinars(page, WEBINARS_PER_PAGE)
-          : await getMyUpcomingWebinars(page, WEBINARS_PER_PAGE);
+          : activeTab === "live-now"
+            ? await getMyLiveWebinars(page, WEBINARS_PER_PAGE)
+            : await getMyUpcomingWebinars(page, WEBINARS_PER_PAGE);
 
       setWebinars(response.webinars);
       setPagination(response.pagination);

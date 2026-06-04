@@ -4,12 +4,18 @@ import Dialog from "@/components/UI/dialogs/dialog";
 
 type EndWebinarDialogProps = {
   open: boolean;
+  isEnding: boolean;
+  participantCount: number;
   onClose: () => void;
+  onConfirm: () => void;
 };
 
 export default function EndWebinarDialog({
   open,
+  isEnding,
+  participantCount,
   onClose,
+  onConfirm,
 }: EndWebinarDialogProps) {
   return (
     <Dialog open={open} onClose={onClose} size="lg" className="!p-0">
@@ -23,19 +29,26 @@ export default function EndWebinarDialog({
         </h2>
 
         <p className="mx-auto mb-9 max-w-[340px] text-sm leading-6 text-[#5D655F]">
-          This will disconnect all 142 students and stop the recording
-          immediately. You cannot resume this specific session once ended.
+          This will disconnect {participantCount} participant
+          {participantCount === 1 ? "" : "s"} and mark this webinar as
+          completed. You cannot resume this specific session once ended.
         </p>
 
         <div className="flex justify-center gap-5">
-          <button className="rounded-full bg-[#C91F1F] px-9 py-3 text-sm font-semibold text-white">
-            End for Everyone
+          <button
+            type="button"
+            disabled={isEnding}
+            onClick={onConfirm}
+            className="rounded-full bg-[#C91F1F] px-9 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isEnding ? "Ending..." : "End for Everyone"}
           </button>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[#E4E9E1] px-9 py-3 text-sm font-semibold text-[#5D655F]"
+            disabled={isEnding}
+            className="rounded-full bg-[#E4E9E1] px-9 py-3 text-sm font-semibold text-[#5D655F] disabled:cursor-not-allowed disabled:opacity-60"
           >
             Cancel
           </button>
