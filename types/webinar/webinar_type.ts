@@ -9,7 +9,7 @@ export type WebinarDirectoryTab = "upcoming-scheduled" | "live-now" | "draft";
 
 export type WebinarPublishType = "draft" | "schedule";
 
-export type WebinarParticipantSpeakingPermission = "granted" | "rejected";
+export type WebinarParticipantSpeakingPermission = "requested" | "granted" | "rejected";
 
 export type WebinarSpeakerRequestPermission = "requested" | "granted" | "rejected";
 
@@ -84,6 +84,7 @@ export type WebinarHostTokenResponse = AgoraTokenResponse;
 
 export interface WebinarUserItem {
   userId: string;
+  fullName: string;
   profilePhoto: string | null;
   role: string;
   agoraUid?: number | null;
@@ -91,7 +92,8 @@ export interface WebinarUserItem {
   leftAt?: string | null;
   speakingPermission:
     | WebinarParticipantSpeakingPermission
-    | WebinarSpeakerRequestPermission;
+    | WebinarSpeakerRequestPermission
+    | null;
 }
 
 export interface WebinarParticipantsResponse {
@@ -111,10 +113,35 @@ export interface WebinarSpeakerRequestActionResponse {
   participant: WebinarUserItem;
 }
 
+
+export interface WebinarChatMessageItem {
+  id: string;
+  webinarId: string;
+  senderUserId: string;
+  senderFullName: string;
+  senderRole: string;
+  senderProfilePhoto: string | null;
+  message: string;
+  isHost: boolean;
+  createdAt: string;
+}
+
+export interface WebinarChatMessagesResponse {
+  webinarId: string;
+  chatMessages: WebinarChatMessageItem[];
+  pagination: WebinarPagination;
+}
+
+export interface WebinarSendChatMessageResponse {
+  message: string;
+  chatMessage: WebinarChatMessageItem;
+}
+
 export interface WebinarSocketPayload {
   webinarId: string;
   webinar?: WebinarItem;
   participant?: WebinarUserItem;
   speakerRequest?: WebinarUserItem;
   action?: string;
+  chatMessage?: WebinarChatMessageItem;
 }

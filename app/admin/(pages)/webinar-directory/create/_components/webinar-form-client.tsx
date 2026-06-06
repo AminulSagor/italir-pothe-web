@@ -42,14 +42,22 @@ const initialFormState: WebinarFormState = {
   publishType: "schedule",
 };
 
+const toBangladeshDate = (dateTime: string) => {
+  const date = new Date(dateTime);
+  if (Number.isNaN(date.getTime())) return null;
+  return new Date(date.getTime() + 6 * 60 * 60 * 1000);
+};
+
 const toDateInputValue = (dateTime: string) => {
-  if (!dateTime) return "";
-  return dateTime.slice(0, 10);
+  const date = toBangladeshDate(dateTime);
+  if (!date) return "";
+  return date.toISOString().slice(0, 10);
 };
 
 const toTimeInputValue = (dateTime: string) => {
-  if (!dateTime) return "";
-  return dateTime.slice(11, 16);
+  const date = toBangladeshDate(dateTime);
+  if (!date) return "";
+  return date.toISOString().slice(11, 16);
 };
 
 const mapWebinarToFormState = (webinar: WebinarItem): WebinarFormState => ({
@@ -65,7 +73,7 @@ const mapWebinarToFormState = (webinar: WebinarItem): WebinarFormState => ({
 });
 
 const buildDateTime = (startDate: string, startTime: string) =>
-  `${startDate}T${startTime}:00+00:00`;
+  `${startDate}T${startTime}:00+06:00`;
 
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;

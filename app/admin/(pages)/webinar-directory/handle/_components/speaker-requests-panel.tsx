@@ -17,7 +17,8 @@ interface SpeakerRequestsPanelProps {
 }
 
 const getDisplayName = (user: WebinarUserItem) =>
-  user.userId ? `User ${user.userId.slice(0, 8)}` : "Not available";
+  user.fullName?.trim() ||
+  (user.userId ? `User ${user.userId.slice(0, 8)}` : "Not available");
 
 const getRoleText = (user: WebinarUserItem) =>
   user.role ? user.role.replace(/_/g, " ") : "Not available";
@@ -124,7 +125,7 @@ export default function SpeakerRequestsPanel({
                       {getDisplayName(item)}
                     </p>
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-[#8B958E]">
-                      {getRoleText(item)} • {item.speakingPermission || "Not available"}
+                      {getRoleText(item)}
                     </p>
                   </div>
                 </div>

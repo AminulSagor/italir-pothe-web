@@ -1,12 +1,14 @@
 import { serviceClient } from "@/service/base/service_client";
 import type {
   DeleteWebinarResponse,
+  WebinarChatMessagesResponse,
   WebinarHostTokenResponse,
   WebinarItem,
   WebinarListResponse,
   WebinarMutationResponse,
   WebinarParticipantsResponse,
   WebinarPayload,
+  WebinarSendChatMessageResponse,
   WebinarSpeakerRequestActionResponse,
   WebinarSpeakerRequestsResponse,
 } from "@/types/webinar/webinar_type";
@@ -74,6 +76,11 @@ export const getHostToken = (webinarId: string) =>
     `/admin/webinars/${webinarId}/host-token`,
   );
 
+export const getScreenShareToken = (webinarId: string) =>
+  serviceClient.post<WebinarHostTokenResponse>(
+    `/admin/webinars/${webinarId}/screen-share-token`,
+  );
+
 export const getWebinarParticipants = (webinarId: string, page = 1, limit = 10) =>
   serviceClient.get<WebinarParticipantsResponse>(
     `/webinars/${webinarId}/participants?${buildPaginationQuery(page, limit)}`,
@@ -96,3 +103,19 @@ export const rejectSpeakerRequest = (webinarId: string, userId: string) =>
 
 export const isWebinarLive = (webinar?: WebinarItem | null) =>
   webinar?.status === "live";
+
+
+export const getWebinarChatMessages = (
+  webinarId: string,
+  page = 1,
+  limit = 50,
+) =>
+  serviceClient.get<WebinarChatMessagesResponse>(
+    `/webinars/${webinarId}/chat-messages?${buildPaginationQuery(page, limit)}`,
+  );
+
+export const sendWebinarChatMessage = (webinarId: string, message: string) =>
+  serviceClient.post<WebinarSendChatMessageResponse>(
+    `/webinars/${webinarId}/chat-messages`,
+    { message },
+  );

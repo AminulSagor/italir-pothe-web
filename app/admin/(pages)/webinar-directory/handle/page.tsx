@@ -13,11 +13,14 @@ import {
   endWebinar,
   getAdminWebinarById,
   getSpeakerRequests,
+  getWebinarChatMessages,
   getWebinarParticipants,
   rejectSpeakerRequest,
+  sendWebinarChatMessage,
 } from "@/service/webinar/webinar";
 import { createWebinarSocket } from "@/service/webinar/webinar_socket";
 import type {
+  WebinarChatMessageItem,
   WebinarItem,
   WebinarSocketPayload,
   WebinarUserItem,
@@ -25,6 +28,7 @@ import type {
 
 const PARTICIPANTS_LIMIT = 50;
 const REQUESTS_LIMIT = 50;
+const CHAT_MESSAGES_LIMIT = 50;
 const fallbackText = "Not available";
 
 const getErrorMessage = (error: unknown) => {
@@ -46,6 +50,9 @@ export default function WebinarHandlePage() {
   const [webinar, setWebinar] = useState<WebinarItem | null>(null);
   const [participants, setParticipants] = useState<WebinarUserItem[]>([]);
   const [speakerRequests, setSpeakerRequests] = useState<WebinarUserItem[]>([]);
+  const [chatMessages, setChatMessages] = useState<WebinarChatMessageItem[]>([]);
+  const [isChatLoading, setIsChatLoading] = useState(true);
+  const [isChatSending, setIsChatSending] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const participantCount = participants.length;
@@ -87,14 +94,46 @@ export default function WebinarHandlePage() {
     setSpeakerRequests(response.speakerRequests);
   }, [webinarId]);
 
+  const upsertChatMessage = useCallback((message: WebinarChatMessageItem) => {
+    setChatMessages((currentMessages) => {
+      const existingIndex = currentMessages.findIndex(
+        (item) => item.id === message.id,
+      );
+
+      if (existingIndex >= 0) {
+        return currentMessages.map((item, index) =>
+          index === existingIndex ? message : item,
+        );
+      }
+
+      return [...currentMessages, message].slice(-CHAT_MESSAGES_LIMIT);
+    });
+  }, []);
+
+  const loadChatMessages = useCallback(async () => {
+    if (!webinarId) return;
+
+    try {
+      setIsChatLoading(true);
+      const response = await getWebinarChatMessages(
+        webinarId,
+        1,
+        CHAT_MESSAGES_LIMIT,
+      );
+      setChatMessages(response.chatMessages);
+    } finally {
+      setIsChatLoading(false);
+    }
+  }, [webinarId]);
+
   const loadPanelData = useCallback(async () => {
     try {
       setIsPanelLoading(true);
-      await Promise.all([loadParticipants(), loadSpeakerRequests()]);
+      await Promise.all([loadParticipants(), loadSpeakerRequests(), loadChatMessages()]);
     } finally {
       setIsPanelLoading(false);
     }
-  }, [loadParticipants, loadSpeakerRequests]);
+  }, [loadChatMessages, loadParticipants, loadSpeakerRequests]);
 
   useEffect(() => {
     if (!webinarId) {
@@ -134,6 +173,14 @@ export default function WebinarHandlePage() {
       loadPanelData();
     };
 
+    const handleChatMessageCreated = (payload: WebinarSocketPayload) => {
+      if (payload.chatMessage) {
+        upsertChatMessage(payload.chatMessage);
+      } else {
+        loadChatMessages();
+      }
+    };
+
     const handleWebinarEnded = (payload: WebinarSocketPayload) => {
       if (payload.webinar) {
         setWebinar(payload.webinar);
@@ -146,6 +193,8 @@ export default function WebinarHandlePage() {
     socket.on("speaker_requests_list_updated", handleRefreshLists);
     socket.on("speaker_request_approved", handleRefreshLists);
     socket.on("speaker_request_rejected", handleRefreshLists);
+    socket.on("webinar_chat_message_created", handleChatMessageCreated);
+    socket.on("webinar_chat_messages_updated", handleChatMessageCreated);
     socket.on("webinar_ended", handleWebinarEnded);
 
     socket.connect();
@@ -154,7 +203,7 @@ export default function WebinarHandlePage() {
       socket.emit("leave_webinar_room", { webinarId });
       socket.disconnect();
     };
-  }, [loadPanelData, router, webinarId]);
+  }, [loadChatMessages, loadPanelData, router, upsertChatMessage, webinarId]);
 
   const handleApprove = async (userId: string) => {
     if (!webinarId) return;
@@ -183,6 +232,21 @@ export default function WebinarHandlePage() {
       setError(getErrorMessage(rejectError));
     } finally {
       setIsActionLoading(false);
+    }
+  };
+
+  const handleSendChatMessage = async (message: string) => {
+    if (!webinarId) return;
+
+    try {
+      setIsChatSending(true);
+      setError("");
+      const response = await sendWebinarChatMessage(webinarId, message);
+      upsertChatMessage(response.chatMessage);
+    } catch (chatError) {
+      setError(getErrorMessage(chatError));
+    } finally {
+      setIsChatSending(false);
     }
   };
 
@@ -251,9 +315,15 @@ export default function WebinarHandlePage() {
                   webinarId={webinarId}
                   webinarTitle={webinar?.title || fallbackText}
                   viewerCount={participantCount}
+                  participants={participants}
                 />
               ) : null}
-              <LiveAudienceChat />
+              <LiveAudienceChat
+                messages={chatMessages}
+                isLoading={isChatLoading}
+                isSending={isChatSending}
+                onSendMessage={handleSendChatMessage}
+              />
             </div>
 
             <SpeakerRequestsPanel

@@ -87,7 +87,7 @@ const WebinarContentForm = ({
 
             <div>
               <label className="mb-3 block text-sm font-medium text-[#202420]">
-                Time (CET)
+                Time (BST)
               </label>
 
               <div className="relative">
