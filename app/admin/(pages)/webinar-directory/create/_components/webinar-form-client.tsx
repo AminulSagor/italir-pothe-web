@@ -67,7 +67,7 @@ const mapWebinarToFormState = (webinar: WebinarItem): WebinarFormState => ({
   hostTeacherName: webinar.hostTeacherName,
   thumbnailImageUrl: webinar.thumbnailImageUrl || "",
   thumbnailFile: null,
-  courseIds: webinar.audienceSettings?.courseIds || [],
+  courseIds: [],
   sendNotification: Boolean(webinar.sendNotification),
   publishType: webinar.status === "draft" ? "draft" : "schedule",
 });
@@ -157,7 +157,7 @@ const WebinarFormClient = () => {
         dateTime: buildDateTime(form.startDate, form.startTime),
         hostTeacherName: form.hostTeacherName.trim(),
         thumbnailImageUrl,
-        courseIds: form.courseIds,
+        courseIds: [],
         status: form.publishType === "schedule" ? "scheduled" : "draft",
         sendNotification: form.sendNotification,
       };

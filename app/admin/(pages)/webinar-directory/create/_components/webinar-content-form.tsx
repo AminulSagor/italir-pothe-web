@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CalendarDays, Clock3, Presentation } from "lucide-react";
 
 import BackButton from "@/components/UI/buttons/back-button";
@@ -23,6 +24,22 @@ const WebinarContentForm = ({
   isEditMode,
   onChange,
 }: WebinarContentFormProps) => {
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState(
+    form.thumbnailImageUrl,
+  );
+
+  useEffect(() => {
+    if (!form.thumbnailFile) {
+      setThumbnailPreviewUrl(form.thumbnailImageUrl);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(form.thumbnailFile);
+    setThumbnailPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [form.thumbnailFile, form.thumbnailImageUrl]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-[#66736B]">
@@ -129,22 +146,18 @@ const WebinarContentForm = ({
             <FileUploader
               accept="image/*"
               className="min-h-[220px]"
-              title={form.thumbnailFile?.name || "Drag & drop thumbnail image (16:9)"}
+              previewUrl={thumbnailPreviewUrl}
+              previewAlt="Webinar thumbnail preview"
+              title={form.thumbnailFile?.name || "Thumbnail image selected"}
               description={
                 form.thumbnailFile
-                  ? "Selected image will be uploaded before saving."
+                  ? "Selected image will be uploaded before saving. Click to replace it."
                   : form.thumbnailImageUrl
-                    ? "Existing thumbnail is already selected. Click to replace it."
-                    : "or click to browse local files (Max 5MB)"
+                    ? "Existing thumbnail is selected. Click to replace it."
+                    : "Drag & drop thumbnail image (16:9) or click to browse local files (Max 5MB)"
               }
               onFileSelect={(file) => onChange("thumbnailFile", file)}
             />
-
-            {form.thumbnailImageUrl && !form.thumbnailFile && (
-              <p className="mt-3 break-all text-xs text-[#66736B]">
-                Current thumbnail: {form.thumbnailImageUrl}
-              </p>
-            )}
           </div>
         </div>
       </Card>

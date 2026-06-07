@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import EndWebinarDialog from "./_components/end-webinar-dialog";
@@ -36,7 +36,7 @@ const getErrorMessage = (error: unknown) => {
   return "Something went wrong. Please try again.";
 };
 
-export default function WebinarHandlePage() {
+function WebinarHandlePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const webinarId = searchParams.get("id");
@@ -346,5 +346,24 @@ export default function WebinarHandlePage() {
         onConfirm={handleEndWebinar}
       />
     </main>
+  );
+}
+function WebinarHandlePageFallback() {
+  return (
+    <main className="min-h-screen bg-[#F5F8F2] px-6 py-8">
+      <div className="mx-auto max-w-[1180px]">
+        <div className="rounded-3xl bg-white p-8 text-sm text-[#66736B] shadow-sm">
+          Loading live webinar...
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function WebinarHandlePage() {
+  return (
+    <Suspense fallback={<WebinarHandlePageFallback />}>
+      <WebinarHandlePageContent />
+    </Suspense>
   );
 }

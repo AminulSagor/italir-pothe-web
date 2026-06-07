@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
@@ -19,7 +19,7 @@ const getErrorMessage = (error: unknown) => {
   return "Something went wrong. Please try again.";
 };
 
-export default function WebinarPreStagePage() {
+function WebinarPreStagePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const webinarId = searchParams.get("id");
@@ -121,5 +121,24 @@ export default function WebinarPreStagePage() {
         )}
       </div>
     </main>
+  );
+}
+function WebinarPreStagePageFallback() {
+  return (
+    <main className="min-h-screen bg-[#F5F8F2] px-6 py-5">
+      <div className="mx-auto max-w-[1180px]">
+        <div className="rounded-3xl bg-white p-8 text-sm text-[#66736B] shadow-sm">
+          Loading webinar details...
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function WebinarPreStagePage() {
+  return (
+    <Suspense fallback={<WebinarPreStagePageFallback />}>
+      <WebinarPreStagePageContent />
+    </Suspense>
   );
 }
