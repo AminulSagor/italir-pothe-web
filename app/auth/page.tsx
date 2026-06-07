@@ -1,13 +1,23 @@
+"use client";
+
 import Image from "next/image";
 import {
   Eye,
+  EyeOff,
   Globe2,
   GraduationCap,
+  Loader2,
   Lock,
   Shield,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
+import { type FormEvent, type ReactNode, useState } from "react";
+
+import { login } from "@/service/auth/login";
+import { decodeJwtPayload } from "@/storage/jwt_decoder";
+import { removeAuthUser, setAuthUser } from "@/utils/auth_user_util";
+import { removeToken, setToken } from "@/utils/cookies_util";
 
 export default function LogInPage() {
   return (
@@ -67,17 +77,26 @@ function StatusPill() {
 function LoginInput({
   icon,
   placeholder,
+  type = "text",
+  value,
+  onChange,
   rightIcon,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   placeholder: string;
-  rightIcon?: React.ReactNode;
+  type?: string;
+  value: string;
+  onChange: (value: string) => void;
+  rightIcon?: ReactNode;
 }) {
   return (
     <div className="flex h-12 items-center gap-3 rounded-full border border-zinc-200 bg-white px-4 text-sm text-zinc-400 shadow-sm">
       <span className="text-zinc-400">{icon}</span>
       <input
-        className="w-full bg-transparent outline-none placeholder:text-zinc-400"
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full bg-transparent text-zinc-900 outline-none placeholder:text-zinc-400"
         placeholder={placeholder}
       />
       {rightIcon ? <span className="text-zinc-500">{rightIcon}</span> : null}
@@ -85,7 +104,80 @@ function LoginInput({
   );
 }
 
+function getErrorMessage(error: unknown) {
+  const fallback = "Login failed. Please try again.";
+
+  if (typeof error !== "object" || error === null) return fallback;
+
+  const errorResponse = error as {
+    response?: {
+      status?: number;
+      data?: {
+        message?: string | string[];
+      };
+    };
+    message?: string;
+  };
+
+  if (errorResponse.response?.status === 401) {
+    return "Email/phone or password is wrong.";
+  }
+
+  const message = errorResponse.response?.data?.message;
+
+  if (Array.isArray(message)) return message.join(", ");
+  if (message) return message;
+
+  return errorResponse.message || fallback;
+}
+
 function LoginCard() {
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!identifier.trim() || !password.trim()) {
+      setErrorMessage("Email/phone and password are required.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrorMessage("");
+
+      const res = await login({
+        identifier: identifier.trim(),
+        password,
+      });
+
+      const token = res?.accessToken;
+      if (!token) throw new Error("No token returned");
+
+      const payload = decodeJwtPayload(token);
+      if (!payload) throw new Error("Invalid token returned");
+
+      const role = String(res.user?.role || payload.role || "").toLowerCase();
+      if (role !== "admin") {
+        removeToken();
+        removeAuthUser();
+        throw new Error("Only admin accounts can access this dashboard.");
+      }
+
+      setToken(token);
+      setAuthUser(res.user);
+      window.location.replace("/admin/dashboard");
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-[390px] rounded-[2rem] bg-white/95 px-8 py-7 shadow-2xl">
       <div className="mx-auto flex size-14 items-center justify-center rounded-3xl bg-lime-700">
@@ -101,27 +193,47 @@ function LoginCard() {
         </h1>
       </div>
 
-      <div className="mt-7 space-y-4">
+      <form onSubmit={onSubmit} className="mt-7 space-y-4">
         <LoginInput
           icon={<UserRound size={18} />}
-          placeholder="Admin Email / Employee ID"
+          placeholder="Admin Email / Phone"
+          value={identifier}
+          onChange={setIdentifier}
         />
 
         <LoginInput
           icon={<Lock size={18} />}
           placeholder="Password"
-          rightIcon={<Eye size={18} />}
+          type={showPassword ? "text" : "password"}
+          value={password}
+          onChange={setPassword}
+          rightIcon={
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              className="flex items-center"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          }
         />
 
-        <LoginInput
-          icon={<Shield size={18} />}
-          placeholder="One-Time Security Code"
-        />
-      </div>
+        {errorMessage ? (
+          <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+            {errorMessage}
+          </p>
+        ) : null}
 
-      <button className="mt-5 h-12 w-full rounded-full bg-lime-700 text-sm font-medium text-white shadow-lg shadow-lime-900/30 transition hover:bg-lime-800">
-        Authenticate & Enter Onboard
-      </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-lime-700 text-sm font-medium text-white shadow-lg shadow-lime-900/30 transition hover:bg-lime-800 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {loading ? <Loader2 className="size-4 animate-spin" /> : null}
+          {loading ? "Authenticating..." : "Authenticate & Enter Onboard"}
+        </button>
+      </form>
 
       <div className="mt-7 border-t border-zinc-200 pt-5">
         <div className="flex items-center justify-between gap-2 text-[9px] uppercase text-zinc-500">

@@ -1,12 +1,45 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CalendarDays, Clock3, Presentation } from "lucide-react";
 
 import BackButton from "@/components/UI/buttons/back-button";
 import Card from "@/components/UI/cards/card";
 import FileUploader from "@/components/UI/uploaders/file-uploader";
+import type { WebinarFormState } from "./webinar-form-client";
 
-const WebinarContentForm = () => {
+type WebinarContentFormProps = {
+  form: WebinarFormState;
+  pageTitle: string;
+  isEditMode: boolean;
+  onChange: <K extends keyof WebinarFormState>(
+    key: K,
+    value: WebinarFormState[K],
+  ) => void;
+};
+
+const WebinarContentForm = ({
+  form,
+  pageTitle,
+  isEditMode,
+  onChange,
+}: WebinarContentFormProps) => {
+  const [thumbnailPreviewUrl, setThumbnailPreviewUrl] = useState(
+    form.thumbnailImageUrl,
+  );
+
+  useEffect(() => {
+    if (!form.thumbnailFile) {
+      setThumbnailPreviewUrl(form.thumbnailImageUrl);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(form.thumbnailFile);
+    setThumbnailPreviewUrl(objectUrl);
+
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [form.thumbnailFile, form.thumbnailImageUrl]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2 text-sm text-[#66736B]">
@@ -16,12 +49,12 @@ const WebinarContentForm = () => {
 
         <span>›</span>
 
-        <span className="font-semibold text-[#006B3F]">Create</span>
+        <span className="font-semibold text-[#006B3F]">
+          {isEditMode ? "Edit" : "Create"}
+        </span>
       </div>
 
-      <h1 className="text-2xl font-semibold text-[#006339]">
-        Schedule New Webinar
-      </h1>
+      <h1 className="text-2xl font-semibold text-[#006339]">{pageTitle}</h1>
 
       <Card padding="lg" rounded="3xl" shadow="sm">
         <div className="mb-8 flex items-center gap-3">
@@ -42,6 +75,8 @@ const WebinarContentForm = () => {
 
             <input
               type="text"
+              value={form.title}
+              onChange={(event) => onChange("title", event.target.value)}
               placeholder="e.g., Grammar Bootcamp: Past Tense"
               className="h-14 w-full rounded-2xl border border-[#E4EBE5] bg-[#F8FBF7] px-5 text-sm outline-none transition focus:border-[#006B3F]"
             />
@@ -58,6 +93,10 @@ const WebinarContentForm = () => {
 
                 <input
                   type="date"
+                  value={form.startDate}
+                  onChange={(event) =>
+                    onChange("startDate", event.target.value)
+                  }
                   className="h-14 w-full rounded-2xl border border-[#E4EBE5] bg-[#F8FBF7] pl-14 pr-5 text-sm outline-none transition focus:border-[#006B3F]"
                 />
               </div>
@@ -65,7 +104,7 @@ const WebinarContentForm = () => {
 
             <div>
               <label className="mb-3 block text-sm font-medium text-[#202420]">
-                Time (CET)
+                Time (BST)
               </label>
 
               <div className="relative">
@@ -73,6 +112,10 @@ const WebinarContentForm = () => {
 
                 <input
                   type="time"
+                  value={form.startTime}
+                  onChange={(event) =>
+                    onChange("startTime", event.target.value)
+                  }
                   className="h-14 w-full rounded-2xl border border-[#E4EBE5] bg-[#F8FBF7] pl-14 pr-5 text-sm outline-none transition focus:border-[#006B3F]"
                 />
               </div>
@@ -84,12 +127,15 @@ const WebinarContentForm = () => {
               Host / Teacher
             </label>
 
-            <select className="h-14 w-full rounded-2xl border border-[#E4EBE5] bg-[#F8FBF7] px-5 text-sm outline-none transition focus:border-[#006B3F]">
-              <option>Select a certified instructor</option>
-              <option>Mario Rossi</option>
-              <option>Sofia Bianchi</option>
-              <option>Luigi Moretti</option>
-            </select>
+            <input
+              type="text"
+              value={form.hostTeacherName}
+              onChange={(event) =>
+                onChange("hostTeacherName", event.target.value)
+              }
+              placeholder="e.g., Test Teacher"
+              className="h-14 w-full rounded-2xl border border-[#E4EBE5] bg-[#F8FBF7] px-5 text-sm outline-none transition focus:border-[#006B3F]"
+            />
           </div>
 
           <div>
@@ -100,8 +146,17 @@ const WebinarContentForm = () => {
             <FileUploader
               accept="image/*"
               className="min-h-[220px]"
-              title="Drag & drop thumbnail image (16:9)"
-              description="or click to browse local files (Max 5MB)"
+              previewUrl={thumbnailPreviewUrl}
+              previewAlt="Webinar thumbnail preview"
+              title={form.thumbnailFile?.name || "Thumbnail image selected"}
+              description={
+                form.thumbnailFile
+                  ? "Selected image will be uploaded before saving. Click to replace it."
+                  : form.thumbnailImageUrl
+                    ? "Existing thumbnail is selected. Click to replace it."
+                    : "Drag & drop thumbnail image (16:9) or click to browse local files (Max 5MB)"
+              }
+              onFileSelect={(file) => onChange("thumbnailFile", file)}
             />
           </div>
         </div>

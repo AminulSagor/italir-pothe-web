@@ -1,7 +1,4 @@
-export type WebinarStatus =
-  | "upcoming-scheduled"
-  | "live-now"
-  | "past-recordings";
+export type WebinarStatus = "upcoming-scheduled" | "live-now" | "draft";
 
 export type WebinarLevel = "all-users" | "beginner-b1" | "only-a2-users";
 
