@@ -4,10 +4,14 @@ export type CvTemplatePageSize = 'a4' | 'letter';
 
 export type CvBuilderElementType =
   | 'text'
-  | 'section'
+  | 'textarea'
   | 'rectangle'
   | 'circle'
-  | 'line';
+  | 'horizontalLine'
+  | 'verticalLine'
+  | 'line'
+  | 'icon'
+  | 'section';
 
 export type CvBuilderFieldKey =
   | 'fullName'
@@ -22,15 +26,54 @@ export type CvBuilderFieldKey =
   | 'languages'
   | 'certificates'
   | 'projects'
-  | 'custom';
+  | 'custom'
+  | string;
+
+export type CvTemplateFieldType =
+  | 'text'
+  | 'email'
+  | 'phone'
+  | 'textarea'
+  | 'list'
+  | 'date'
+  | 'imageUrl'
+  | 'website';
 
 export interface CvTemplateFieldSchema {
   key: string;
   label: string;
-  type: 'text' | 'email' | 'phone' | 'textarea' | 'list' | 'date';
+  type: CvTemplateFieldType;
   required: boolean;
   placeholder?: string;
   options?: string[];
+}
+
+export interface CvTemplateSectionDesignerElement {
+  id: string;
+  type: CvBuilderElementType;
+  fieldKey: string;
+  label: string;
+  previewValue: string;
+  isField?: boolean;
+  richTextFormat?: 'plain' | 'html';
+  hyperlink?: string;
+  iconName?: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email';
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+  style: CvBuilderElementStyle;
+}
+
+export interface CvTemplateSectionDesignerSchema {
+  version: number;
+  canvas: {
+    width: number;
+    height: number;
+    unit: 'px';
+  };
+  elements: CvTemplateSectionDesignerElement[];
 }
 
 export interface CvTemplateSectionSchema {
@@ -38,6 +81,7 @@ export interface CvTemplateSectionSchema {
   title: string;
   required: boolean;
   fields: CvTemplateFieldSchema[];
+  designerJson?: CvTemplateSectionDesignerSchema;
 }
 
 export interface CvBuilderPageLayout {
@@ -53,6 +97,7 @@ export interface CvBuilderElementStyle {
   fontFamily?: string;
   fontSize?: number;
   fontWeight?: number;
+  fontStyle?: 'normal' | 'italic';
   color?: string;
   backgroundColor?: string;
   borderColor?: string;
@@ -61,6 +106,15 @@ export interface CvBuilderElementStyle {
   textAlign?: 'left' | 'center' | 'right';
   lineHeight?: number;
   opacity?: number;
+}
+
+export interface CvBuilderContentBinding {
+  sectionKey?: string;
+  fieldKey?: string;
+  mode: 'static' | 'dynamic';
+  autoHeight?: boolean;
+  allowPageBreak?: boolean;
+  repeatItemGap?: number;
 }
 
 export interface CvBuilderLayoutElement {
@@ -75,18 +129,34 @@ export interface CvBuilderLayoutElement {
   height: number;
   zIndex: number;
   locked?: boolean;
+  hyperlink?: string;
+  iconName?: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email';
+  richTextFormat?: 'plain' | 'html';
+  sectionDesignerJson?: CvTemplateSectionDesignerSchema;
+  contentBinding?: CvBuilderContentBinding;
   style: CvBuilderElementStyle;
+}
+
+export interface CvTemplateContentFlowSchema {
+  mode: 'fixed' | 'auto_paginated_sections';
+  autoCreatePages: boolean;
+  pageBreakStrategy: 'section_boundary' | 'element_boundary';
+  overflowBehavior: 'move_to_next_page' | 'shrink_to_fit';
+  sectionGap: number;
 }
 
 export interface CvTemplateLayoutSchema {
   version: number;
+  format?: 'cv_visual_template_json';
   page: CvBuilderPageLayout;
+  contentFlow?: CvTemplateContentFlowSchema;
   elements: CvBuilderLayoutElement[];
 }
 
 export interface CvTemplateSchema {
   sections: CvTemplateSectionSchema[];
   colorOptions?: string[];
+  designJson?: CvTemplateLayoutSchema;
   layout?: CvTemplateLayoutSchema;
 }
 

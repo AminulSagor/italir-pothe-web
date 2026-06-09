@@ -1,13 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import type { ReactNode } from 'react';
-import { Circle, Minus, Square, Type } from 'lucide-react';
+import { Circle, Minus, Plus, Square, Type } from 'lucide-react';
 import type {
   CvBuilderLayoutElement,
   CvTemplatePageSize,
   CvTemplateSectionSchema,
 } from '@/types/cv-template/cv_template_type';
-import { fontOptions, paletteItems, pageSizes, sectionOptions } from './cv-builder-defaults';
+import { fontOptions, paletteItems, pageSizes } from './cv-builder-defaults';
+import CvSectionDesignerDialog from './cv-section-designer-dialog';
 
 interface CvBuilderSidebarProps {
   title: string;
@@ -16,7 +18,7 @@ interface CvBuilderSidebarProps {
   fontFamily: string;
   primaryColor: string;
   accentColor: string;
-  selectedSections: string[];
+  formSections: CvTemplateSectionSchema[];
   selectedElement: CvBuilderLayoutElement | null;
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
@@ -24,7 +26,10 @@ interface CvBuilderSidebarProps {
   onFontFamilyChange: (value: string) => void;
   onPrimaryColorChange: (value: string) => void;
   onAccentColorChange: (value: string) => void;
-  onSectionToggle: (section: CvTemplateSectionSchema) => void;
+  onCreateFormSection: (section: CvTemplateSectionSchema) => void;
+  onUpdateFormSection: (sectionKey: string, section: CvTemplateSectionSchema) => void;
+  onDeleteFormSection: (sectionKey: string) => void;
+  onPlaceFormSection: (section: CvTemplateSectionSchema) => void;
   onAddElement: (itemIndex: number) => void;
   onUpdateElement: (element: CvBuilderLayoutElement) => void;
   onDeleteElement: (elementId: string) => void;
@@ -40,7 +45,7 @@ export default function CvBuilderSidebar({
   fontFamily,
   primaryColor,
   accentColor,
-  selectedSections,
+  formSections,
   selectedElement,
   onTitleChange,
   onDescriptionChange,
@@ -48,16 +53,44 @@ export default function CvBuilderSidebar({
   onFontFamilyChange,
   onPrimaryColorChange,
   onAccentColorChange,
-  onSectionToggle,
+  onCreateFormSection,
+  onUpdateFormSection,
+  onDeleteFormSection,
+  onPlaceFormSection,
   onAddElement,
   onUpdateElement,
   onDeleteElement,
 }: CvBuilderSidebarProps) {
+  const [editingSection, setEditingSection] = useState<CvTemplateSectionSchema | null>(null);
+  const [sectionDesignerOpen, setSectionDesignerOpen] = useState(false);
+
+  const openNewSectionDesigner = () => {
+    setEditingSection(null);
+    setSectionDesignerOpen(true);
+  };
+
+  const openEditSectionDesigner = (section: CvTemplateSectionSchema) => {
+    setEditingSection(section);
+    setSectionDesignerOpen(true);
+  };
+
+  const handleSaveSection = (section: CvTemplateSectionSchema) => {
+    if (editingSection) {
+      onUpdateFormSection(editingSection.key, section);
+    } else {
+      onCreateFormSection(section);
+    }
+    setSectionDesignerOpen(false);
+    setEditingSection(null);
+  };
+
   return (
     <aside className="space-y-4 overflow-y-auto rounded-[30px] bg-white p-5 shadow-sm xl:max-h-[calc(100vh-150px)]">
       <div>
         <h2 className="text-lg font-black text-[#202420]">Template Setup</h2>
-        <p className="mt-1 text-xs leading-5 text-black/55">Add components, move and resize them on the A4/Letter canvas, then publish the reusable CV layout.</p>
+        <p className="mt-1 text-xs leading-5 text-black/55">
+          Draw the main CV page here. Create reusable user form sections in the separate section designer, then place those sections anywhere on the CV canvas.
+        </p>
       </div>
 
       <div className="space-y-3">
@@ -75,7 +108,7 @@ export default function CvBuilderSidebar({
       <BuilderPanel title="Components">
         <div className="grid grid-cols-2 gap-2">
           {paletteItems.map((item, index) => (
-            <button key={`${item.type}-${item.fieldKey}-${item.label}`} type="button" onClick={() => onAddElement(index)} className="flex items-center gap-2 rounded-2xl border border-black/10 bg-[#F7F8F5] p-3 text-left text-xs font-bold text-[#202420] transition hover:border-[#006B3F] hover:bg-[#E6F6F0]">
+            <button key={`${item.type}-${item.label}`} type="button" onClick={() => onAddElement(index)} className="flex items-center gap-2 rounded-2xl border border-black/10 bg-[#F7F8F5] p-3 text-left text-xs font-bold text-[#202420] transition hover:border-[#006B3F] hover:bg-[#E6F6F0]">
               <PaletteIcon type={item.type} />
               {item.label}
             </button>
@@ -84,26 +117,56 @@ export default function CvBuilderSidebar({
       </BuilderPanel>
 
       <BuilderPanel title="User Form Sections">
-        <div className="space-y-2">
-          {sectionOptions.map((section) => {
-            const selected = section.required || selectedSections.includes(section.key);
-            return (
-              <button key={section.key} type="button" onClick={() => onSectionToggle(section)} className={`w-full rounded-2xl border p-3 text-left text-xs font-bold transition ${selected ? 'border-[#006B3F] bg-[#E6F6F0] text-[#006B3F]' : 'border-black/10 bg-white text-[#202420]'}`}>
-                {section.title}
-                <span className="ml-2 font-medium text-black/45">{section.required ? 'Required' : `${section.fields.length} fields`}</span>
+        <div className="space-y-3">
+          {formSections.length === 0 ? (
+            <div className="rounded-2xl bg-white p-3 text-xs font-bold text-black/45">No section designed yet.</div>
+          ) : formSections.map((section) => (
+            <div key={section.key} className="rounded-2xl border border-black/10 bg-white p-3">
+              <button type="button" onClick={() => openEditSectionDesigner(section)} className="w-full text-left">
+                <span className="block text-sm font-black text-[#202420]">{section.title}</span>
+                <span className="mt-1 block text-xs text-black/50">{section.fields.length} fields · click to edit designer</span>
               </button>
-            );
-          })}
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button type="button" onClick={() => onPlaceFormSection(section)} className="rounded-xl bg-[#E6F6F0] px-3 py-2 text-xs font-black text-[#006B3F]">Place on CV</button>
+                <button type="button" onClick={() => onDeleteFormSection(section.key)} className="rounded-xl bg-red-50 px-3 py-2 text-xs font-black text-red-600">Delete</button>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={openNewSectionDesigner} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#E6F6F0] px-4 py-3 text-sm font-black text-[#006B3F]">
+            <Plus className="size-4" /> Design New Section
+          </button>
         </div>
       </BuilderPanel>
 
       <BuilderPanel title="Selected Element">
         {selectedElement ? (
-          <ElementInspector element={selectedElement} onUpdate={onUpdateElement} onDelete={onDeleteElement} />
+          <ElementInspector
+            element={selectedElement}
+            formSections={formSections}
+            onUpdate={onUpdateElement}
+            onDelete={onDeleteElement}
+          />
         ) : (
-          <p className="text-sm text-black/50">Select an item on the canvas to edit text, color, size, border, and layer.</p>
+          <p className="text-sm text-black/50">Select an item on the canvas to edit it. Use arrow keys to move selected items by 1px, or Shift + arrow for 10px.</p>
         )}
       </BuilderPanel>
+
+      <BuilderPanel title="Dynamic content rule">
+        <p className="text-xs leading-5 text-black/55">
+          Sections are saved as JSON. Flutter users will only see form fields from those sections. The CV renderer can then place the user content in the section container and auto-page if content becomes longer.
+        </p>
+      </BuilderPanel>
+
+      <CvSectionDesignerDialog
+        open={sectionDesignerOpen}
+        section={editingSection}
+        existingSections={formSections}
+        onClose={() => {
+          setSectionDesignerOpen(false);
+          setEditingSection(null);
+        }}
+        onSave={handleSaveSection}
+      />
     </aside>
   );
 }
@@ -120,40 +183,73 @@ function BuilderPanel({ title, children }: { title: string; children: ReactNode 
 function PaletteIcon({ type }: { type: string }) {
   if (type === 'rectangle') return <Square className="size-4" />;
   if (type === 'circle') return <Circle className="size-4" />;
-  if (type === 'line') return <Minus className="size-4" />;
+  if (type === 'horizontalLine' || type === 'verticalLine' || type === 'line') return <Minus className="size-4" />;
   return <Type className="size-4" />;
 }
 
 function ElementInspector({
   element,
+  formSections,
   onUpdate,
   onDelete,
 }: {
   element: CvBuilderLayoutElement;
+  formSections: CvTemplateSectionSchema[];
   onUpdate: (element: CvBuilderLayoutElement) => void;
   onDelete: (elementId: string) => void;
 }) {
+  const isLine = element.type === 'horizontalLine' || element.type === 'verticalLine' || element.type === 'line';
+  const isShape = element.type === 'rectangle' || element.type === 'circle';
+  const isSection = element.type === 'section';
   const updateStyle = (style: Partial<CvBuilderLayoutElement['style']>) => onUpdate({ ...element, style: { ...element.style, ...style } });
   const updateElement = (updates: Partial<CvBuilderLayoutElement>) => onUpdate({ ...element, ...updates });
+  const fieldOptions = formSections.flatMap((section) => section.fields.map((field) => ({ section, field })));
 
   return (
     <div className="space-y-3">
       <label className={labelClass}>Label<input className={inputClass} value={element.label} onChange={(event) => updateElement({ label: event.target.value })} /></label>
-      <label className={labelClass}>Placeholder<input className={inputClass} value={element.placeholder} onChange={(event) => updateElement({ placeholder: event.target.value })} /></label>
+      {!isShape && !isLine && !isSection ? <label className={labelClass}>Preview text<input className={inputClass} value={element.placeholder} onChange={(event) => updateElement({ placeholder: event.target.value })} /></label> : null}
       <div className="grid grid-cols-2 gap-2">
         <NumberInput label="X" value={element.x} onChange={(value) => updateElement({ x: value })} />
         <NumberInput label="Y" value={element.y} onChange={(value) => updateElement({ y: value })} />
-        <NumberInput label="Width" value={element.width} onChange={(value) => updateElement({ width: value })} />
-        <NumberInput label="Height" value={element.height} onChange={(value) => updateElement({ height: value })} />
-        <NumberInput label="Font" value={element.style.fontSize ?? 12} onChange={(value) => updateStyle({ fontSize: value })} />
+        {!isLine || element.type === 'horizontalLine' || element.type === 'line' ? <NumberInput label="Width" value={element.width} onChange={(value) => updateElement({ width: value })} /> : null}
+        {!isLine || element.type === 'verticalLine' ? <NumberInput label="Height" value={element.height} onChange={(value) => updateElement({ height: element.type === 'circle' ? value : value, width: element.type === 'circle' ? value : element.width })} /> : null}
+        {!isShape && !isLine && !isSection ? <NumberInput label="Font" value={element.style.fontSize ?? 12} onChange={(value) => updateStyle({ fontSize: value })} /> : null}
         <NumberInput label="Layer" value={element.zIndex} onChange={(value) => updateElement({ zIndex: value })} />
       </div>
+
+      {!isShape && !isLine && !isSection ? (
+        <>
+          <label className={labelClass}>Font family<select className={inputClass} value={element.style.fontFamily ?? 'Inter'} onChange={(event) => updateStyle({ fontFamily: event.target.value })}>{fontOptions.map((font) => <option key={font} value={font}>{font}</option>)}</select></label>
+          <label className={labelClass}>Bind to form field<select className={inputClass} value={`${element.contentBinding?.sectionKey ?? ''}.${element.contentBinding?.fieldKey ?? ''}`} onChange={(event) => {
+            const [sectionKey, fieldKey] = event.target.value.split('.');
+            updateElement({
+              fieldKey: fieldKey || 'custom',
+              contentBinding: fieldKey
+                ? { sectionKey, fieldKey, mode: 'dynamic', autoHeight: true, allowPageBreak: true }
+                : { mode: 'static', autoHeight: false, allowPageBreak: false },
+            });
+          }}>
+            <option value=".">Static text only</option>
+            {fieldOptions.map(({ section, field }) => <option key={`${section.key}.${field.key}`} value={`${section.key}.${field.key}`}>{section.title} / {field.label}</option>)}
+          </select></label>
+        </>
+      ) : null}
+
+      {isSection ? (
+        <p className="rounded-2xl bg-[#E6F6F0] p-3 text-xs font-bold leading-5 text-[#006B3F]">
+          This is a user form section container. It renders fields from “{element.contentBinding?.sectionKey ?? element.label}” and can auto-grow during user CV rendering.
+        </p>
+      ) : null}
+
       <div className="grid grid-cols-2 gap-2">
-        <label className={labelClass}>Text<input className={inputClass} type="color" value={element.style.color ?? '#111827'} onChange={(event) => updateStyle({ color: event.target.value })} /></label>
-        <label className={labelClass}>Fill<input className={inputClass} type="color" value={element.style.backgroundColor ?? '#ffffff'} onChange={(event) => updateStyle({ backgroundColor: event.target.value })} /></label>
-        <label className={labelClass}>Border<input className={inputClass} type="color" value={element.style.borderColor ?? '#ffffff'} onChange={(event) => updateStyle({ borderColor: event.target.value })} /></label>
-        <NumberInput label="Border" value={element.style.borderWidth ?? 0} onChange={(value) => updateStyle({ borderWidth: value })} />
+        {!isShape && !isLine && !isSection ? <label className={labelClass}>Text<input className={inputClass} type="color" value={element.style.color ?? '#111827'} onChange={(event) => updateStyle({ color: event.target.value })} /></label> : null}
+        {!isLine ? <label className={labelClass}>Fill<input className={inputClass} type="color" value={element.style.backgroundColor === 'transparent' ? '#ffffff' : element.style.backgroundColor ?? '#ffffff'} onChange={(event) => updateStyle({ backgroundColor: event.target.value })} /></label> : null}
+        <label className={labelClass}>{isLine ? 'Line' : 'Border'}<input className={inputClass} type="color" value={element.style.borderColor ?? element.style.backgroundColor ?? '#111827'} onChange={(event) => updateStyle(isLine ? { borderColor: event.target.value, backgroundColor: event.target.value } : { borderColor: event.target.value })} /></label>
+        <NumberInput label={isLine ? 'Line width' : 'Border'} value={element.style.borderWidth ?? (isLine ? 2 : 0)} onChange={(value) => updateStyle({ borderWidth: value })} />
       </div>
+
+      {element.type === 'rectangle' ? <NumberInput label="Radius" value={element.style.borderRadius ?? 0} onChange={(value) => updateStyle({ borderRadius: value })} /> : null}
       <button type="button" onClick={() => onDelete(element.id)} className="w-full rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">Delete Element</button>
     </div>
   );

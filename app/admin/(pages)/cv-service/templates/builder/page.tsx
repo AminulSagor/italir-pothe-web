@@ -13,6 +13,7 @@ import {
 } from '@/service/cv-template/cv_template';
 import type {
   CvBuilderLayoutElement,
+  CvTemplateFieldType,
   CvTemplatePageSize,
   CvTemplatePayload,
   CvTemplateSectionSchema,
@@ -23,12 +24,36 @@ import CvBuilderCanvas from './_components/cv-builder-canvas';
 import CvBuilderSidebar from './_components/cv-builder-sidebar';
 import {
   buildDefaultElements,
+  contentFlowDefaults,
+  defaultFormSections,
   pageSizes,
   paletteItems,
-  sectionOptions,
 } from './_components/cv-builder-defaults';
 
 const defaultColorOptions = ['#006B3F', '#646C7A', '#0B4A7D', '#7B4A2F', '#1F2937'];
+
+const makeSafeKey = (value: string) =>
+  value
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/^([0-9])/, 'field_$1') || `field_${Date.now()}`;
+
+const clampElementToPage = (
+  element: CvBuilderLayoutElement,
+  pageSize: CvTemplatePageSize,
+): CvBuilderLayoutElement => {
+  const page = pageSizes[pageSize];
+  const width = Math.min(element.width, page.width);
+  const height = Math.min(element.height, page.height);
+  return {
+    ...element,
+    width,
+    height,
+    x: Math.min(Math.max(0, element.x), page.width - width),
+    y: Math.min(Math.max(0, element.y), page.height - height),
+  };
+};
 
 export default function CvTemplateBuilderPage() {
   const router = useRouter();
@@ -46,13 +71,7 @@ export default function CvTemplateBuilderPage() {
   const [status, setStatus] = useState<CvTemplateStatus>('draft');
   const [isPremium, setIsPremium] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState('');
-  const [selectedSections, setSelectedSections] = useState<string[]>([
-    'contact',
-    'summary',
-    'experience',
-    'education',
-    'skills',
-  ]);
+  const [formSections, setFormSections] = useState<CvTemplateSectionSchema[]>(defaultFormSections);
   const [elements, setElements] = useState<CvBuilderLayoutElement[]>(() =>
     buildDefaultElements('modern_column', '#183847', '#F3F4F6', 'Inter'),
   );
@@ -70,29 +89,25 @@ export default function CvTemplateBuilderPage() {
       .then((response) => {
         if (!active) return;
         const template = response.template;
-        const layout = template.schema.layout;
+        const designJson = template.schema.designJson ?? template.schema.layout;
         setTitle(template.title);
         setDescription(template.description ?? '');
         setStyleType(template.styleType);
-        setPageSize(layout?.page.size ?? template.pageSize);
+        setPageSize(designJson?.page.size ?? template.pageSize);
         setFontFamily(template.fontFamily);
         setPrimaryColor(template.primaryColor);
         setAccentColor(template.accentColor);
         setPreviewImageUrl(template.previewImageUrl ?? '');
         setStatus(template.status);
         setIsPremium(template.isPremium);
-        setSelectedSections(
-          template.schema.sections?.map((section) => section.key) ?? [
-            'contact',
-            'summary',
-            'experience',
-            'education',
-            'skills',
-          ],
+        setFormSections(
+          template.schema.sections?.length
+            ? template.schema.sections
+            : defaultFormSections,
         );
         setElements(
-          layout?.elements?.length
-            ? layout.elements
+          designJson?.elements?.length
+            ? designJson.elements
             : buildDefaultElements(
                 template.styleType,
                 template.primaryColor,
@@ -100,7 +115,7 @@ export default function CvTemplateBuilderPage() {
                 template.fontFamily,
               ),
         );
-        setSelectedElementId(layout?.elements?.[0]?.id ?? null);
+        setSelectedElementId(designJson?.elements?.[0]?.id ?? null);
       })
       .catch((apiError: Error) => setError(apiError.message))
       .finally(() => setIsLoading(false));
@@ -115,31 +130,21 @@ export default function CvTemplateBuilderPage() {
     [elements, selectedElementId],
   );
 
-  const selectedSchemaSections = useMemo(
-    () =>
-      sectionOptions.filter(
-        (section) => section.required || selectedSections.includes(section.key),
-      ),
-    [selectedSections],
-  );
-
-  const handleSectionToggle = (section: CvTemplateSectionSchema) => {
-    if (section.required) return;
-    setSelectedSections((current) =>
-      current.includes(section.key)
-        ? current.filter((item) => item !== section.key)
-        : [...current, section.key],
-    );
-  };
-
   const handleStyleReset = () => {
     setElements(buildDefaultElements(styleType, primaryColor, accentColor, fontFamily));
     setSelectedElementId('name');
   };
 
+  const handlePageSizeChange = (value: CvTemplatePageSize) => {
+    setPageSize(value);
+    setElements((current) => current.map((element) => clampElementToPage(element, value)));
+  };
+
   const handleAddElement = (itemIndex: number) => {
     const item = paletteItems[itemIndex];
-    const id = `${item.fieldKey}-${Date.now()}`;
+    const id = `${item.type}-${Date.now()}`;
+    const isHorizontalLine = item.type === 'horizontalLine';
+    const isVerticalLine = item.type === 'verticalLine';
     const element: CvBuilderLayoutElement = {
       id,
       type: item.type,
@@ -148,29 +153,44 @@ export default function CvTemplateBuilderPage() {
       placeholder: item.placeholder,
       x: 90 + (elements.length % 4) * 18,
       y: 90 + (elements.length % 6) * 30,
-      width: item.type === 'line' ? 280 : item.type === 'circle' ? 90 : 250,
-      height: item.type === 'line' ? 3 : item.type === 'circle' ? 90 : 80,
+      width: isHorizontalLine ? 280 : isVerticalLine ? 2 : item.type === 'circle' ? 90 : 250,
+      height: isHorizontalLine ? 2 : isVerticalLine ? 220 : item.type === 'circle' ? 90 : 80,
       zIndex: Math.max(1, ...elements.map((current) => current.zIndex)) + 1,
+      contentBinding: { mode: 'static', autoHeight: false, allowPageBreak: false },
       style: {
         fontFamily,
         fontSize: item.type === 'text' ? 18 : 12,
         fontWeight: item.type === 'text' ? 800 : 500,
         color: '#111827',
         backgroundColor:
-          item.type === 'rectangle' || item.type === 'line' ? accentColor : 'transparent',
-        borderColor: item.type === 'circle' || item.type === 'rectangle' ? primaryColor : 'transparent',
-        borderWidth: item.type === 'circle' ? 2 : 0,
-        borderRadius: item.type === 'rectangle' ? 10 : 0,
+          isHorizontalLine || isVerticalLine || item.type === 'rectangle'
+            ? primaryColor
+            : 'transparent',
+        borderColor:
+          isHorizontalLine || isVerticalLine
+            ? primaryColor
+            : item.type === 'circle' || item.type === 'rectangle'
+              ? primaryColor
+              : 'transparent',
+        borderWidth: isHorizontalLine || isVerticalLine ? 2 : item.type === 'circle' ? 2 : 0,
+        borderRadius: 0,
       },
     };
-    setElements((current) => [...current, element]);
+    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
     setSelectedElementId(id);
   };
 
   const handleUpdateElement = (updatedElement: CvBuilderLayoutElement) => {
     setElements((current) =>
       current.map((element) =>
-        element.id === updatedElement.id ? updatedElement : element,
+        element.id === updatedElement.id
+          ? clampElementToPage(
+              updatedElement.type === 'circle'
+                ? { ...updatedElement, height: updatedElement.width }
+                : updatedElement,
+              pageSize,
+            )
+          : element,
       ),
     );
   };
@@ -178,6 +198,113 @@ export default function CvTemplateBuilderPage() {
   const handleDeleteElement = (elementId: string) => {
     setElements((current) => current.filter((element) => element.id !== elementId));
     setSelectedElementId(null);
+  };
+
+  const makeSafeSection = (section: CvTemplateSectionSchema): CvTemplateSectionSchema => ({
+    ...section,
+    key: section.key,
+    required: false,
+    fields: section.fields.map((field) => ({
+      ...field,
+      key: makeSafeKey(field.key),
+      type: field.type as CvTemplateFieldType,
+    })),
+  });
+
+  const handleCreateFormSection = (section: CvTemplateSectionSchema) => {
+    const safeSection = makeSafeSection(section);
+    setFormSections((current) => {
+      const existingIndex = current.findIndex((item) => item.key === safeSection.key);
+      if (existingIndex === -1) return [...current, safeSection];
+      return [
+        ...current,
+        {
+          ...safeSection,
+          key: `${safeSection.key}_${Date.now()}`,
+        },
+      ];
+    });
+  };
+
+  const handlePlaceFormSection = (section: CvTemplateSectionSchema) => {
+    const id = `section-${section.key}-${Date.now()}`;
+    const sectionCanvas = section.designerJson?.canvas;
+    const sectionElements = section.designerJson?.elements ?? [];
+    const element: CvBuilderLayoutElement = {
+      id,
+      type: 'section',
+      fieldKey: 'custom',
+      label: section.title,
+      placeholder: `Section: ${section.title}`,
+      x: 90 + (elements.length % 4) * 18,
+      y: 120 + (elements.length % 5) * 34,
+      width: sectionCanvas?.width ?? 420,
+      height: sectionCanvas?.height ?? Math.max(120, Math.min(280, 70 + section.fields.length * 34)),
+      zIndex: Math.max(1, ...elements.map((current) => current.zIndex)) + 1,
+      sectionDesignerJson: section.designerJson,
+      contentBinding: {
+        sectionKey: section.key,
+        mode: 'dynamic',
+        autoHeight: true,
+        allowPageBreak: true,
+      },
+      style: {
+        fontFamily,
+        fontSize: 12,
+        fontWeight: 600,
+        color: '#111827',
+        backgroundColor: sectionElements.length ? 'transparent' : '#FFFFFF',
+        borderColor: sectionElements.length ? 'transparent' : primaryColor,
+        borderWidth: sectionElements.length ? 0 : 1,
+        borderRadius: 0,
+      },
+    };
+    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
+    setSelectedElementId(id);
+  };
+
+  const handleUpdateFormSection = (sectionKey: string, updatedSection: CvTemplateSectionSchema) => {
+    const safeSection = makeSafeSection(updatedSection);
+    setFormSections((current) =>
+      current.map((section) => (section.key === sectionKey ? safeSection : section)),
+    );
+    setElements((current) =>
+      current.map((element) =>
+        element.contentBinding?.sectionKey === sectionKey
+          ? {
+              ...element,
+              label: safeSection.title,
+              placeholder: `Section: ${safeSection.title}`,
+              contentBinding: {
+                ...element.contentBinding,
+                sectionKey: safeSection.key,
+              },
+            }
+          : element,
+      ),
+    );
+  };
+
+  const handleDeleteFormSection = (sectionKey: string) => {
+    setFormSections((current) => current.filter((section) => section.key !== sectionKey));
+    setElements((current) =>
+      current.filter((element) => element.contentBinding?.sectionKey !== sectionKey),
+    );
+  };
+
+  const designJson = {
+    version: 2,
+    format: 'cv_visual_template_json' as const,
+    page: {
+      size: pageSize,
+      width: pageSizes[pageSize].width,
+      height: pageSizes[pageSize].height,
+      unit: 'px' as const,
+      margin: 40,
+      backgroundColor: '#FFFFFF',
+    },
+    contentFlow: contentFlowDefaults,
+    elements,
   };
 
   const payload: CvTemplatePayload = {
@@ -192,20 +319,10 @@ export default function CvTemplateBuilderPage() {
     status,
     previewImageUrl: previewImageUrl || null,
     schema: {
-      sections: selectedSchemaSections,
+      sections: formSections,
       colorOptions: Array.from(new Set([primaryColor, accentColor, ...defaultColorOptions])),
-      layout: {
-        version: 1,
-        page: {
-          size: pageSize,
-          width: pageSizes[pageSize].width,
-          height: pageSizes[pageSize].height,
-          unit: 'px',
-          margin: 40,
-          backgroundColor: '#FFFFFF',
-        },
-        elements,
-      },
+      designJson,
+      layout: designJson,
     },
   };
 
@@ -216,6 +333,10 @@ export default function CvTemplateBuilderPage() {
     }
     if (elements.length === 0) {
       setError('Add at least one CV layout element before saving.');
+      return;
+    }
+    if (formSections.length === 0) {
+      setError('Add at least one user form section before saving.');
       return;
     }
 
@@ -251,7 +372,7 @@ export default function CvTemplateBuilderPage() {
               {isEdit ? 'Edit Visual CV Template' : 'Professional CV Layout Builder'}
             </h1>
             <p className="mt-1 max-w-3xl text-sm leading-6 text-black/60">
-              Build a FlowCV-style interactive page template. Drag, resize, layer, color, and bind components to form fields that users will fill in the Flutter app.
+              Create a real CV template JSON: draw components, bind text to fields, and let user data auto-flow to new pages when content becomes longer than the designed space.
             </p>
           </div>
         </div>
@@ -289,7 +410,7 @@ export default function CvTemplateBuilderPage() {
 
       {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</div> : null}
 
-      <div className="grid gap-5 xl:grid-cols-[380px_1fr]">
+      <div className="grid gap-5 xl:grid-cols-[400px_1fr]">
         <CvBuilderSidebar
           title={title}
           description={description}
@@ -297,15 +418,18 @@ export default function CvTemplateBuilderPage() {
           fontFamily={fontFamily}
           primaryColor={primaryColor}
           accentColor={accentColor}
-          selectedSections={selectedSections}
+          formSections={formSections}
           selectedElement={selectedElement}
           onTitleChange={setTitle}
           onDescriptionChange={setDescription}
-          onPageSizeChange={setPageSize}
+          onPageSizeChange={handlePageSizeChange}
           onFontFamilyChange={setFontFamily}
           onPrimaryColorChange={setPrimaryColor}
           onAccentColorChange={setAccentColor}
-          onSectionToggle={handleSectionToggle}
+          onCreateFormSection={handleCreateFormSection}
+          onUpdateFormSection={handleUpdateFormSection}
+          onDeleteFormSection={handleDeleteFormSection}
+          onPlaceFormSection={handlePlaceFormSection}
           onAddElement={handleAddElement}
           onUpdateElement={handleUpdateElement}
           onDeleteElement={handleDeleteElement}
