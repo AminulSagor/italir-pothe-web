@@ -96,19 +96,12 @@ export interface CvTemplateSectionSchema {
   designerJson?: CvTemplateSectionDesignerSchema;
 }
 
-export interface CvBuilderPageMargins {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-}
 
 export interface CvBuilderPageLayout {
   size: CvTemplatePageSize;
   width: number;
   height: number;
   unit: 'px';
-  margin: number | CvBuilderPageMargins;
   backgroundColor: string;
 }
 

@@ -13,7 +13,6 @@ import {
 } from '@/service/cv-template/cv_template';
 import type {
   CvBuilderLayoutElement,
-  CvBuilderPageMargins,
   CvTemplateFieldType,
   CvTemplatePageSize,
   CvTemplatePayload,
@@ -32,26 +31,6 @@ import {
 } from './_components/cv-builder-defaults';
 
 const defaultColorOptions = ['#006B3F', '#646C7A', '#0B4A7D', '#7B4A2F', '#1F2937'];
-const defaultPageMarginsInch: CvBuilderPageMargins = { top: 1, right: 1, bottom: 1, left: 1 };
-const inchToPx = (value: number) => Math.round(value * 96);
-const normalizePageMargins = (value: unknown): CvBuilderPageMargins => {
-  if (typeof value === 'number') {
-    const inches = Math.max(0, Number((value / 96).toFixed(2)));
-    return { top: inches, right: inches, bottom: inches, left: inches };
-  }
-
-  if (value && typeof value === 'object') {
-    const margin = value as Partial<CvBuilderPageMargins>;
-    return {
-      top: typeof margin.top === 'number' ? margin.top : 1,
-      right: typeof margin.right === 'number' ? margin.right : 1,
-      bottom: typeof margin.bottom === 'number' ? margin.bottom : 1,
-      left: typeof margin.left === 'number' ? margin.left : 1,
-    };
-  }
-
-  return defaultPageMarginsInch;
-};
 
 const makeSafeKey = (value: string) =>
   value
@@ -63,30 +42,17 @@ const makeSafeKey = (value: string) =>
 const clampElementToPage = (
   element: CvBuilderLayoutElement,
   pageSize: CvTemplatePageSize,
-  pageMarginsInch: CvBuilderPageMargins,
 ): CvBuilderLayoutElement => {
   const page = pageSizes[pageSize];
-  const margins = {
-    top: inchToPx(pageMarginsInch.top),
-    right: inchToPx(pageMarginsInch.right),
-    bottom: inchToPx(pageMarginsInch.bottom),
-    left: inchToPx(pageMarginsInch.left),
-  };
-  const maxWidth = Math.max(24, page.width - margins.left - margins.right);
-  const maxHeight = Math.max(24, page.height - margins.top - margins.bottom);
-  const width = Math.min(element.width, maxWidth);
-  const height = Math.min(element.height, maxHeight);
-  const minX = margins.left;
-  const minY = margins.top;
-  const maxX = page.width - margins.right - width;
-  const maxY = page.height - margins.bottom - height;
+  const width = Math.min(element.width, Math.max(24, page.width));
+  const height = Math.min(element.height, Math.max(24, page.height));
 
   return {
     ...element,
     width,
     height,
-    x: Math.min(Math.max(minX, element.x), Math.max(minX, maxX)),
-    y: Math.min(Math.max(minY, element.y), Math.max(minY, maxY)),
+    x: Math.min(Math.max(0, element.x), Math.max(0, page.width - width)),
+    y: Math.min(Math.max(0, element.y), Math.max(0, page.height - height)),
   };
 };
 
@@ -100,7 +66,6 @@ export default function CvTemplateBuilderPage() {
   const [description, setDescription] = useState('Editable CV template created with the visual layout builder.');
   const [styleType, setStyleType] = useState<CvTemplateStyleType>('modern_column');
   const [pageSize, setPageSize] = useState<CvTemplatePageSize>('a4');
-  const [pageMarginsInch, setPageMarginsInch] = useState<CvBuilderPageMargins>(defaultPageMarginsInch);
   const [fontFamily, setFontFamily] = useState('Inter');
   const [primaryColor, setPrimaryColor] = useState('#183847');
   const [accentColor, setAccentColor] = useState('#F3F4F6');
@@ -130,7 +95,6 @@ export default function CvTemplateBuilderPage() {
         setDescription(template.description ?? '');
         setStyleType(template.styleType);
         setPageSize(designJson?.page.size ?? template.pageSize);
-        setPageMarginsInch(normalizePageMargins(designJson?.page.margin));
         setFontFamily(template.fontFamily);
         setPrimaryColor(template.primaryColor);
         setAccentColor(template.accentColor);
@@ -194,14 +158,9 @@ export default function CvTemplateBuilderPage() {
 
   const handlePageSizeChange = (value: CvTemplatePageSize) => {
     setPageSize(value);
-    setElements((current) => current.map((element) => clampElementToPage(element, value, pageMarginsInch)));
+    setElements((current) => current.map((element) => clampElementToPage(element, value)));
   };
 
-
-  const handlePageMarginsChange = (nextMargins: CvBuilderPageMargins) => {
-    setPageMarginsInch(nextMargins);
-    setElements((current) => current.map((element) => clampElementToPage(element, pageSize, nextMargins)));
-  };
 
   const handleAddElement = (itemIndex: number) => {
     const item = paletteItems[itemIndex];
@@ -241,7 +200,7 @@ export default function CvTemplateBuilderPage() {
         borderRadius: 0,
       },
     };
-    setElements((current) => [...current, clampElementToPage(element, pageSize, pageMarginsInch)]);
+    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
     setSelectedElementId(id);
   };
 
@@ -254,7 +213,6 @@ export default function CvTemplateBuilderPage() {
                 ? { ...updatedElement, height: updatedElement.width }
                 : updatedElement,
               pageSize,
-              pageMarginsInch,
             )
           : element,
       ),
@@ -327,7 +285,7 @@ export default function CvTemplateBuilderPage() {
         borderRadius: 0,
       },
     };
-    setElements((current) => [...current, clampElementToPage(element, pageSize, pageMarginsInch)]);
+    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
     setSelectedElementId(id);
   };
 
@@ -375,7 +333,6 @@ export default function CvTemplateBuilderPage() {
       width: pageSizes[pageSize].width,
       height: pageSizes[pageSize].height,
       unit: 'px' as const,
-      margin: pageMarginsInch,
       backgroundColor: '#FFFFFF',
     },
     contentFlow: contentFlowDefaults,
@@ -498,7 +455,6 @@ export default function CvTemplateBuilderPage() {
           title={title}
           description={description}
           pageSize={pageSize}
-          pageMarginsInch={pageMarginsInch}
           fontFamily={fontFamily}
           primaryColor={primaryColor}
           accentColor={accentColor}
@@ -507,7 +463,6 @@ export default function CvTemplateBuilderPage() {
           onTitleChange={setTitle}
           onDescriptionChange={setDescription}
           onPageSizeChange={handlePageSizeChange}
-          onPageMarginsChange={handlePageMarginsChange}
           onFontFamilyChange={setFontFamily}
           onPrimaryColorChange={setPrimaryColor}
           onAccentColorChange={setAccentColor}
@@ -522,7 +477,6 @@ export default function CvTemplateBuilderPage() {
 
         <CvBuilderCanvas
           pageSize={pageSize}
-          pageMarginsInch={pageMarginsInch}
           elements={elements}
           selectedElementId={selectedElementId}
           onSelect={setSelectedElementId}

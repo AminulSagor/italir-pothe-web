@@ -5,17 +5,13 @@ import { Globe, Mail, MapPin, Phone } from 'lucide-react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type {
   CvBuilderLayoutElement,
-  CvBuilderPageMargins,
   CvTemplatePageSize,
   CvTemplateSectionDesignerElement,
 } from '@/types/cv-template/cv_template_type';
 import { pageSizes } from './cv-builder-defaults';
 
-const inchToPx = (value: number) => Math.round(value * 96);
-
 interface CvBuilderCanvasProps {
   pageSize: CvTemplatePageSize;
-  pageMarginsInch: CvBuilderPageMargins;
   elements: CvBuilderLayoutElement[];
   selectedElementId: string | null;
   onSelect: (elementId: string) => void;
@@ -62,19 +58,22 @@ const LinkedinIcon = ({ className, style }: { className?: string; style?: CSSPro
 );
 
 const previewValues: Record<string, string> = {
-  fullName: 'Emily Carter',
-  professionalTitle: 'Project Manager',
-  email: 'emily.carter@email.com',
-  phone: '+1 416 555 2847',
-  location: 'Toronto, Canada',
+  fullName: 'Your Name',
+  professionalTitle: 'Software Engineer',
+  email: '✉  example@gmail.com',
+  phone: '☎  +1 2345 6789',
+  location: '📍  #1 road, city/state-0011',
   summary:
-    'Project manager with six years of experience coordinating cross-functional initiatives. This block is marked as dynamic and can grow when user content is longer.',
-  experience: 'Northbridge Digital — Project Manager\n• Managed releases and reporting.\n• Improved delivery timelines.',
-  education: 'Bachelor of Commerce in Management',
-  skills: 'Project Planning • Stakeholder Management • Agile Delivery',
-  languages: 'English • French',
+    'I am a software engineer with experience in a variety of programming languages and a track record of delivering high-quality code. I am skilled in problem-solving and have a strong background in computer science. I am a strong communicator and enjoy working collaboratively with others.',
+  experience:
+    '<p><strong>Senior Software Developer</strong><br/>Company – Country <span style="float:right">Jan 2022 – Dec 2023</span></p><ul><li>Developed and maintained software using Java, Python, and C++</li><li>Led cross-functional teams to deliver successful software projects</li><li>write a work experience of a senior software engineer in bullet points</li></ul><p><strong>Web Developer</strong><br/>Company – Country <span style="float:right">Jan 2021 – Dec 2021</span></p><ul><li>Developed and maintained various web applications using languages such as HTML, CSS, JavaScript, and PHP</li><li>Worked with cross-functional teams to gather requirements and design user interfaces</li></ul>',
+  education:
+    '<p><strong>Masters in Software Engineering</strong></p><p>Jan 2019 – Dec 2020</p><p><em>XYX University, Bangalore</em></p><p><strong>Bachelor in Computer Science</strong></p><p>Jan 2015 – Dec 2018</p><p><em>XYX University, Bangalore</em></p>',
+  skills: '<ul><li>SQL Database Management</li><li>Linux/Unix Command line</li><li>Python</li><li>C++</li><li>JAVA</li></ul>',
+  languages: '<ul><li><strong>English:</strong> Proficient</li><li><strong>Hindi:</strong> Proficient</li></ul>',
   certificates: 'Project Management Professional (PMP)',
   projects: 'CRM Migration — Led planning, rollout, and training.',
+  hobbies: '<ul><li>Writing</li><li>Cricket</li><li>Music</li></ul>',
   custom: '',
 };
 
@@ -87,9 +86,41 @@ const isTextInputTarget = (target: EventTarget | null) => {
   return ['input', 'textarea', 'select'].includes(tagName) || target.isContentEditable;
 };
 
+const getElementBounds = (params: {
+  element: Pick<CvBuilderLayoutElement, 'width' | 'height'>;
+  pageWidth: number;
+  pageHeight: number;
+}) => ({
+  minX: 0,
+  minY: 0,
+  maxX: Math.max(0, params.pageWidth - params.element.width),
+  maxY: Math.max(0, params.pageHeight - params.element.height),
+});
+
+const getResizeBounds = (params: {
+  element: Pick<CvBuilderLayoutElement, 'x' | 'y'>;
+  pageWidth: number;
+  pageHeight: number;
+}) => ({
+  maxWidth: params.pageWidth - params.element.x,
+  maxHeight: params.pageHeight - params.element.y,
+});
+
+const stripHtml = (value: string) =>
+  value
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<li>/gi, '• ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+
 export default function CvBuilderCanvas({
   pageSize,
-  pageMarginsInch,
   elements,
   selectedElementId,
   onSelect,
@@ -97,12 +128,6 @@ export default function CvBuilderCanvas({
   onDelete,
 }: CvBuilderCanvasProps) {
   const page = pageSizes[pageSize];
-  const marginPx = {
-    top: inchToPx(pageMarginsInch.top),
-    right: inchToPx(pageMarginsInch.right),
-    bottom: inchToPx(pageMarginsInch.bottom),
-    left: inchToPx(pageMarginsInch.left),
-  };
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.72);
 
@@ -141,16 +166,22 @@ export default function CvBuilderCanvas({
         ArrowRight: { x: distance, y: 0 },
       }[event.key] ?? { x: 0, y: 0 };
 
+      const bounds = getElementBounds({
+        element: selectedElement,
+        pageWidth: page.width,
+        pageHeight: page.height,
+      });
+
       onChange({
         ...selectedElement,
-        x: clamp(selectedElement.x + movement.x, marginPx.left, page.width - marginPx.right - selectedElement.width),
-        y: clamp(selectedElement.y + movement.y, marginPx.top, page.height - marginPx.bottom - selectedElement.height),
+        x: clamp(selectedElement.x + movement.x, bounds.minX, bounds.maxX),
+        y: clamp(selectedElement.y + movement.y, bounds.minY, bounds.maxY),
       });
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [elements, marginPx.bottom, marginPx.left, marginPx.right, marginPx.top, onChange, onDelete, page.height, page.width, selectedElementId]);
+  }, [elements, onChange, onDelete, page.height, page.width, selectedElementId]);
 
   const sortedElements = useMemo(
     () => [...elements].sort((first, second) => first.zIndex - second.zIndex),
@@ -175,22 +206,12 @@ export default function CvBuilderCanvas({
             transformOrigin: 'top left',
           }}
         >
-          <div
-            className="pointer-events-none absolute border border-dashed border-[#006B3F]/35 bg-[#006B3F]/[0.015]"
-            style={{
-              left: marginPx.left,
-              top: marginPx.top,
-              width: Math.max(0, page.width - marginPx.left - marginPx.right),
-              height: Math.max(0, page.height - marginPx.top - marginPx.bottom),
-            }}
-          />
           {sortedElements.map((element) => (
             <CanvasElement
               key={element.id}
               element={element}
               pageHeight={page.height}
               pageWidth={page.width}
-              marginPx={marginPx}
               scale={scale}
               selected={selectedElementId === element.id}
               onSelect={onSelect}
@@ -208,7 +229,6 @@ function CanvasElement({
   pageHeight,
   pageWidth,
   scale,
-  marginPx,
   selected,
   onSelect,
   onChange,
@@ -217,7 +237,6 @@ function CanvasElement({
   pageHeight: number;
   pageWidth: number;
   scale: number;
-  marginPx: { top: number; right: number; bottom: number; left: number };
   selected: boolean;
   onSelect: (elementId: string) => void;
   onChange: (element: CvBuilderLayoutElement) => void;
@@ -266,10 +285,12 @@ function CanvasElement({
     const onPointerMove = (moveEvent: PointerEvent) => {
       const dx = (moveEvent.clientX - startX) / scale;
       const dy = (moveEvent.clientY - startY) / scale;
+      const bounds = getElementBounds({ element, pageWidth, pageHeight });
+
       onChange({
         ...element,
-        x: clamp(Math.round(startLeft + dx), marginPx.left, pageWidth - marginPx.right - element.width),
-        y: clamp(Math.round(startTop + dy), marginPx.top, pageHeight - marginPx.bottom - element.height),
+        x: clamp(Math.round(startLeft + dx), bounds.minX, bounds.maxX),
+        y: clamp(Math.round(startTop + dy), bounds.minY, bounds.maxY),
       });
     };
 
@@ -295,12 +316,13 @@ function CanvasElement({
     const onPointerMove = (moveEvent: PointerEvent) => {
       const dx = (moveEvent.clientX - startX) / scale;
       const dy = (moveEvent.clientY - startY) / scale;
+      const resizeBounds = getResizeBounds({ element, pageWidth, pageHeight });
 
       if (element.type === 'circle') {
         const size = clamp(
           Math.round(Math.max(startWidth + dx, startHeight + dy, 24)),
           24,
-          Math.min(pageWidth - marginPx.right - element.x, pageHeight - marginPx.bottom - element.y),
+          Math.min(resizeBounds.maxWidth, resizeBounds.maxHeight),
         );
         onChange({ ...element, width: size, height: size });
         return;
@@ -310,7 +332,7 @@ function CanvasElement({
         const width = direction === 'right' || direction === 'corner' ? startWidth + dx : startWidth;
         onChange({
           ...element,
-          width: clamp(Math.round(width), 12, pageWidth - marginPx.right - element.x),
+          width: clamp(Math.round(width), 12, resizeBounds.maxWidth),
           height: lineWidth,
           style: { ...element.style, borderWidth: lineWidth },
         });
@@ -322,7 +344,7 @@ function CanvasElement({
         onChange({
           ...element,
           width: lineWidth,
-          height: clamp(Math.round(height), 12, pageHeight - marginPx.bottom - element.y),
+          height: clamp(Math.round(height), 12, resizeBounds.maxHeight),
           style: { ...element.style, borderWidth: lineWidth },
         });
         return;
@@ -332,8 +354,8 @@ function CanvasElement({
       const height = direction === 'bottom' || direction === 'corner' ? startHeight + dy : startHeight;
       onChange({
         ...element,
-        width: clamp(Math.round(width), 24, pageWidth - marginPx.right - element.x),
-        height: clamp(Math.round(height), 12, pageHeight - marginPx.bottom - element.y),
+        width: clamp(Math.round(width), 24, resizeBounds.maxWidth),
+        height: clamp(Math.round(height), 12, resizeBounds.maxHeight),
       });
     };
 
@@ -418,26 +440,16 @@ function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
   const value = previewValues[element.contentBinding?.fieldKey ?? element.fieldKey] ?? element.placeholder;
 
   if (element.type === 'textarea' || element.richTextFormat === 'html') {
+    const htmlValue = value.trim().startsWith('<') ? value : stripHtml(value);
+
     return (
-      <div className="h-full w-full overflow-hidden p-0.5 leading-tight">
-        {element.contentBinding?.autoHeight ? (
-          <span className="rounded bg-[#E6F6F0] px-1 text-[0.68em] font-black uppercase text-[#006B3F]">
-            Auto flow
-          </span>
-        ) : null}
-        <div className={`${element.contentBinding?.autoHeight ? 'mt-1 ' : ''}[&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5`} dangerouslySetInnerHTML={{ __html: value }} />
-      </div>
+      <div className="h-full w-full overflow-hidden p-0.5 leading-tight [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: htmlValue }} />
     );
   }
 
   return (
     <div className="h-full w-full whitespace-pre-line p-0.5 leading-tight">
-      {element.contentBinding?.autoHeight ? (
-        <span className="rounded bg-[#E6F6F0] px-1 text-[0.68em] font-black uppercase text-[#006B3F]">
-          Auto flow
-        </span>
-      ) : null}
-      <div className={element.contentBinding?.autoHeight ? 'mt-1' : ''}>{value}</div>
+      {stripHtml(value)}
     </div>
   );
 }

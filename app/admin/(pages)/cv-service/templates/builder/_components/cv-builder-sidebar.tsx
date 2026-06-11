@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import type {
   CvBuilderLayoutElement,
-  CvBuilderPageMargins,
   CvTemplatePageSize,
   CvTemplateSectionSchema,
 } from "@/types/cv-template/cv_template_type";
@@ -27,7 +26,6 @@ interface CvBuilderSidebarProps {
   title: string;
   description: string;
   pageSize: CvTemplatePageSize;
-  pageMarginsInch: CvBuilderPageMargins;
   fontFamily: string;
   primaryColor: string;
   accentColor: string;
@@ -36,7 +34,6 @@ interface CvBuilderSidebarProps {
   onTitleChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onPageSizeChange: (value: CvTemplatePageSize) => void;
-  onPageMarginsChange: (value: CvBuilderPageMargins) => void;
   onFontFamilyChange: (value: string) => void;
   onPrimaryColorChange: (value: string) => void;
   onAccentColorChange: (value: string) => void;
@@ -66,6 +63,19 @@ const iconOptions = [
   "email",
 ] as const;
 type IconName = (typeof iconOptions)[number];
+
+const stripHtml = (value: string) =>
+  value
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<li>/gi, '• ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
 
 const GithubIcon = ({ className, style }: { className?: string; style?: CSSProperties }) => (
   <svg
@@ -106,7 +116,6 @@ export default function CvBuilderSidebar({
   title,
   description,
   pageSize,
-  pageMarginsInch,
   fontFamily,
   primaryColor,
   accentColor,
@@ -115,7 +124,6 @@ export default function CvBuilderSidebar({
   onTitleChange,
   onDescriptionChange,
   onPageSizeChange,
-  onPageMarginsChange,
   onFontFamilyChange,
   onPrimaryColorChange,
   onAccentColorChange,
@@ -231,34 +239,6 @@ export default function CvBuilderSidebar({
           />
         </label>
       </div>
-
-      <BuilderPanel title="Page margins (inch)">
-        <div className="grid grid-cols-2 gap-2">
-          <MarginInput
-            label="Top"
-            value={pageMarginsInch.top}
-            onChange={(value) => onPageMarginsChange({ ...pageMarginsInch, top: value })}
-          />
-          <MarginInput
-            label="Right"
-            value={pageMarginsInch.right}
-            onChange={(value) => onPageMarginsChange({ ...pageMarginsInch, right: value })}
-          />
-          <MarginInput
-            label="Bottom"
-            value={pageMarginsInch.bottom}
-            onChange={(value) => onPageMarginsChange({ ...pageMarginsInch, bottom: value })}
-          />
-          <MarginInput
-            label="Left"
-            value={pageMarginsInch.left}
-            onChange={(value) => onPageMarginsChange({ ...pageMarginsInch, left: value })}
-          />
-        </div>
-        <p className="mt-2 text-xs leading-5 text-black/55">
-          Elements are clamped inside this safe printable area on every page.
-        </p>
-      </BuilderPanel>
 
       <BuilderPanel title="Components">
         <div className="grid grid-cols-2 gap-2">
@@ -432,7 +412,7 @@ function ElementInspector({
           Preview text
           <textarea
             className="min-h-20 w-full rounded-2xl border border-black/10 bg-white px-3 py-2 text-sm normal-case text-[#202420] outline-none focus:border-[#006B3F]"
-            value={element.placeholder}
+            value={element.type === "textarea" ? stripHtml(element.placeholder) : element.placeholder}
             onChange={(event) =>
               updateElement({ placeholder: event.target.value })
             }
@@ -709,31 +689,6 @@ function ClearColorButton({
     >
       Clear
     </button>
-  );
-}
-
-function MarginInput({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <label className={labelClass}>
-      {label}
-      <input
-        className={inputClass}
-        type="number"
-        min={0}
-        max={3}
-        step={0.1}
-        value={value}
-        onChange={(event) => onChange(Math.max(0, Number(event.target.value)))}
-      />
-    </label>
   );
 }
 
