@@ -5,25 +5,31 @@ import { Globe, Mail, MapPin, Phone } from 'lucide-react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type {
   CvBuilderLayoutElement,
+  CvBuilderPageMargins,
   CvTemplatePageSize,
   CvTemplateSectionDesignerElement,
 } from '@/types/cv-template/cv_template_type';
 import { pageSizes } from './cv-builder-defaults';
 
+const inchToPx = (value: number) => Math.round(value * 96);
+
 interface CvBuilderCanvasProps {
   pageSize: CvTemplatePageSize;
+  pageMarginsInch: CvBuilderPageMargins;
   elements: CvBuilderLayoutElement[];
   selectedElementId: string | null;
   onSelect: (elementId: string) => void;
   onChange: (element: CvBuilderLayoutElement) => void;
+  onDelete: (elementId: string) => void;
 }
 
 type ResizeDirection = 'right' | 'bottom' | 'corner';
 
 
-const GithubIcon = ({ className }: { className?: string }) => (
+const GithubIcon = ({ className, style }: { className?: string; style?: CSSProperties }) => (
   <svg
     className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -37,9 +43,10 @@ const GithubIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const LinkedinIcon = ({ className }: { className?: string }) => (
+const LinkedinIcon = ({ className, style }: { className?: string; style?: CSSProperties }) => (
   <svg
     className={className}
+    style={style}
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -82,12 +89,20 @@ const isTextInputTarget = (target: EventTarget | null) => {
 
 export default function CvBuilderCanvas({
   pageSize,
+  pageMarginsInch,
   elements,
   selectedElementId,
   onSelect,
   onChange,
+  onDelete,
 }: CvBuilderCanvasProps) {
   const page = pageSizes[pageSize];
+  const marginPx = {
+    top: inchToPx(pageMarginsInch.top),
+    right: inchToPx(pageMarginsInch.right),
+    bottom: inchToPx(pageMarginsInch.bottom),
+    left: inchToPx(pageMarginsInch.left),
+  };
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.72);
 
@@ -106,10 +121,16 @@ export default function CvBuilderCanvas({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!selectedElementId || isTextInputTarget(event.target)) return;
-      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
-
       const selectedElement = elements.find((element) => element.id === selectedElementId);
       if (!selectedElement || selectedElement.locked) return;
+
+      if (event.key === 'Delete' || event.key === 'Backspace') {
+        event.preventDefault();
+        onDelete(selectedElement.id);
+        return;
+      }
+
+      if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
 
       event.preventDefault();
       const distance = event.shiftKey ? 10 : 1;
@@ -122,14 +143,14 @@ export default function CvBuilderCanvas({
 
       onChange({
         ...selectedElement,
-        x: clamp(selectedElement.x + movement.x, 0, page.width - selectedElement.width),
-        y: clamp(selectedElement.y + movement.y, 0, page.height - selectedElement.height),
+        x: clamp(selectedElement.x + movement.x, marginPx.left, page.width - marginPx.right - selectedElement.width),
+        y: clamp(selectedElement.y + movement.y, marginPx.top, page.height - marginPx.bottom - selectedElement.height),
       });
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [elements, onChange, page.height, page.width, selectedElementId]);
+  }, [elements, marginPx.bottom, marginPx.left, marginPx.right, marginPx.top, onChange, onDelete, page.height, page.width, selectedElementId]);
 
   const sortedElements = useMemo(
     () => [...elements].sort((first, second) => first.zIndex - second.zIndex),
@@ -154,12 +175,22 @@ export default function CvBuilderCanvas({
             transformOrigin: 'top left',
           }}
         >
+          <div
+            className="pointer-events-none absolute border border-dashed border-[#006B3F]/35 bg-[#006B3F]/[0.015]"
+            style={{
+              left: marginPx.left,
+              top: marginPx.top,
+              width: Math.max(0, page.width - marginPx.left - marginPx.right),
+              height: Math.max(0, page.height - marginPx.top - marginPx.bottom),
+            }}
+          />
           {sortedElements.map((element) => (
             <CanvasElement
               key={element.id}
               element={element}
               pageHeight={page.height}
               pageWidth={page.width}
+              marginPx={marginPx}
               scale={scale}
               selected={selectedElementId === element.id}
               onSelect={onSelect}
@@ -177,6 +208,7 @@ function CanvasElement({
   pageHeight,
   pageWidth,
   scale,
+  marginPx,
   selected,
   onSelect,
   onChange,
@@ -185,6 +217,7 @@ function CanvasElement({
   pageHeight: number;
   pageWidth: number;
   scale: number;
+  marginPx: { top: number; right: number; bottom: number; left: number };
   selected: boolean;
   onSelect: (elementId: string) => void;
   onChange: (element: CvBuilderLayoutElement) => void;
@@ -235,8 +268,8 @@ function CanvasElement({
       const dy = (moveEvent.clientY - startY) / scale;
       onChange({
         ...element,
-        x: clamp(Math.round(startLeft + dx), 0, pageWidth - element.width),
-        y: clamp(Math.round(startTop + dy), 0, pageHeight - element.height),
+        x: clamp(Math.round(startLeft + dx), marginPx.left, pageWidth - marginPx.right - element.width),
+        y: clamp(Math.round(startTop + dy), marginPx.top, pageHeight - marginPx.bottom - element.height),
       });
     };
 
@@ -267,7 +300,7 @@ function CanvasElement({
         const size = clamp(
           Math.round(Math.max(startWidth + dx, startHeight + dy, 24)),
           24,
-          Math.min(pageWidth - element.x, pageHeight - element.y),
+          Math.min(pageWidth - marginPx.right - element.x, pageHeight - marginPx.bottom - element.y),
         );
         onChange({ ...element, width: size, height: size });
         return;
@@ -277,7 +310,7 @@ function CanvasElement({
         const width = direction === 'right' || direction === 'corner' ? startWidth + dx : startWidth;
         onChange({
           ...element,
-          width: clamp(Math.round(width), 12, pageWidth - element.x),
+          width: clamp(Math.round(width), 12, pageWidth - marginPx.right - element.x),
           height: lineWidth,
           style: { ...element.style, borderWidth: lineWidth },
         });
@@ -289,7 +322,7 @@ function CanvasElement({
         onChange({
           ...element,
           width: lineWidth,
-          height: clamp(Math.round(height), 12, pageHeight - element.y),
+          height: clamp(Math.round(height), 12, pageHeight - marginPx.bottom - element.y),
           style: { ...element.style, borderWidth: lineWidth },
         });
         return;
@@ -299,8 +332,8 @@ function CanvasElement({
       const height = direction === 'bottom' || direction === 'corner' ? startHeight + dy : startHeight;
       onChange({
         ...element,
-        width: clamp(Math.round(width), 24, pageWidth - element.x),
-        height: clamp(Math.round(height), 12, pageHeight - element.y),
+        width: clamp(Math.round(width), 24, pageWidth - marginPx.right - element.x),
+        height: clamp(Math.round(height), 12, pageHeight - marginPx.bottom - element.y),
       });
     };
 
@@ -328,20 +361,20 @@ function CanvasElement({
             <span
               data-resize-handle="true"
               onPointerDown={(event) => resize('right', event)}
-              className="absolute right-0 top-1/2 h-10 w-2 -translate-y-1/2 cursor-ew-resize bg-[#006B3F]"
+              className="absolute -right-1 top-0 h-full w-2 cursor-ew-resize bg-transparent"
             />
           ) : null}
           {!isHorizontalLine ? (
             <span
               data-resize-handle="true"
               onPointerDown={(event) => resize('bottom', event)}
-              className="absolute bottom-0 left-1/2 h-2 w-10 -translate-x-1/2 cursor-ns-resize bg-[#006B3F]"
+              className="absolute -bottom-1 left-0 h-2 w-full cursor-ns-resize bg-transparent"
             />
           ) : null}
           <span
             data-resize-handle="true"
             onPointerDown={(event) => resize('corner', event)}
-            className="absolute bottom-0 right-0 size-4 cursor-nwse-resize bg-[#006B3F]"
+            className="absolute -bottom-1 -right-1 size-4 cursor-nwse-resize bg-transparent"
           />
         </>
       ) : null}
@@ -366,7 +399,7 @@ function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
     }
 
     return (
-      <div className="flex h-full w-full flex-col gap-2 p-3 leading-tight">
+      <div className="flex h-full w-full flex-col gap-1 p-1.5 leading-tight">
         <span className="w-fit rounded bg-[#E6F6F0] px-2 py-1 text-[0.68em] font-black uppercase text-[#006B3F]">
           Auto form section
         </span>
@@ -379,26 +412,26 @@ function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
   }
 
   if (element.type === 'icon') {
-    return <div className="flex h-full w-full items-center justify-center"><IconGraphic name={element.iconName ?? 'linkedin'} className="h-[70%] w-[70%]" /></div>;
+    return <div className="flex h-full w-full items-center justify-center"><IconGraphic name={element.iconName ?? 'linkedin'} className="shrink-0" style={{ width: element.style.fontSize ?? Math.min(element.width, element.height) * 0.7, height: element.style.fontSize ?? Math.min(element.width, element.height) * 0.7 }} /></div>;
   }
 
   const value = previewValues[element.contentBinding?.fieldKey ?? element.fieldKey] ?? element.placeholder;
 
   if (element.type === 'textarea' || element.richTextFormat === 'html') {
     return (
-      <div className="h-full w-full overflow-hidden p-2 leading-tight">
+      <div className="h-full w-full overflow-hidden p-0.5 leading-tight">
         {element.contentBinding?.autoHeight ? (
           <span className="rounded bg-[#E6F6F0] px-1 text-[0.68em] font-black uppercase text-[#006B3F]">
             Auto flow
           </span>
         ) : null}
-        <div className={element.contentBinding?.autoHeight ? 'mt-1' : ''} dangerouslySetInnerHTML={{ __html: value }} />
+        <div className={`${element.contentBinding?.autoHeight ? 'mt-1 ' : ''}[&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5`} dangerouslySetInnerHTML={{ __html: value }} />
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full whitespace-pre-line p-2 leading-tight">
+    <div className="h-full w-full whitespace-pre-line p-0.5 leading-tight">
       {element.contentBinding?.autoHeight ? (
         <span className="rounded bg-[#E6F6F0] px-1 text-[0.68em] font-black uppercase text-[#006B3F]">
           Auto flow
@@ -448,6 +481,7 @@ function SectionPreviewElement({ element, scaleX, scaleY }: { element: CvTemplat
     fontSize: (element.style.fontSize ?? 12) * Math.min(scaleX, scaleY),
     fontWeight: element.style.fontWeight,
     fontStyle: element.style.fontStyle,
+    textAlign: element.style.textAlign,
     overflow: 'hidden',
   };
 
@@ -462,17 +496,17 @@ function SectionPreviewContent({ element }: { element: CvTemplateSectionDesigner
   if (element.type === 'rectangle' || element.type === 'horizontalLine' || element.type === 'verticalLine' || element.type === 'line') return null;
   if (element.type === 'circle' && element.isField && element.previewValue.startsWith('http')) return <img src={element.previewValue} alt="Section preview" className="h-full w-full object-cover" />;
   if (element.type === 'circle') return null;
-  if (element.type === 'icon') return <div className="flex h-full w-full items-center justify-center"><IconGraphic name={element.iconName ?? 'linkedin'} className="h-[70%] w-[70%]" /></div>;
-  if (element.type === 'textarea' || element.richTextFormat === 'html') return <div className="h-full w-full overflow-hidden p-1 leading-tight" dangerouslySetInnerHTML={{ __html: element.previewValue || '' }} />;
-  const content = <div className="h-full w-full whitespace-pre-line p-1 leading-tight">{element.previewValue || element.label}</div>;
+  if (element.type === 'icon') return <div className="flex h-full w-full items-center justify-center"><IconGraphic name={element.iconName ?? 'linkedin'} className="shrink-0" style={{ width: element.style.fontSize ?? Math.min(element.width, element.height) * 0.7, height: element.style.fontSize ?? Math.min(element.width, element.height) * 0.7 }} /></div>;
+  if (element.type === 'textarea' || element.richTextFormat === 'html') return <div className="h-full w-full overflow-hidden p-0.5 leading-tight [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: element.previewValue || '' }} />;
+  const content = <div className="h-full w-full whitespace-pre-line p-0.5 leading-tight">{element.previewValue || element.label}</div>;
   return element.hyperlink ? <a href={element.hyperlink} target="_blank" rel="noreferrer" className="block h-full w-full">{content}</a> : content;
 }
 
-function IconGraphic({ name, className }: { name: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email'; className?: string }) {
-  if (name === 'github') return <GithubIcon className={className} />;
-  if (name === 'linkedin') return <LinkedinIcon className={className} />;
-  if (name === 'phone') return <Phone className={className} />;
-  if (name === 'location') return <MapPin className={className} />;
-  if (name === 'email') return <Mail className={className} />;
-  return <Globe className={className} />;
+function IconGraphic({ name, className, style }: { name: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email'; className?: string; style?: CSSProperties }) {
+  if (name === 'github') return <GithubIcon className={className} style={style} />;
+  if (name === 'linkedin') return <LinkedinIcon className={className} style={style} />;
+  if (name === 'phone') return <Phone className={className} style={style} />;
+  if (name === 'location') return <MapPin className={className} style={style} />;
+  if (name === 'email') return <Mail className={className} style={style} />;
+  return <Globe className={className} style={style} />;
 }

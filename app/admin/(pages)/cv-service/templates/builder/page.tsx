@@ -13,6 +13,7 @@ import {
 } from '@/service/cv-template/cv_template';
 import type {
   CvBuilderLayoutElement,
+  CvBuilderPageMargins,
   CvTemplateFieldType,
   CvTemplatePageSize,
   CvTemplatePayload,
@@ -31,6 +32,26 @@ import {
 } from './_components/cv-builder-defaults';
 
 const defaultColorOptions = ['#006B3F', '#646C7A', '#0B4A7D', '#7B4A2F', '#1F2937'];
+const defaultPageMarginsInch: CvBuilderPageMargins = { top: 1, right: 1, bottom: 1, left: 1 };
+const inchToPx = (value: number) => Math.round(value * 96);
+const normalizePageMargins = (value: unknown): CvBuilderPageMargins => {
+  if (typeof value === 'number') {
+    const inches = Math.max(0, Number((value / 96).toFixed(2)));
+    return { top: inches, right: inches, bottom: inches, left: inches };
+  }
+
+  if (value && typeof value === 'object') {
+    const margin = value as Partial<CvBuilderPageMargins>;
+    return {
+      top: typeof margin.top === 'number' ? margin.top : 1,
+      right: typeof margin.right === 'number' ? margin.right : 1,
+      bottom: typeof margin.bottom === 'number' ? margin.bottom : 1,
+      left: typeof margin.left === 'number' ? margin.left : 1,
+    };
+  }
+
+  return defaultPageMarginsInch;
+};
 
 const makeSafeKey = (value: string) =>
   value
@@ -42,16 +63,30 @@ const makeSafeKey = (value: string) =>
 const clampElementToPage = (
   element: CvBuilderLayoutElement,
   pageSize: CvTemplatePageSize,
+  pageMarginsInch: CvBuilderPageMargins,
 ): CvBuilderLayoutElement => {
   const page = pageSizes[pageSize];
-  const width = Math.min(element.width, page.width);
-  const height = Math.min(element.height, page.height);
+  const margins = {
+    top: inchToPx(pageMarginsInch.top),
+    right: inchToPx(pageMarginsInch.right),
+    bottom: inchToPx(pageMarginsInch.bottom),
+    left: inchToPx(pageMarginsInch.left),
+  };
+  const maxWidth = Math.max(24, page.width - margins.left - margins.right);
+  const maxHeight = Math.max(24, page.height - margins.top - margins.bottom);
+  const width = Math.min(element.width, maxWidth);
+  const height = Math.min(element.height, maxHeight);
+  const minX = margins.left;
+  const minY = margins.top;
+  const maxX = page.width - margins.right - width;
+  const maxY = page.height - margins.bottom - height;
+
   return {
     ...element,
     width,
     height,
-    x: Math.min(Math.max(0, element.x), page.width - width),
-    y: Math.min(Math.max(0, element.y), page.height - height),
+    x: Math.min(Math.max(minX, element.x), Math.max(minX, maxX)),
+    y: Math.min(Math.max(minY, element.y), Math.max(minY, maxY)),
   };
 };
 
@@ -65,6 +100,7 @@ export default function CvTemplateBuilderPage() {
   const [description, setDescription] = useState('Editable CV template created with the visual layout builder.');
   const [styleType, setStyleType] = useState<CvTemplateStyleType>('modern_column');
   const [pageSize, setPageSize] = useState<CvTemplatePageSize>('a4');
+  const [pageMarginsInch, setPageMarginsInch] = useState<CvBuilderPageMargins>(defaultPageMarginsInch);
   const [fontFamily, setFontFamily] = useState('Inter');
   const [primaryColor, setPrimaryColor] = useState('#183847');
   const [accentColor, setAccentColor] = useState('#F3F4F6');
@@ -75,7 +111,7 @@ export default function CvTemplateBuilderPage() {
   const [elements, setElements] = useState<CvBuilderLayoutElement[]>(() =>
     buildDefaultElements('modern_column', '#183847', '#F3F4F6', 'Inter'),
   );
-  const [selectedElementId, setSelectedElementId] = useState<string | null>('name');
+  const [selectedElementId, setSelectedElementId] = useState<string | null>('modern-name');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(Boolean(templateId));
   const [error, setError] = useState<string | null>(null);
@@ -94,6 +130,7 @@ export default function CvTemplateBuilderPage() {
         setDescription(template.description ?? '');
         setStyleType(template.styleType);
         setPageSize(designJson?.page.size ?? template.pageSize);
+        setPageMarginsInch(normalizePageMargins(designJson?.page.margin));
         setFontFamily(template.fontFamily);
         setPrimaryColor(template.primaryColor);
         setAccentColor(template.accentColor);
@@ -130,14 +167,40 @@ export default function CvTemplateBuilderPage() {
     [elements, selectedElementId],
   );
 
+  const resetLayout = (nextStyleType: CvTemplateStyleType) => {
+    const nextElements = buildDefaultElements(
+      nextStyleType,
+      primaryColor,
+      accentColor,
+      fontFamily,
+    );
+    setElements(nextElements);
+    setSelectedElementId(nextElements[0]?.id ?? null);
+  };
+
   const handleStyleReset = () => {
-    setElements(buildDefaultElements(styleType, primaryColor, accentColor, fontFamily));
-    setSelectedElementId('name');
+    resetLayout(styleType);
+  };
+
+  const handleStyleTypeChange = (value: CvTemplateStyleType) => {
+    if (value === styleType) return;
+    const confirmed = window.confirm(
+      'All unsaved layout changes will be lost. Continue?',
+    );
+    if (!confirmed) return;
+    setStyleType(value);
+    resetLayout(value);
   };
 
   const handlePageSizeChange = (value: CvTemplatePageSize) => {
     setPageSize(value);
-    setElements((current) => current.map((element) => clampElementToPage(element, value)));
+    setElements((current) => current.map((element) => clampElementToPage(element, value, pageMarginsInch)));
+  };
+
+
+  const handlePageMarginsChange = (nextMargins: CvBuilderPageMargins) => {
+    setPageMarginsInch(nextMargins);
+    setElements((current) => current.map((element) => clampElementToPage(element, pageSize, nextMargins)));
   };
 
   const handleAddElement = (itemIndex: number) => {
@@ -153,13 +216,15 @@ export default function CvTemplateBuilderPage() {
       placeholder: item.placeholder,
       x: 90 + (elements.length % 4) * 18,
       y: 90 + (elements.length % 6) * 30,
-      width: isHorizontalLine ? 280 : isVerticalLine ? 2 : item.type === 'circle' ? 90 : 250,
-      height: isHorizontalLine ? 2 : isVerticalLine ? 220 : item.type === 'circle' ? 90 : 80,
+      width: isHorizontalLine ? 280 : isVerticalLine ? 2 : item.type === 'circle' ? 90 : item.type === 'icon' ? 34 : 250,
+      height: isHorizontalLine ? 2 : isVerticalLine ? 220 : item.type === 'circle' ? 90 : item.type === 'icon' ? 34 : item.type === 'textarea' ? 120 : 80,
       zIndex: Math.max(1, ...elements.map((current) => current.zIndex)) + 1,
       contentBinding: { mode: 'static', autoHeight: false, allowPageBreak: false },
+      richTextFormat: item.type === 'textarea' ? 'html' : 'plain',
+      iconName: item.type === 'icon' ? 'linkedin' : undefined,
       style: {
         fontFamily,
-        fontSize: item.type === 'text' ? 18 : 12,
+        fontSize: item.type === 'text' ? 18 : item.type === 'textarea' ? 13 : 12,
         fontWeight: item.type === 'text' ? 800 : 500,
         color: '#111827',
         backgroundColor:
@@ -176,7 +241,7 @@ export default function CvTemplateBuilderPage() {
         borderRadius: 0,
       },
     };
-    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
+    setElements((current) => [...current, clampElementToPage(element, pageSize, pageMarginsInch)]);
     setSelectedElementId(id);
   };
 
@@ -189,6 +254,7 @@ export default function CvTemplateBuilderPage() {
                 ? { ...updatedElement, height: updatedElement.width }
                 : updatedElement,
               pageSize,
+              pageMarginsInch,
             )
           : element,
       ),
@@ -247,6 +313,8 @@ export default function CvTemplateBuilderPage() {
         mode: 'dynamic',
         autoHeight: true,
         allowPageBreak: true,
+        collapseWhenEmpty: true,
+        reflowSiblings: true,
       },
       style: {
         fontFamily,
@@ -259,7 +327,7 @@ export default function CvTemplateBuilderPage() {
         borderRadius: 0,
       },
     };
-    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
+    setElements((current) => [...current, clampElementToPage(element, pageSize, pageMarginsInch)]);
     setSelectedElementId(id);
   };
 
@@ -275,9 +343,16 @@ export default function CvTemplateBuilderPage() {
               ...element,
               label: safeSection.title,
               placeholder: `Section: ${safeSection.title}`,
+              width: safeSection.designerJson?.canvas.width ?? element.width,
+              height: safeSection.designerJson?.canvas.height ?? element.height,
+              sectionDesignerJson: safeSection.designerJson,
               contentBinding: {
                 ...element.contentBinding,
                 sectionKey: safeSection.key,
+                autoHeight: true,
+                allowPageBreak: true,
+                collapseWhenEmpty: true,
+                reflowSiblings: true,
               },
             }
           : element,
@@ -300,7 +375,7 @@ export default function CvTemplateBuilderPage() {
       width: pageSizes[pageSize].width,
       height: pageSizes[pageSize].height,
       unit: 'px' as const,
-      margin: 40,
+      margin: pageMarginsInch,
       backgroundColor: '#FFFFFF',
     },
     contentFlow: contentFlowDefaults,
@@ -377,32 +452,40 @@ export default function CvTemplateBuilderPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" rounded="full" size="lg" onClick={handleStyleReset}>
-            <Eye className="size-5" />
-            Reset Layout
+        <div className="flex flex-nowrap items-center gap-2 overflow-x-auto rounded-full bg-white/70 p-1.5 shadow-sm">
+          <Button variant="outline" rounded="full" size="sm" onClick={handleStyleReset}>
+            <Eye className="size-4" />
+            Reset
           </Button>
           <select
             value={styleType}
-            onChange={(event) => setStyleType(event.target.value as CvTemplateStyleType)}
-            className="h-12 rounded-full border border-black/10 bg-white px-5 text-sm font-bold text-[#202420] outline-none"
+            onChange={(event) =>
+              handleStyleTypeChange(event.target.value as CvTemplateStyleType)
+            }
+            className="h-8 rounded-full border border-black/10 bg-white px-3 text-xs font-bold text-[#202420] outline-none"
           >
-            <option value="ats">ATS</option>
             <option value="modern_column">Modern Column</option>
             <option value="classic">Classic</option>
-            <option value="creative">Creative</option>
           </select>
           <select
             value={status}
             onChange={(event) => setStatus(event.target.value as CvTemplateStatus)}
-            className="h-12 rounded-full border border-black/10 bg-white px-5 text-sm font-bold text-[#202420] outline-none"
+            className="h-8 rounded-full border border-black/10 bg-white px-3 text-xs font-bold text-[#202420] outline-none"
           >
             <option value="draft">Draft</option>
             <option value="active">Active / Publish</option>
             <option value="archived">Archived</option>
           </select>
-          <Button rounded="full" size="lg" onClick={handleSave} disabled={isSubmitting} className="min-w-[170px]">
-            <Save className="size-5" />
+          <select
+            value={isPremium ? 'premium' : 'free'}
+            onChange={(event) => setIsPremium(event.target.value === 'premium')}
+            className="h-8 rounded-full border border-black/10 bg-white px-3 text-xs font-bold text-[#202420] outline-none"
+          >
+            <option value="free">Free</option>
+            <option value="premium">Premium</option>
+          </select>
+          <Button rounded="full" size="sm" onClick={handleSave} disabled={isSubmitting} className="min-w-[130px]">
+            <Save className="size-4" />
             {isSubmitting ? 'Saving...' : 'Save Template'}
           </Button>
         </div>
@@ -415,6 +498,7 @@ export default function CvTemplateBuilderPage() {
           title={title}
           description={description}
           pageSize={pageSize}
+          pageMarginsInch={pageMarginsInch}
           fontFamily={fontFamily}
           primaryColor={primaryColor}
           accentColor={accentColor}
@@ -423,6 +507,7 @@ export default function CvTemplateBuilderPage() {
           onTitleChange={setTitle}
           onDescriptionChange={setDescription}
           onPageSizeChange={handlePageSizeChange}
+          onPageMarginsChange={handlePageMarginsChange}
           onFontFamilyChange={setFontFamily}
           onPrimaryColorChange={setPrimaryColor}
           onAccentColorChange={setAccentColor}
@@ -437,22 +522,16 @@ export default function CvTemplateBuilderPage() {
 
         <CvBuilderCanvas
           pageSize={pageSize}
+          pageMarginsInch={pageMarginsInch}
           elements={elements}
           selectedElementId={selectedElementId}
           onSelect={setSelectedElementId}
           onChange={handleUpdateElement}
+          onDelete={handleDeleteElement}
         />
       </div>
 
-      <button
-        type="button"
-        onClick={() => setIsPremium((value) => !value)}
-        className={`fixed bottom-6 right-6 rounded-full px-6 py-3 text-sm font-black shadow-2xl ${
-          isPremium ? 'bg-[#006B3F] text-white' : 'bg-white text-[#202420]'
-        }`}
-      >
-        {isPremium ? 'Premium Template' : 'Free Template'}
-      </button>
+
     </div>
   );
 }

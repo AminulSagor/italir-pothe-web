@@ -58,6 +58,7 @@ export interface CvTemplateSectionDesignerElement {
   richTextFormat?: 'plain' | 'html';
   hyperlink?: string;
   iconName?: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email';
+  contentFlow?: CvBuilderElementFlowSchema;
   x: number;
   y: number;
   width: number;
@@ -73,6 +74,17 @@ export interface CvTemplateSectionDesignerSchema {
     height: number;
     unit: 'px';
   };
+  contentFlow?: {
+    fitToContent: boolean;
+    autoCropOnSave: boolean;
+    collapseEmptyFields: boolean;
+    autoGrowFields: boolean;
+    autoCreatePages: boolean;
+    overflowBehavior: 'grow_section' | 'create_new_page';
+    stackingStrategy: 'flow_relative' | 'absolute_with_reflow';
+    baseWidth: number;
+    baseHeight: number;
+  };
   elements: CvTemplateSectionDesignerElement[];
 }
 
@@ -84,12 +96,19 @@ export interface CvTemplateSectionSchema {
   designerJson?: CvTemplateSectionDesignerSchema;
 }
 
+export interface CvBuilderPageMargins {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 export interface CvBuilderPageLayout {
   size: CvTemplatePageSize;
   width: number;
   height: number;
   unit: 'px';
-  margin: number;
+  margin: number | CvBuilderPageMargins;
   backgroundColor: string;
 }
 
@@ -103,9 +122,19 @@ export interface CvBuilderElementStyle {
   borderColor?: string;
   borderWidth?: number;
   borderRadius?: number;
-  textAlign?: 'left' | 'center' | 'right';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
   lineHeight?: number;
   opacity?: number;
+}
+
+export interface CvBuilderElementFlowSchema {
+  flowOrder?: number;
+  collapseWhenEmpty?: boolean;
+  reserveSpaceWhenEmpty?: boolean;
+  autoHeight?: boolean;
+  allowPageBreak?: boolean;
+  moveFollowingElements?: boolean;
+  growDirection?: 'down' | 'right';
 }
 
 export interface CvBuilderContentBinding {
@@ -115,6 +144,8 @@ export interface CvBuilderContentBinding {
   autoHeight?: boolean;
   allowPageBreak?: boolean;
   repeatItemGap?: number;
+  collapseWhenEmpty?: boolean;
+  reflowSiblings?: boolean;
 }
 
 export interface CvBuilderLayoutElement {
@@ -143,6 +174,9 @@ export interface CvTemplateContentFlowSchema {
   pageBreakStrategy: 'section_boundary' | 'element_boundary';
   overflowBehavior: 'move_to_next_page' | 'shrink_to_fit';
   sectionGap: number;
+  collapseEmptySections?: boolean;
+  reflowAfterCollapse?: boolean;
+  growDynamicSections?: boolean;
 }
 
 export interface CvTemplateLayoutSchema {
