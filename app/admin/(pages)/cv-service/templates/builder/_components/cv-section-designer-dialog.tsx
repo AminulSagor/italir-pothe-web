@@ -290,14 +290,14 @@ const fieldTypeOptions: Array<{ label: string; value: CvTemplateFieldType }> = [
   { label: "Textarea", value: "textarea" },
   { label: "List", value: "list" },
   { label: "Date", value: "date" },
-  { label: "Photo URL", value: "imageUrl" },
+  { label: "Photo Upload", value: "photoUrl" },
   { label: "Website", value: "website" },
 ];
 
 const getDefaultFieldType = (
   type: CvBuilderElementType,
 ): CvTemplateFieldType => {
-  if (type === "circle") return "imageUrl";
+  if (type === "circle") return "photoUrl";
   if (type === "textarea") return "textarea";
   if (type === "icon") return "website";
   return "text";

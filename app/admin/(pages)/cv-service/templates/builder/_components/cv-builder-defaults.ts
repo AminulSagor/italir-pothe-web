@@ -50,7 +50,7 @@ export const defaultFormSections: CvTemplateSectionSchema[] = [
       { key: 'email', label: 'Email', type: 'email', required: false },
       { key: 'phone', label: 'Phone', type: 'phone', required: false },
       { key: 'location', label: 'Location', type: 'text', required: false },
-      { key: 'profilePhoto', label: 'Profile photo URL', type: 'imageUrl', required: false },
+      { key: 'profilePhoto', label: 'Profile photo', type: 'photoUrl', required: false },
     ],
   },
   {

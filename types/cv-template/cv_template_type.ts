@@ -37,6 +37,7 @@ export type CvTemplateFieldType =
   | 'list'
   | 'date'
   | 'imageUrl'
+  | 'photoUrl'
   | 'website';
 
 export interface CvTemplateFieldSchema {
