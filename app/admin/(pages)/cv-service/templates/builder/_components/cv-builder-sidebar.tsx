@@ -396,6 +396,9 @@ function ElementInspector({
   const fieldOptions = formSections.flatMap((section) =>
     section.fields.map((field) => ({ section, field })),
   );
+  const photoFieldOptions = fieldOptions.filter(({ field }) =>
+    ["photoUrl", "imageUrl"].includes(field.type),
+  );
 
   return (
     <div className="space-y-3">
@@ -531,6 +534,46 @@ function ElementInspector({
             />
           </label>
         </>
+      ) : null}
+
+      {element.type === "circle" ? (
+        <label className={labelClass}>
+          Bind photo to form field
+          <select
+            className={inputClass}
+            value={`${element.contentBinding?.sectionKey ?? ""}.${element.contentBinding?.fieldKey ?? ""}`}
+            onChange={(event) => {
+              const [sectionKey, fieldKey] = event.target.value.split(".");
+              updateElement({
+                fieldKey: fieldKey || "custom",
+                contentBinding: fieldKey
+                  ? {
+                      sectionKey,
+                      fieldKey,
+                      mode: "dynamic",
+                      autoHeight: false,
+                      allowPageBreak: false,
+                      collapseWhenEmpty: true,
+                    }
+                  : {
+                      mode: "static",
+                      autoHeight: false,
+                      allowPageBreak: false,
+                    },
+              });
+            }}
+          >
+            <option value=".">Static circle only</option>
+            {photoFieldOptions.map(({ section, field }) => (
+              <option
+                key={`${section.key}.${field.key}`}
+                value={`${section.key}.${field.key}`}
+              >
+                {section.title} / {field.label}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
 
       {element.type === "icon" ? (

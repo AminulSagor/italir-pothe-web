@@ -320,7 +320,7 @@ const createDesignerElement = (
 ): CvTemplateSectionDesignerElement => {
   const isHorizontalLine = type === "horizontalLine" || type === "line";
   const isVerticalLine = type === "verticalLine";
-  const isField = type === "text";
+  const isField = false;
   const fieldKey = makeSafeFieldKey(`${type}_${index + 1}`);
 
   return {
@@ -785,7 +785,7 @@ export default function CvSectionDesignerDialog({
               Registered Fields
             </h3>
             <p className="mt-1 text-xs leading-5 text-black/55">
-              Only checked components become Flutter form fields. Text is
+              Only checked components become Flutter form fields. Text, textarea and photo circles are
               checked automatically.
             </p>
             <div className="mt-3 space-y-2">

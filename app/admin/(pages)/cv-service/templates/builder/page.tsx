@@ -224,16 +224,49 @@ export default function CvTemplateBuilderPage() {
     setSelectedElementId(null);
   };
 
-  const makeSafeSection = (section: CvTemplateSectionSchema): CvTemplateSectionSchema => ({
-    ...section,
-    key: section.key,
-    required: false,
-    fields: section.fields.map((field) => ({
-      ...field,
-      key: makeSafeKey(field.key),
-      type: field.type as CvTemplateFieldType,
-    })),
-  });
+  const makeSafeSection = (section: CvTemplateSectionSchema): CvTemplateSectionSchema => {
+    const fieldKeyMap = new Map<string, string>();
+    const usedFieldKeys = new Set<string>();
+    const makeUniqueSafeFieldKey = (value: string) => {
+      const baseKey = makeSafeKey(value);
+      let nextKey = baseKey;
+      let serial = 2;
+      while (usedFieldKeys.has(nextKey)) {
+        nextKey = `${baseKey}_${serial}`;
+        serial += 1;
+      }
+      usedFieldKeys.add(nextKey);
+      return nextKey;
+    };
+
+    const fields = section.fields.map((field) => {
+      const safeKey = makeUniqueSafeFieldKey(field.key);
+      fieldKeyMap.set(field.key, safeKey);
+      return {
+        ...field,
+        key: safeKey,
+        type: field.type as CvTemplateFieldType,
+      };
+    });
+
+    const designerJson = section.designerJson
+      ? {
+          ...section.designerJson,
+          elements: section.designerJson.elements.map((element) => ({
+            ...element,
+            fieldKey: fieldKeyMap.get(element.fieldKey) ?? element.fieldKey,
+          })),
+        }
+      : section.designerJson;
+
+    return {
+      ...section,
+      key: section.key,
+      required: false,
+      fields,
+      designerJson,
+    };
+  };
 
   const handleCreateFormSection = (section: CvTemplateSectionSchema) => {
     const safeSection = makeSafeSection(section);
