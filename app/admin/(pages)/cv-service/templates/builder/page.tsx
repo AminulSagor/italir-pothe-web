@@ -9,12 +9,15 @@ import Button from '@/components/UI/buttons/button';
 import {
   createCvTemplate,
   getCvTemplateById,
+  getCvTemplateDefaultLayout,
+  saveCvTemplateDefaultLayout,
   updateCvTemplate,
 } from '@/service/cv-template/cv_template';
 import type {
   CvBuilderLayoutElement,
   CvTemplateFieldType,
   CvTemplatePageSize,
+  CvTemplateDefaultLayoutItem,
   CvTemplatePayload,
   CvTemplateSectionSchema,
   CvTemplateStatus,
@@ -31,6 +34,124 @@ import {
 } from './_components/cv-builder-defaults';
 
 const defaultColorOptions = ['#006B3F', '#646C7A', '#0B4A7D', '#7B4A2F', '#1F2937'];
+
+
+const sectionGap = 16;
+
+const isSectionElement = (element: CvBuilderLayoutElement) => element.type === 'section';
+
+const elementsOverlap = (first: CvBuilderLayoutElement, second: CvBuilderLayoutElement, gap = sectionGap) => {
+  return !(
+    first.x + first.width + gap <= second.x ||
+    second.x + second.width + gap <= first.x ||
+    first.y + first.height + gap <= second.y ||
+    second.y + second.height + gap <= first.y
+  );
+};
+
+const resolveSectionCollision = (
+  targetElement: CvBuilderLayoutElement,
+  allElements: CvBuilderLayoutElement[],
+  pageSize: CvTemplatePageSize,
+): CvBuilderLayoutElement => {
+  if (!isSectionElement(targetElement)) return targetElement;
+
+  const page = pageSizes[pageSize];
+  let nextElement = clampElementToPage(targetElement, pageSize);
+  const otherSections = allElements
+    .filter((element) => element.id !== targetElement.id && isSectionElement(element))
+    .sort((first, second) => first.y - second.y || first.x - second.x);
+
+  for (let pass = 0; pass < otherSections.length + 2; pass += 1) {
+    const blocker = otherSections.find((element) => elementsOverlap(nextElement, element));
+    if (!blocker) break;
+    nextElement = {
+      ...nextElement,
+      y: Math.min(
+        Math.max(0, page.height - nextElement.height),
+        blocker.y + blocker.height + sectionGap,
+      ),
+    };
+  }
+
+  return clampElementToPage(nextElement, pageSize);
+};
+
+const firstAvailableSectionPosition = (
+  draftElement: CvBuilderLayoutElement,
+  allElements: CvBuilderLayoutElement[],
+  pageSize: CvTemplatePageSize,
+): CvBuilderLayoutElement => {
+  const page = pageSizes[pageSize];
+  let nextElement = clampElementToPage(draftElement, pageSize);
+  const sortedSections = allElements
+    .filter(isSectionElement)
+    .sort((first, second) => first.y - second.y || first.x - second.x);
+
+  for (const section of sortedSections) {
+    if (!elementsOverlap(nextElement, section)) continue;
+    nextElement = {
+      ...nextElement,
+      y: Math.min(
+        Math.max(0, page.height - nextElement.height),
+        section.y + section.height + sectionGap,
+      ),
+    };
+  }
+
+  return clampElementToPage(nextElement, pageSize);
+};
+
+
+const resolveSectionStack = (
+  allElements: CvBuilderLayoutElement[],
+  pageSize: CvTemplatePageSize,
+): CvBuilderLayoutElement[] => {
+  const page = pageSizes[pageSize];
+  const sectionIds = new Set(
+    allElements.filter(isSectionElement).map((element) => element.id),
+  );
+  const sortedSections = allElements
+    .filter(isSectionElement)
+    .sort((first, second) => first.y - second.y || first.x - second.x);
+
+  const adjustedSections = new Map<string, CvBuilderLayoutElement>();
+  const placedSections: CvBuilderLayoutElement[] = [];
+
+  for (const section of sortedSections) {
+    let nextSection = clampElementToPage(section, pageSize);
+
+    for (let pass = 0; pass < sortedSections.length + 4; pass += 1) {
+      const blocker = placedSections.find((placedSection) =>
+        elementsOverlap(nextSection, placedSection),
+      );
+
+      if (!blocker) break;
+
+      const nextY = Math.min(
+        Math.max(0, page.height - nextSection.height),
+        blocker.y + blocker.height + sectionGap,
+      );
+
+      if (nextY === nextSection.y) break;
+
+      nextSection = clampElementToPage(
+        {
+          ...nextSection,
+          y: nextY,
+        },
+        pageSize,
+      );
+    }
+
+    adjustedSections.set(nextSection.id, nextSection);
+    placedSections.push(nextSection);
+  }
+
+  return allElements.map((element) =>
+    sectionIds.has(element.id) ? adjustedSections.get(element.id) ?? element : element,
+  );
+};
 
 const makeSafeKey = (value: string) =>
   value
@@ -78,6 +199,7 @@ export default function CvTemplateBuilderPage() {
   );
   const [selectedElementId, setSelectedElementId] = useState<string | null>('modern-name');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDefaultLayout, setIsSavingDefaultLayout] = useState(false);
   const [isLoading, setIsLoading] = useState(Boolean(templateId));
   const [error, setError] = useState<string | null>(null);
 
@@ -126,24 +248,70 @@ export default function CvTemplateBuilderPage() {
     };
   }, [templateId]);
 
+  useEffect(() => {
+    if (templateId) return;
+    void loadDefaultLayout(styleType);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateId]);
+
   const selectedElement = useMemo(
     () => elements.find((element) => element.id === selectedElementId) ?? null,
     [elements, selectedElementId],
   );
 
-  const resetLayout = (nextStyleType: CvTemplateStyleType) => {
-    const nextElements = buildDefaultElements(
-      nextStyleType,
-      primaryColor,
-      accentColor,
-      fontFamily,
+  const applyDefaultLayout = (defaultLayout: CvTemplateDefaultLayoutItem | null, fallbackStyleType: CvTemplateStyleType) => {
+    if (!defaultLayout) {
+      const nextElements = buildDefaultElements(
+        fallbackStyleType,
+        primaryColor,
+        accentColor,
+        fontFamily,
+      );
+      setElements(nextElements);
+      setSelectedElementId(nextElements[0]?.id ?? null);
+      return;
+    }
+
+    const defaultSchema = defaultLayout.schema;
+    const designJson = defaultSchema.designJson ?? defaultSchema.layout;
+    const nextPageSize = designJson?.page.size ?? defaultLayout.pageSize;
+    setPageSize(nextPageSize);
+    setFontFamily(defaultLayout.fontFamily);
+    setPrimaryColor(defaultLayout.primaryColor);
+    setAccentColor(defaultLayout.accentColor);
+    setFormSections(
+      defaultSchema.sections?.length ? defaultSchema.sections : defaultFormSections,
     );
+    const nextElements = designJson?.elements?.length
+      ? designJson.elements
+      : buildDefaultElements(
+          fallbackStyleType,
+          defaultLayout.primaryColor,
+          defaultLayout.accentColor,
+          defaultLayout.fontFamily,
+        );
     setElements(nextElements);
     setSelectedElementId(nextElements[0]?.id ?? null);
   };
 
+  const loadDefaultLayout = async (nextStyleType: CvTemplateStyleType) => {
+    try {
+      const response = await getCvTemplateDefaultLayout(nextStyleType);
+      applyDefaultLayout(response.layout, nextStyleType);
+    } catch {
+      const nextElements = buildDefaultElements(
+        nextStyleType,
+        primaryColor,
+        accentColor,
+        fontFamily,
+      );
+      setElements(nextElements);
+      setSelectedElementId(nextElements[0]?.id ?? null);
+    }
+  };
+
   const handleStyleReset = () => {
-    resetLayout(styleType);
+    void loadDefaultLayout(styleType);
   };
 
   const handleStyleTypeChange = (value: CvTemplateStyleType) => {
@@ -153,7 +321,7 @@ export default function CvTemplateBuilderPage() {
     );
     if (!confirmed) return;
     setStyleType(value);
-    resetLayout(value);
+    void loadDefaultLayout(value);
   };
 
   const handlePageSizeChange = (value: CvTemplatePageSize) => {
@@ -187,36 +355,50 @@ export default function CvTemplateBuilderPage() {
         fontWeight: item.type === 'text' ? 800 : 500,
         color: '#111827',
         backgroundColor:
-          isHorizontalLine || isVerticalLine || item.type === 'rectangle'
+          isHorizontalLine || isVerticalLine || item.type === 'rectangle' || item.type === 'circle'
             ? primaryColor
             : 'transparent',
+        backgroundColorRole:
+          isHorizontalLine || isVerticalLine || item.type === 'rectangle' || item.type === 'circle'
+            ? 'primary'
+            : 'custom',
         borderColor:
           isHorizontalLine || isVerticalLine
-            ? primaryColor
+            ? accentColor
             : item.type === 'circle' || item.type === 'rectangle'
-              ? primaryColor
+              ? accentColor
               : 'transparent',
+        borderColorRole:
+          isHorizontalLine || isVerticalLine || item.type === 'circle' || item.type === 'rectangle'
+            ? 'accent'
+            : 'custom',
         borderWidth: isHorizontalLine || isVerticalLine ? 2 : item.type === 'circle' ? 2 : 0,
         borderRadius: 0,
       },
     };
-    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
+    setElements((current) => {
+      const nextElement = firstAvailableSectionPosition(element, current, pageSize);
+      return isSectionElement(nextElement)
+        ? resolveSectionStack([...current, nextElement], pageSize)
+        : [...current, nextElement];
+    });
     setSelectedElementId(id);
   };
 
   const handleUpdateElement = (updatedElement: CvBuilderLayoutElement) => {
-    setElements((current) =>
-      current.map((element) =>
-        element.id === updatedElement.id
-          ? clampElementToPage(
-              updatedElement.type === 'circle'
-                ? { ...updatedElement, height: updatedElement.width }
-                : updatedElement,
-              pageSize,
-            )
-          : element,
-      ),
-    );
+    setElements((current) => {
+      const normalizedElement = updatedElement.type === 'circle'
+        ? { ...updatedElement, height: updatedElement.width }
+        : updatedElement;
+      const nextElement = clampElementToPage(normalizedElement, pageSize);
+      const collisionSafeElement = isSectionElement(nextElement)
+        ? resolveSectionCollision(nextElement, current, pageSize)
+        : nextElement;
+
+      return current.map((element) =>
+        element.id === updatedElement.id ? collisionSafeElement : element,
+      );
+    });
   };
 
   const handleDeleteElement = (elementId: string) => {
@@ -242,16 +424,46 @@ export default function CvTemplateBuilderPage() {
     const fields = section.fields.map((field) => {
       const safeKey = makeUniqueSafeFieldKey(field.key);
       fieldKeyMap.set(field.key, safeKey);
+      const itemKeys = new Set<string>();
+      const itemFields = field.itemFields?.map((itemField) => {
+        const baseKey = makeSafeKey(itemField.key);
+        let nextKey = baseKey;
+        let serial = 2;
+        while (itemKeys.has(nextKey)) {
+          nextKey = `${baseKey}_${serial}`;
+          serial += 1;
+        }
+        itemKeys.add(nextKey);
+        fieldKeyMap.set(itemField.key, nextKey);
+        return {
+          ...itemField,
+          key: nextKey,
+        };
+      });
       return {
         ...field,
         key: safeKey,
         type: field.type as CvTemplateFieldType,
+        itemFields,
+        options: itemFields?.map((item) => `${item.key}|${item.label}|${item.type}`) ?? field.options,
       };
     });
+
+    const dynamicItem = section.dynamicItem
+      ? {
+          ...section.dynamicItem,
+          fieldKey: fieldKeyMap.get(section.dynamicItem.fieldKey) ?? section.dynamicItem.fieldKey,
+          itemFields: section.dynamicItem.itemFields.map((itemField) => ({
+            ...itemField,
+            key: fieldKeyMap.get(itemField.key) ?? itemField.key,
+          })),
+        }
+      : undefined;
 
     const designerJson = section.designerJson
       ? {
           ...section.designerJson,
+          dynamicItem,
           elements: section.designerJson.elements.map((element) => ({
             ...element,
             fieldKey: fieldKeyMap.get(element.fieldKey) ?? element.fieldKey,
@@ -264,6 +476,7 @@ export default function CvTemplateBuilderPage() {
       key: section.key,
       required: false,
       fields,
+      dynamicItem,
       designerJson,
     };
   };
@@ -302,7 +515,7 @@ export default function CvTemplateBuilderPage() {
       contentBinding: {
         sectionKey: section.key,
         mode: 'dynamic',
-        autoHeight: true,
+        autoHeight: false,
         allowPageBreak: true,
         collapseWhenEmpty: true,
         reflowSiblings: true,
@@ -312,13 +525,20 @@ export default function CvTemplateBuilderPage() {
         fontSize: 12,
         fontWeight: 600,
         color: '#111827',
-        backgroundColor: sectionElements.length ? 'transparent' : '#FFFFFF',
-        borderColor: sectionElements.length ? 'transparent' : primaryColor,
+        backgroundColor: sectionElements.length ? 'transparent' : primaryColor,
+        backgroundColorRole: sectionElements.length ? 'custom' : 'primary',
+        borderColor: sectionElements.length ? 'transparent' : accentColor,
+        borderColorRole: sectionElements.length ? 'custom' : 'accent',
         borderWidth: sectionElements.length ? 0 : 1,
         borderRadius: 0,
       },
     };
-    setElements((current) => [...current, clampElementToPage(element, pageSize)]);
+    setElements((current) => {
+      const nextElement = firstAvailableSectionPosition(element, current, pageSize);
+      return isSectionElement(nextElement)
+        ? resolveSectionStack([...current, nextElement], pageSize)
+        : [...current, nextElement];
+    });
     setSelectedElementId(id);
   };
 
@@ -334,13 +554,13 @@ export default function CvTemplateBuilderPage() {
               ...element,
               label: safeSection.title,
               placeholder: `Section: ${safeSection.title}`,
-              width: safeSection.designerJson?.canvas.width ?? element.width,
-              height: safeSection.designerJson?.canvas.height ?? element.height,
+              width: element.width,
+              height: element.height,
               sectionDesignerJson: safeSection.designerJson,
               contentBinding: {
                 ...element.contentBinding,
                 sectionKey: safeSection.key,
-                autoHeight: true,
+                autoHeight: false,
                 allowPageBreak: true,
                 collapseWhenEmpty: true,
                 reflowSiblings: true,
@@ -389,6 +609,31 @@ export default function CvTemplateBuilderPage() {
       designJson,
       layout: designJson,
     },
+  };
+
+  const handleSaveDefaultLayout = async () => {
+    if (isSavingDefaultLayout) return;
+    if (styleType !== 'modern_column' && styleType !== 'classic') {
+      setError('Only Modern and Classic CV default layouts are supported for now.');
+      return;
+    }
+
+    setError(null);
+    setIsSavingDefaultLayout(true);
+    try {
+      await saveCvTemplateDefaultLayout(styleType, {
+        pageSize,
+        fontFamily,
+        primaryColor,
+        accentColor,
+        schema: payload.schema,
+      });
+      window.alert('Default layout saved successfully.');
+    } catch (apiError) {
+      setError(apiError instanceof Error ? apiError.message : 'Default layout save failed.');
+    } finally {
+      setIsSavingDefaultLayout(false);
+    }
   };
 
   const handleSave = async () => {
@@ -515,6 +760,10 @@ export default function CvTemplateBuilderPage() {
           onSelect={setSelectedElementId}
           onChange={handleUpdateElement}
           onDelete={handleDeleteElement}
+          primaryColor={primaryColor}
+          accentColor={accentColor}
+          onSaveDefaultLayout={handleSaveDefaultLayout}
+          isSavingDefaultLayout={isSavingDefaultLayout}
         />
       </div>
 

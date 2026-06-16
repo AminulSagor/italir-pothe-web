@@ -13,6 +13,8 @@ import {
   Globe,
   Italic,
   Link as LinkIcon,
+  List,
+  ListOrdered,
   Mail,
   MapPin,
   Minus,
@@ -21,11 +23,13 @@ import {
   Square,
   TextCursorInput,
   Trash2,
+  Repeat,
   Type,
   X,
 } from "lucide-react";
 import type {
   CvBuilderElementType,
+  CvBuilderThemeColorRole,
   CvTemplateFieldSchema,
   CvTemplateFieldType,
   CvTemplateSectionDesignerElement,
@@ -87,6 +91,7 @@ const sectionPaletteItems: Array<{
 }> = [
   { label: "Text", type: "text" },
   { label: "Textarea", type: "textarea" },
+  { label: "List", type: "list" },
   { label: "Rectangle", type: "rectangle" },
   { label: "Circle", type: "circle" },
   { label: "Horizontal Line", type: "horizontalLine" },
@@ -101,6 +106,8 @@ interface CvSectionDesignerDialogProps {
   open: boolean;
   section: CvTemplateSectionSchema | null;
   existingSections: CvTemplateSectionSchema[];
+  primaryColor: string;
+  accentColor: string;
   onClose: () => void;
   onSave: (section: CvTemplateSectionSchema) => void;
 }
@@ -149,7 +156,7 @@ const getFieldAwareElement = (
     reserveSpaceWhenEmpty: !element.isField,
     autoHeight:
       Boolean(element.isField) &&
-      (element.type === "text" || element.type === "textarea"),
+      (element.type === "text" || element.type === "textarea" || element.type === "list" || element.type === "dynamicItems"),
     allowPageBreak: Boolean(element.isField),
     moveFollowingElements: Boolean(element.isField),
     growDirection: "down",
@@ -299,6 +306,8 @@ const getDefaultFieldType = (
 ): CvTemplateFieldType => {
   if (type === "circle") return "photoUrl";
   if (type === "textarea") return "textarea";
+  if (type === "list") return "list";
+  if (type === "dynamicItems") return "dynamicItems";
   if (type === "icon") return "website";
   return "text";
 };
@@ -307,30 +316,143 @@ const getDefaultPreviewValue = (type: CvBuilderElementType) => {
   if (type === "circle") return "https://example.com/profile-photo.jpg";
   if (type === "textarea")
     return "<p>Long text block with <strong>selected</strong> formatting support.</p>";
+  if (type === "list") return "First bullet item\nSecond bullet item\nThird bullet item";
+  if (type === "dynamicItems")
+    return "Job Title\nCompany - Country | Jan 2022 - Dec 2023\nDescribe this item in bullet points";
   if (type === "icon") return "";
   if (type === "horizontalLine" || type === "verticalLine" || type === "line")
     return "";
   return "Sample text";
 };
 
+
+const defaultDynamicItemFields = () => [
+  { key: "title", label: "Title", type: "text" as const, required: false, placeholder: "Senior Software Developer" },
+  { key: "subtitle", label: "Company / Institution", type: "text" as const, required: false, placeholder: "Company - Country" },
+  { key: "dateRange", label: "Date range", type: "text" as const, required: false, placeholder: "Jan 2022 - Dec 2023" },
+  { key: "description", label: "Description", type: "textarea" as const, required: false, placeholder: "Describe the role or achievement" },
+];
+
+const parseDynamicItemFields = (value: string) => {
+  const rows = value
+    .split(/\n+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (rows.length === 0) return defaultDynamicItemFields();
+
+  return rows.map((row, index) => {
+    const [rawKey, rawLabel, rawType] = row.split('|').map((item) => item?.trim());
+    const label = rawLabel || rawKey || `Item field ${index + 1}`;
+    return {
+      key: makeSafeFieldKey(rawKey || label),
+      label,
+      type: ((rawType || 'text') === 'textarea' ? 'textarea' : 'text') as 'text' | 'textarea',
+      required: false,
+      placeholder: label,
+    };
+  });
+};
+
+const serializeDynamicItemFields = (
+  fields?: ReturnType<typeof defaultDynamicItemFields>,
+) =>
+  (fields?.length ? fields : defaultDynamicItemFields())
+    .map((field) => `${field.key}|${field.label}|${field.type}`)
+    .join('\n');
+
+const isDynamicItemsType = (value?: string) => {
+  const type = (value ?? '').trim().toLowerCase();
+  return type === 'dynamicitems' || type === 'dynamic_items' || type === 'repeatable' || type === 'repeatableitems';
+};
+
+const toDynamicItemFieldSchemas = (fields: CvTemplateFieldSchema[]) =>
+  fields.map((field) => ({
+    key: field.key,
+    label: field.label,
+    type: (isDynamicItemsType(field.type) || field.type === 'photoUrl' || field.type === 'imageUrl'
+      ? 'text'
+      : field.type) as Exclude<CvTemplateFieldType, 'dynamicItems' | 'photoUrl' | 'imageUrl'>,
+    required: field.required,
+    placeholder: field.placeholder,
+  }));
+
+const dynamicItemFieldsToSectionFields = (
+  itemFields: ReturnType<typeof toDynamicItemFieldSchemas>,
+): CvTemplateFieldSchema[] =>
+  itemFields.map((field) => ({
+    key: field.key,
+    label: field.label,
+    type: field.type,
+    required: field.required ?? false,
+    placeholder: field.placeholder,
+    options: undefined,
+    listStyle: field.type === 'list' ? 'bullet' : undefined,
+  }));
+
+const normalizeHex = (value?: string) => (value ?? '').trim().toLowerCase();
+
+const inferColorRole = (
+  value: string | undefined,
+  explicitRole: CvBuilderThemeColorRole | undefined,
+  primaryColor: string,
+  accentColor: string,
+): CvBuilderThemeColorRole => {
+  if (explicitRole) return explicitRole;
+  const color = normalizeHex(value);
+  if (color && color === normalizeHex(primaryColor)) return 'primary';
+  if (color && color === normalizeHex(accentColor)) return 'accent';
+  return 'custom';
+};
+
+const colorFromRole = (
+  role: CvBuilderThemeColorRole,
+  customColor: string | undefined,
+  primaryColor: string,
+  accentColor: string,
+  fallbackColor: string,
+) => {
+  if (role === 'primary') return primaryColor;
+  if (role === 'accent') return accentColor;
+  return customColor && customColor !== 'transparent' ? customColor : fallbackColor;
+};
+
+const resolveThemeColor = (
+  value: string | undefined,
+  role: CvBuilderThemeColorRole | undefined,
+  primaryColor: string,
+  accentColor: string,
+) => {
+  if (role === 'primary') return primaryColor;
+  if (role === 'accent') return accentColor;
+  return value;
+};
+
 const createDesignerElement = (
   type: CvBuilderElementType,
   index: number,
   fontFamily: string,
+  primaryColor: string,
+  accentColor: string,
 ): CvTemplateSectionDesignerElement => {
   const isHorizontalLine = type === "horizontalLine" || type === "line";
   const isVerticalLine = type === "verticalLine";
   const isField = false;
   const fieldKey = makeSafeFieldKey(`${type}_${index + 1}`);
+  const isFillThemeElement =
+    isHorizontalLine || isVerticalLine || type === "rectangle" || type === "circle";
+  const isBorderThemeElement =
+    isHorizontalLine || isVerticalLine || type === "rectangle" || type === "circle";
 
   return {
     id: `${type}-${Date.now()}-${index}`,
     type,
     fieldKey,
-    label: `${type === "circle" ? "Photo" : type === "textarea" ? "Long text" : type === "icon" ? "Icon" : type} ${index + 1}`,
+    label: `${type === "circle" ? "Photo" : type === "textarea" ? "Long text" : type === "list" ? "List" : type === "dynamicItems" ? "Dynamic items" : type === "icon" ? "Icon" : type} ${index + 1}`,
     previewValue: getDefaultPreviewValue(type),
     isField,
     richTextFormat: type === "textarea" ? "html" : "plain",
+    listStyle: type === "list" ? "bullet" : undefined,
     iconName: type === "icon" ? "linkedin" : undefined,
     x: 35 + (index % 3) * 18,
     y: 35 + (index % 5) * 40,
@@ -342,7 +464,9 @@ const createDesignerElement = (
           ? 96
           : type === "icon"
             ? 34
-            : 250,
+            : type === "dynamicItems"
+              ? 300
+              : 250,
     height: isHorizontalLine
       ? 2
       : isVerticalLine
@@ -351,27 +475,19 @@ const createDesignerElement = (
           ? 96
           : type === "icon"
             ? 34
-            : type === "textarea"
+            : type === "textarea" || type === "list" || type === "dynamicItems"
               ? 120
               : 62,
     zIndex: index + 1,
     style: {
       fontFamily,
-      fontSize: type === "text" ? 16 : type === "textarea" ? 13 : 12,
+      fontSize: type === "text" ? 16 : type === "textarea" || type === "list" || type === "dynamicItems" ? 13 : 12,
       fontWeight: type === "text" ? 700 : 500,
       color: "#111827",
-      backgroundColor:
-        isHorizontalLine || isVerticalLine
-          ? "#111827"
-          : type === "rectangle"
-            ? "#F3F4F6"
-            : "transparent",
-      borderColor:
-        isHorizontalLine || isVerticalLine
-          ? "#111827"
-          : type === "rectangle" || type === "circle"
-            ? "#111827"
-            : "transparent",
+      backgroundColor: isFillThemeElement ? primaryColor : "transparent",
+      backgroundColorRole: isFillThemeElement ? "primary" : "custom",
+      borderColor: isBorderThemeElement ? accentColor : "transparent",
+      borderColorRole: isBorderThemeElement ? "accent" : "custom",
       borderWidth:
         isHorizontalLine || isVerticalLine
           ? 2
@@ -387,6 +503,8 @@ export default function CvSectionDesignerDialog({
   open,
   section,
   existingSections,
+  primaryColor,
+  accentColor,
   onClose,
   onSave,
 }: CvSectionDesignerDialogProps) {
@@ -395,6 +513,7 @@ export default function CvSectionDesignerDialog({
   const [keyEdited, setKeyEdited] = useState(false);
   const [canvasSize, setCanvasSize] = useState(defaultCanvas);
   const [fields, setFields] = useState<CvTemplateFieldSchema[]>([]);
+  const [isDynamicItemSection, setIsDynamicItemSection] = useState(false);
   const [elements, setElements] = useState<CvTemplateSectionDesignerElement[]>(
     [],
   );
@@ -412,10 +531,18 @@ export default function CvSectionDesignerDialog({
       section?.key ?? makeUniqueSectionKey(currentTitle, existingSections);
     const currentCanvas = section?.designerJson?.canvas ?? defaultCanvas;
 
+    const dynamicField = section?.fields.find((field) => isDynamicItemsType(field.type));
+    const dynamicItemConfig = section?.dynamicItem ?? section?.designerJson?.dynamicItem;
+    const dynamicEnabled = Boolean(dynamicItemConfig?.enabled || dynamicField);
+    const editableFields = dynamicEnabled && dynamicField?.itemFields?.length
+      ? dynamicItemFieldsToSectionFields(dynamicField.itemFields)
+      : section?.fields ?? [];
+
     setTitle(currentTitle);
     setSectionKey(currentKey);
     setKeyEdited(Boolean(section));
-    setFields(section?.fields ?? []);
+    setFields(editableFields);
+    setIsDynamicItemSection(dynamicEnabled);
     setCanvasSize({ width: currentCanvas.width, height: currentCanvas.height });
     const designerElements = section?.designerJson?.elements ?? [];
     setElements(designerElements);
@@ -451,7 +578,7 @@ export default function CvSectionDesignerDialog({
   };
 
   const addElement = (type: CvBuilderElementType) => {
-    const element = createDesignerElement(type, elements.length, "Inter");
+    const element = createDesignerElement(type, elements.length, "Inter", primaryColor, accentColor);
     setElements((current) => [...current, element]);
     if (element.isField) {
       setFields((current) => [
@@ -462,6 +589,9 @@ export default function CvSectionDesignerDialog({
           type: getDefaultFieldType(type),
           required: false,
           placeholder: element.previewValue,
+          listStyle: type === "list" ? "bullet" : undefined,
+          repeatGap: type === "dynamicItems" ? 10 : undefined,
+          itemFields: type === "dynamicItems" ? defaultDynamicItemFields() : undefined,
         },
       ]);
     }
@@ -477,8 +607,8 @@ export default function CvSectionDesignerDialog({
       ...element,
       width,
       height,
-      x: clamp(element.x, 0, canvasSize.width - width),
-      y: clamp(element.y, 0, canvasSize.height - height),
+      x: clamp(element.x, 0, Math.max(0, canvasSize.width - width)),
+      y: clamp(element.y, 0, Math.max(0, canvasSize.height - height)),
     };
   };
 
@@ -566,6 +696,12 @@ export default function CvSectionDesignerDialog({
         type: getDefaultFieldType(selectedElement.type),
         required: false,
         placeholder: selectedElement.previewValue,
+        listStyle: selectedElement.type === "list" ? (selectedElement.listStyle ?? "bullet") : undefined,
+        repeatGap: selectedElement.type === "dynamicItems" ? 10 : undefined,
+        itemFields: selectedElement.type === "dynamicItems" ? defaultDynamicItemFields() : undefined,
+        options: selectedElement.type === "dynamicItems"
+          ? defaultDynamicItemFields().map((item) => `${item.key}|${item.label}|${item.type}`)
+          : undefined,
       };
       updateElement({ ...selectedElement, isField: true, fieldKey: field.key });
       if (!selectedField) setFields((current) => [...current, field]);
@@ -673,12 +809,39 @@ export default function CvSectionDesignerDialog({
         .map((element) => element.fieldKey),
     );
     const registeredFields = fields.filter((field) => fieldKeys.has(field.key));
+    const dynamicItemFieldKey = makeSafeFieldKey(`${safeSectionKey}Items`);
+    const dynamicItemConfig = isDynamicItemSection
+      ? {
+          enabled: true,
+          fieldKey: dynamicItemFieldKey,
+          fieldLabel: title.trim() || "Custom Section",
+          repeatGap: 12,
+          itemFields: toDynamicItemFieldSchemas(registeredFields),
+        }
+      : undefined;
+    const savedFields: CvTemplateFieldSchema[] = dynamicItemConfig
+      ? [
+          {
+            key: dynamicItemConfig.fieldKey,
+            label: dynamicItemConfig.fieldLabel,
+            type: "dynamicItems",
+            required: false,
+            placeholder: undefined,
+            repeatGap: dynamicItemConfig.repeatGap,
+            itemFields: dynamicItemConfig.itemFields,
+            options: dynamicItemConfig.itemFields.map(
+              (item) => `${item.key}|${item.label}|${item.type}`,
+            ),
+          },
+        ]
+      : registeredFields;
 
     onSave({
       key: safeSectionKey,
       title: title.trim() || "Custom Section",
       required: false,
-      fields: registeredFields,
+      fields: savedFields,
+      dynamicItem: dynamicItemConfig,
       designerJson: {
         version: 3,
         canvas: fittedSection.canvas,
@@ -693,6 +856,7 @@ export default function CvSectionDesignerDialog({
           baseWidth: fittedSection.canvas.width,
           baseHeight: fittedSection.canvas.height,
         },
+        dynamicItem: dynamicItemConfig,
         elements: fittedSection.elements,
       },
     });
@@ -837,6 +1001,8 @@ export default function CvSectionDesignerDialog({
                     key={element.id}
                     canvasSize={canvasSize}
                     element={element}
+                    primaryColor={primaryColor}
+                    accentColor={accentColor}
                     selected={selectedElementId === element.id}
                     onSelect={setSelectedElementId}
                     onChange={updateElement}
@@ -870,6 +1036,20 @@ export default function CvSectionDesignerDialog({
                   }
                 />
                 Register as user input field
+              </label>
+              <label className="flex items-start gap-2 rounded-2xl bg-white p-3 text-xs font-black text-[#202420]">
+                <input
+                  type="checkbox"
+                  checked={isDynamicItemSection}
+                  onChange={(event) => setIsDynamicItemSection(event.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Register this section as a dynamic item
+                  <span className="mt-1 block text-[11px] font-semibold leading-4 text-black/45">
+                    The full section design repeats in Flutter when the user taps Add item.
+                  </span>
+                </span>
               </label>
 
               <label className={labelClass}>
@@ -930,6 +1110,30 @@ export default function CvSectionDesignerDialog({
                 <RichTextareaInspector
                   element={selectedElement}
                   onChange={updateElement}
+                  onTextChange={updateSelectedPreview}
+                />
+              ) : null}
+
+              {selectedElement.type === "list" ? (
+                <ListInspector
+                  element={selectedElement}
+                  field={selectedField}
+                  onChange={updateElement}
+                  onFieldChange={(field) =>
+                    selectedField ? updateField(selectedField.key, field) : undefined
+                  }
+                  onTextChange={updateSelectedPreview}
+                />
+              ) : null}
+
+              {selectedElement.type === "dynamicItems" ? (
+                <DynamicItemsInspector
+                  element={selectedElement}
+                  field={selectedField}
+                  onChange={updateElement}
+                  onFieldChange={(field) =>
+                    selectedField ? updateField(selectedField.key, field) : undefined
+                  }
                   onTextChange={updateSelectedPreview}
                 />
               ) : null}
@@ -1044,6 +1248,8 @@ export default function CvSectionDesignerDialog({
               <div className="grid grid-cols-2 gap-2">
                 {selectedElement.type === "text" ||
                 selectedElement.type === "textarea" ||
+                selectedElement.type === "list" ||
+                selectedElement.type === "dynamicItems" ||
                 selectedElement.type === "icon" ? (
                   <label className={labelClass}>
                     Text/Icon
@@ -1065,87 +1271,132 @@ export default function CvSectionDesignerDialog({
                 ) : null}
                 {selectedElement.type !== "horizontalLine" &&
                 selectedElement.type !== "verticalLine" ? (
-                  <div className={labelClass}>
-                    Fill
-                    <div className="flex gap-2">
-                      <input
-                        className={`${inputClass} flex-1`}
-                        type="color"
-                        value={
-                          selectedElement.style.backgroundColor === "transparent"
-                            ? "#ffffff"
-                            : (selectedElement.style.backgroundColor ?? "#ffffff")
-                        }
-                        onChange={(event) =>
-                          updateElement({
-                            ...selectedElement,
-                            style: {
-                              ...selectedElement.style,
-                              backgroundColor: event.target.value,
-                            },
-                          })
-                        }
-                      />
-                      <ClearColorButton
-                        label="Clear fill"
-                        onClick={() =>
-                          updateElement({
-                            ...selectedElement,
-                            style: {
-                              ...selectedElement.style,
-                              backgroundColor: "transparent",
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
+                  <ThemeColorControl
+                    label="Fill"
+                    role={inferColorRole(
+                      selectedElement.style.backgroundColor,
+                      selectedElement.style.backgroundColorRole,
+                      primaryColor,
+                      accentColor,
+                    )}
+                    color={selectedElement.style.backgroundColor}
+                    fallbackColor="#ffffff"
+                    onRoleChange={(role) =>
+                      updateElement({
+                        ...selectedElement,
+                        style: {
+                          ...selectedElement.style,
+                          backgroundColorRole: role,
+                          backgroundColor: colorFromRole(
+                            role,
+                            selectedElement.style.backgroundColor,
+                            primaryColor,
+                            accentColor,
+                            '#ffffff',
+                          ),
+                        },
+                      })
+                    }
+                    onColorChange={(color) =>
+                      updateElement({
+                        ...selectedElement,
+                        style: {
+                          ...selectedElement.style,
+                          backgroundColorRole: 'custom',
+                          backgroundColor: color,
+                        },
+                      })
+                    }
+                    onClear={() =>
+                      updateElement({
+                        ...selectedElement,
+                        style: {
+                          ...selectedElement.style,
+                          backgroundColorRole: 'custom',
+                          backgroundColor: 'transparent',
+                        },
+                      })
+                    }
+                  />
                 ) : null}
-                <div className={labelClass}>
-                  Border / line
-                  <div className="flex gap-2">
-                    <input
-                      className={`${inputClass} flex-1`}
-                      type="color"
-                      value={
-                        selectedElement.style.borderColor === "transparent"
-                          ? "#111827"
-                          : (selectedElement.style.borderColor ?? "#111827")
-                      }
-                      onChange={(event) =>
-                        updateElement({
-                          ...selectedElement,
-                          style: {
-                            ...selectedElement.style,
-                            borderColor: event.target.value,
-                            backgroundColor:
-                              selectedElement.type === "horizontalLine" ||
-                              selectedElement.type === "verticalLine"
-                                ? event.target.value
-                                : selectedElement.style.backgroundColor,
-                          },
-                        })
-                      }
-                    />
-                    <ClearColorButton
-                      label="Clear border"
-                      onClick={() =>
-                        updateElement({
-                          ...selectedElement,
-                          style: {
-                            ...selectedElement.style,
-                            borderColor: "transparent",
-                            backgroundColor:
-                              selectedElement.type === "horizontalLine" ||
-                              selectedElement.type === "verticalLine"
-                                ? "transparent"
-                                : selectedElement.style.backgroundColor,
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </div>
+                <ThemeColorControl
+                  label="Border / line"
+                  role={inferColorRole(
+                    selectedElement.style.borderColor,
+                    selectedElement.style.borderColorRole,
+                    primaryColor,
+                    accentColor,
+                  )}
+                  color={selectedElement.style.borderColor}
+                  fallbackColor="#111827"
+                  onRoleChange={(role) => {
+                    const color = colorFromRole(
+                      role,
+                      selectedElement.style.borderColor,
+                      primaryColor,
+                      accentColor,
+                      '#111827',
+                    );
+                    updateElement({
+                      ...selectedElement,
+                      style: {
+                        ...selectedElement.style,
+                        borderColorRole: role,
+                        borderColor: color,
+                        backgroundColorRole:
+                          selectedElement.type === "horizontalLine" ||
+                          selectedElement.type === "verticalLine"
+                            ? role
+                            : selectedElement.style.backgroundColorRole,
+                        backgroundColor:
+                          selectedElement.type === "horizontalLine" ||
+                          selectedElement.type === "verticalLine"
+                            ? color
+                            : selectedElement.style.backgroundColor,
+                      },
+                    });
+                  }}
+                  onColorChange={(color) =>
+                    updateElement({
+                      ...selectedElement,
+                      style: {
+                        ...selectedElement.style,
+                        borderColorRole: 'custom',
+                        borderColor: color,
+                        backgroundColorRole:
+                          selectedElement.type === "horizontalLine" ||
+                          selectedElement.type === "verticalLine"
+                            ? 'custom'
+                            : selectedElement.style.backgroundColorRole,
+                        backgroundColor:
+                          selectedElement.type === "horizontalLine" ||
+                          selectedElement.type === "verticalLine"
+                            ? color
+                            : selectedElement.style.backgroundColor,
+                      },
+                    })
+                  }
+                  onClear={() =>
+                    updateElement({
+                      ...selectedElement,
+                      style: {
+                        ...selectedElement.style,
+                        borderColorRole: 'custom',
+                        borderColor: 'transparent',
+                        backgroundColorRole:
+                          selectedElement.type === "horizontalLine" ||
+                          selectedElement.type === "verticalLine"
+                            ? 'custom'
+                            : selectedElement.style.backgroundColorRole,
+                        backgroundColor:
+                          selectedElement.type === "horizontalLine" ||
+                          selectedElement.type === "verticalLine"
+                            ? 'transparent'
+                            : selectedElement.style.backgroundColor,
+                      },
+                    })
+                  }
+                />
                 <NumberInput
                   label="Border"
                   value={selectedElement.style.borderWidth ?? 0}
@@ -1327,6 +1578,202 @@ function NormalTextInspector({
   );
 }
 
+
+function ListInspector({
+  element,
+  field,
+  onChange,
+  onFieldChange,
+  onTextChange,
+}: {
+  element: CvTemplateSectionDesignerElement;
+  field: CvTemplateFieldSchema | null;
+  onChange: (element: CvTemplateSectionDesignerElement) => void;
+  onFieldChange: (field: CvTemplateFieldSchema) => void;
+  onTextChange: (value: string) => void;
+}) {
+  const updateStyle = (
+    style: Partial<CvTemplateSectionDesignerElement["style"]>,
+  ) => onChange({ ...element, style: { ...element.style, ...style } });
+
+  const updateListStyle = (listStyle: "bullet" | "number") => {
+    onChange({ ...element, listStyle });
+    if (field) onFieldChange({ ...field, type: "list", listStyle });
+  };
+
+  return (
+    <section className="rounded-3xl border border-black/5 bg-white p-3">
+      <div className="mb-2 flex flex-wrap gap-2">
+        <FormatButton
+          active={element.style.fontWeight === 800}
+          icon={<Bold className="size-4" />}
+          onClick={() =>
+            updateStyle({
+              fontWeight: element.style.fontWeight === 800 ? 500 : 800,
+            })
+          }
+        />
+        <FormatButton
+          active={element.style.fontStyle === "italic"}
+          icon={<Italic className="size-4" />}
+          onClick={() =>
+            updateStyle({
+              fontStyle:
+                element.style.fontStyle === "italic" ? "normal" : "italic",
+            } as Partial<CvTemplateSectionDesignerElement["style"]>)
+          }
+        />
+        <FormatButton
+          active={(element.listStyle ?? field?.listStyle ?? "bullet") === "bullet"}
+          icon={<List className="size-4" />}
+          onClick={() => updateListStyle("bullet")}
+        />
+        <FormatButton
+          active={(element.listStyle ?? field?.listStyle) === "number"}
+          icon={<ListOrdered className="size-4" />}
+          onClick={() => updateListStyle("number")}
+        />
+      </div>
+      <div className="mb-2">
+        <AlignmentButtons
+          value={element.style.textAlign}
+          onChange={(textAlign) => updateStyle({ textAlign })}
+        />
+      </div>
+      <div className="mb-2 grid grid-cols-2 gap-2">
+        <NumberInput
+          label="Font size"
+          value={element.style.fontSize ?? 13}
+          onChange={(value) => updateStyle({ fontSize: value })}
+        />
+        <label className={labelClass}>
+          Font
+          <select
+            className={inputClass}
+            value={element.style.fontFamily ?? "Inter"}
+            onChange={(event) => updateStyle({ fontFamily: event.target.value })}
+          >
+            {fontOptions.map((font) => (
+              <option key={font} value={font}>
+                {font}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <label className={labelClass}>
+        List items
+        <textarea
+          className="min-h-32 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs normal-case text-[#202420] outline-none focus:border-[#006B3F]"
+          value={element.previewValue}
+          onChange={(event) => onTextChange(event.target.value)}
+          placeholder="Each new line becomes one bullet or number item"
+        />
+      </label>
+      <p className="mt-2 text-[11px] font-semibold normal-case leading-5 text-black/50">
+        Press Enter for a new item. Choose bullet or numbered style above.
+      </p>
+    </section>
+  );
+}
+
+function DynamicItemsInspector({
+  element,
+  field,
+  onChange,
+  onFieldChange,
+  onTextChange,
+}: {
+  element: CvTemplateSectionDesignerElement;
+  field: CvTemplateFieldSchema | null;
+  onChange: (element: CvTemplateSectionDesignerElement) => void;
+  onFieldChange: (field: CvTemplateFieldSchema) => void;
+  onTextChange: (value: string) => void;
+}) {
+  const updateStyle = (
+    style: Partial<CvTemplateSectionDesignerElement["style"]>,
+  ) => onChange({ ...element, style: { ...element.style, ...style } });
+
+  const itemFieldText = serializeDynamicItemFields(field?.itemFields as ReturnType<typeof defaultDynamicItemFields> | undefined);
+
+  const updateItemFields = (value: string) => {
+    if (!field) return;
+    onFieldChange({
+      ...field,
+      type: "dynamicItems",
+      itemFields: parseDynamicItemFields(value),
+      options: parseDynamicItemFields(value).map(
+        (item) => `${item.key}|${item.label}|${item.type}`,
+      ),
+    });
+  };
+
+  return (
+    <section className="rounded-3xl border border-black/5 bg-white p-3">
+      <div className="mb-2 flex flex-wrap gap-2">
+        <FormatButton
+          active={element.style.fontWeight === 800}
+          icon={<Bold className="size-4" />}
+          onClick={() =>
+            updateStyle({
+              fontWeight: element.style.fontWeight === 800 ? 500 : 800,
+            })
+          }
+        />
+        <FormatButton
+          active={element.style.fontStyle === "italic"}
+          icon={<Italic className="size-4" />}
+          onClick={() =>
+            updateStyle({
+              fontStyle:
+                element.style.fontStyle === "italic" ? "normal" : "italic",
+            } as Partial<CvTemplateSectionDesignerElement["style"]>)
+          }
+        />
+      </div>
+      <div className="mb-2">
+        <AlignmentButtons
+          value={element.style.textAlign}
+          onChange={(textAlign) => updateStyle({ textAlign })}
+        />
+      </div>
+      <div className="mb-2 grid grid-cols-2 gap-2">
+        <NumberInput
+          label="Font size"
+          value={element.style.fontSize ?? 13}
+          onChange={(value) => updateStyle({ fontSize: value })}
+        />
+        <NumberInput
+          label="Repeat gap"
+          value={field?.repeatGap ?? 10}
+          onChange={(value) => field ? onFieldChange({ ...field, repeatGap: value }) : undefined}
+        />
+      </div>
+      <label className={labelClass}>
+        Item design preview
+        <textarea
+          className="min-h-24 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs normal-case text-[#202420] outline-none focus:border-[#006B3F]"
+          value={element.previewValue}
+          onChange={(event) => onTextChange(event.target.value)}
+          placeholder="Preview for one repeated item"
+        />
+      </label>
+      <label className={`${labelClass} mt-2`}>
+        Required fields for each item
+        <textarea
+          className="min-h-32 w-full rounded-xl border border-black/10 bg-white px-3 py-2 text-xs normal-case text-[#202420] outline-none focus:border-[#006B3F]"
+          value={itemFieldText}
+          onChange={(event) => updateItemFields(event.target.value)}
+          placeholder="title|Title|text\nsubtitle|Company|text\ndescription|Description|textarea"
+        />
+      </label>
+      <p className="mt-2 text-[11px] font-semibold normal-case leading-5 text-black/50">
+        Flutter will show Add item. Each added item repeats this component style in the final CV.
+      </p>
+    </section>
+  );
+}
+
 function RichTextareaInspector({
   element,
   onChange,
@@ -1347,14 +1794,52 @@ function RichTextareaInspector({
     }
   }, [element.id, element.previewValue]);
 
-  const applyCommand = (command: string, value?: string) => {
-    editorRef.current?.focus();
-    document.execCommand("styleWithCSS", false, "true");
-    document.execCommand(command, false, value);
+  const syncEditorValue = () => {
     window.setTimeout(
       () => onTextChange(editorRef.current?.innerHTML ?? ""),
       0,
     );
+  };
+
+  const placeCursorAtEnd = (node: HTMLElement) => {
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  };
+
+  const applyCommand = (command: string, value?: string) => {
+    editorRef.current?.focus();
+    document.execCommand("styleWithCSS", false, "true");
+    document.execCommand(command, false, value);
+    syncEditorValue();
+  };
+
+  const applyListCommand = (ordered: boolean) => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.focus();
+    document.execCommand("styleWithCSS", false, "true");
+    const command = ordered ? "insertOrderedList" : "insertUnorderedList";
+    const fallbackHtml = ordered
+      ? "<ol><li>List item</li></ol>"
+      : "<ul><li>List item</li></ul>";
+
+    if (!editor.innerText.trim()) {
+      editor.innerHTML = fallbackHtml;
+      placeCursorAtEnd(editor);
+      onTextChange(editor.innerHTML);
+      return;
+    }
+
+    const applied = document.execCommand(command, false);
+    if (!applied) {
+      document.execCommand("insertHTML", false, fallbackHtml);
+    }
+    syncEditorValue();
   };
 
   const applyAlignment = (textAlign: "left" | "center" | "right" | "justify") => {
@@ -1387,11 +1872,11 @@ function RichTextareaInspector({
         />
         <FormatButton
           label="•"
-          onClick={() => applyCommand("insertUnorderedList")}
+          onClick={() => applyListCommand(false)}
         />
         <FormatButton
           label="1."
-          onClick={() => applyCommand("insertOrderedList")}
+          onClick={() => applyListCommand(true)}
         />
         <FormatButton
           icon={<LinkIcon className="size-4" />}
@@ -1464,12 +1949,16 @@ function RichTextareaInspector({
 function DesignerElement({
   canvasSize,
   element,
+  primaryColor,
+  accentColor,
   selected,
   onSelect,
   onChange,
 }: {
   canvasSize: { width: number; height: number };
   element: CvTemplateSectionDesignerElement;
+  primaryColor: string;
+  accentColor: string;
   selected: boolean;
   onSelect: (id: string) => void;
   onChange: (element: CvTemplateSectionDesignerElement) => void;
@@ -1478,18 +1967,36 @@ function DesignerElement({
     element.type === "horizontalLine" || element.type === "line";
   const isVerticalLine = element.type === "verticalLine";
   const lineWidth = Math.max(1, element.style.borderWidth ?? 2);
+  const resolvedTextColor = resolveThemeColor(
+    element.style.color,
+    element.style.colorRole,
+    primaryColor,
+    accentColor,
+  );
+  const resolvedFillColor = resolveThemeColor(
+    element.style.backgroundColor,
+    element.style.backgroundColorRole,
+    primaryColor,
+    accentColor,
+  );
+  const resolvedBorderColor = resolveThemeColor(
+    element.style.borderColor,
+    element.style.borderColorRole,
+    primaryColor,
+    accentColor,
+  );
   const style: CSSProperties = {
     left: element.x,
     top: element.y,
     width: isVerticalLine ? lineWidth : element.width,
     height: isHorizontalLine ? lineWidth : element.height,
     zIndex: element.zIndex,
-    color: element.style.color,
+    color: resolvedTextColor,
     backgroundColor:
       isHorizontalLine || isVerticalLine
-        ? (element.style.borderColor ?? "#111827")
-        : element.style.backgroundColor,
-    borderColor: element.style.borderColor ?? "transparent",
+        ? (resolvedBorderColor ?? "#111827")
+        : resolvedFillColor,
+    borderColor: resolvedBorderColor ?? "transparent",
     borderWidth:
       isHorizontalLine || isVerticalLine ? 0 : (element.style.borderWidth ?? 0),
     borderStyle: "solid",
@@ -1689,6 +2196,31 @@ function DesignerElementContent({
         dangerouslySetInnerHTML={{ __html: element.previewValue || "" }}
       />
     );
+  if (element.type === "list") {
+    const items = element.previewValue
+      .split(/\n+/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const isNumberList = element.listStyle === "number";
+    const ListTag = isNumberList ? "ol" : "ul";
+    return (
+      <ListTag
+        className="h-full w-full overflow-hidden p-1 leading-tight"
+        style={{
+          listStylePosition: "inside",
+          listStyleType: isNumberList ? "decimal" : "disc",
+        }}
+      >
+        {items.length ? items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>) : <li>List item</li>}
+      </ListTag>
+    );
+  }
+  if (element.type === "dynamicItems")
+    return (
+      <div className="h-full w-full overflow-hidden whitespace-pre-line p-1 leading-tight">
+        {element.previewValue || "Dynamic items preview"}
+      </div>
+    );
   const textNode = (
     <div className="h-full w-full whitespace-pre-line p-1 leading-tight">
       {element.previewValue || element.label}
@@ -1714,6 +2246,8 @@ function PaletteIcon({ type }: { type: string }) {
   if (type === "horizontalLine" || type === "verticalLine" || type === "line")
     return <Minus className="size-4" />;
   if (type === "textarea") return <TextCursorInput className="size-4" />;
+  if (type === "list") return <List className="size-4" />;
+  if (type === "dynamicItems") return <Repeat className="size-4" />;
   if (type === "icon") return <LinkedinIcon className="size-4" />;
   return <Type className="size-4" />;
 }
@@ -1749,12 +2283,62 @@ function FormatButton({
   return (
     <button
       type="button"
-      onMouseDown={(event) => event.preventDefault()}
-      onClick={onClick}
+      onMouseDown={(event) => {
+        event.preventDefault();
+        onClick();
+      }}
       className={`rounded-xl border p-2 text-[#202420] hover:border-[#006B3F] ${active ? "border-[#006B3F] bg-[#E6F6F0]" : "border-black/10 bg-[#F7F8F5]"}`}
     >
       {icon ?? <span className="text-xs font-black">{label}</span>}
     </button>
+  );
+}
+
+function ThemeColorControl({
+  label,
+  role,
+  color,
+  fallbackColor,
+  onRoleChange,
+  onColorChange,
+  onClear,
+}: {
+  label: string;
+  role: CvBuilderThemeColorRole;
+  color?: string;
+  fallbackColor: string;
+  onRoleChange: (role: CvBuilderThemeColorRole) => void;
+  onColorChange: (color: string) => void;
+  onClear: () => void;
+}) {
+  const colorValue = color === 'transparent' ? fallbackColor : (color ?? fallbackColor);
+
+  return (
+    <div className={labelClass}>
+      {label}
+      <select
+        className={inputClass}
+        value={role}
+        onChange={(event) =>
+          onRoleChange(event.target.value as CvBuilderThemeColorRole)
+        }
+      >
+        <option value="primary">Primary</option>
+        <option value="accent">Accent</option>
+        <option value="custom">Custom</option>
+      </select>
+      {role === 'custom' ? (
+        <div className="flex gap-2">
+          <input
+            className={`${inputClass} flex-1`}
+            type="color"
+            value={colorValue}
+            onChange={(event) => onColorChange(event.target.value)}
+          />
+          <ClearColorButton label={`Clear ${label}`} onClick={onClear} />
+        </div>
+      ) : null}
+    </div>
   );
 }
 

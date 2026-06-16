@@ -158,7 +158,7 @@ export const buildDefaultElements = (
         width: 292,
         height: 1123,
         zIndex: 1,
-        style: { backgroundColor: darkColor, borderRadius: 0, borderWidth: 0 },
+        style: { backgroundColor: darkColor, backgroundColorRole: 'primary', borderRadius: 0, borderWidth: 0 },
       }),
       createElement({
         id: 'modern-photo-frame',
@@ -172,7 +172,7 @@ export const buildDefaultElements = (
         height: 180,
         zIndex: 2,
         contentBinding: { sectionKey: 'contact', fieldKey: 'profilePhoto', mode: 'dynamic', autoHeight: false, allowPageBreak: false, collapseWhenEmpty: true, reflowSiblings: true },
-        style: { backgroundColor: '#E5E7EB', borderColor: '#FFFFFF', borderWidth: 4, borderRadius: 999 },
+        style: { backgroundColor: '#E5E7EB', backgroundColorRole: 'accent', borderColor: '#FFFFFF', borderColorRole: 'custom', borderWidth: 4, borderRadius: 999 },
       }),
       text({
         id: 'modern-name', fieldKey: 'fullName', label: 'Name', placeholder: 'Your Name',
@@ -243,7 +243,7 @@ export const buildDefaultElements = (
       width: 630,
       height: 2,
       zIndex: 2,
-      style: { backgroundColor: primaryColor, borderColor: primaryColor, borderWidth: 2 },
+      style: { backgroundColor: primaryColor, backgroundColorRole: 'primary', borderColor: primaryColor, borderColorRole: 'primary', borderWidth: 2 },
     }),
     text({
       id: 'classic-summary-heading',
@@ -269,7 +269,7 @@ export const buildDefaultElements = (
       height: 90,
       zIndex: 2,
       contentBinding: { sectionKey: 'summary', fieldKey: 'summary', mode: 'dynamic', autoHeight: true, allowPageBreak: true },
-      style: { fontFamily, fontSize: 12, color: '#111827', backgroundColor: accentColor, textAlign: 'justify' },
+      style: { fontFamily, fontSize: 12, color: '#111827', backgroundColor: accentColor, backgroundColorRole: 'accent', textAlign: 'justify' },
     }),
   ];
 };

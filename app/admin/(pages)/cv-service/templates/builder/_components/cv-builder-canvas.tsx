@@ -5,6 +5,7 @@ import { Globe, Mail, MapPin, Phone } from 'lucide-react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type {
   CvBuilderLayoutElement,
+  CvBuilderThemeColorRole,
   CvTemplatePageSize,
   CvTemplateSectionDesignerElement,
 } from '@/types/cv-template/cv_template_type';
@@ -17,6 +18,10 @@ interface CvBuilderCanvasProps {
   onSelect: (elementId: string) => void;
   onChange: (element: CvBuilderLayoutElement) => void;
   onDelete: (elementId: string) => void;
+  primaryColor: string;
+  accentColor: string;
+  onSaveDefaultLayout: () => void;
+  isSavingDefaultLayout: boolean;
 }
 
 type ResizeDirection = 'right' | 'bottom' | 'corner';
@@ -119,6 +124,17 @@ const stripHtml = (value: string) =>
     .replace(/&gt;/g, '>')
     .trim();
 
+const resolveThemeColor = (
+  value: string | undefined,
+  role: CvBuilderThemeColorRole | undefined,
+  primaryColor: string,
+  accentColor: string,
+) => {
+  if (role === 'primary') return primaryColor;
+  if (role === 'accent') return accentColor;
+  return value;
+};
+
 export default function CvBuilderCanvas({
   pageSize,
   elements,
@@ -126,6 +142,10 @@ export default function CvBuilderCanvas({
   onSelect,
   onChange,
   onDelete,
+  primaryColor,
+  accentColor,
+  onSaveDefaultLayout,
+  isSavingDefaultLayout,
 }: CvBuilderCanvasProps) {
   const page = pageSizes[pageSize];
   const containerRef = useRef<HTMLDivElement>(null);
@@ -193,6 +213,16 @@ export default function CvBuilderCanvas({
       ref={containerRef}
       className="min-h-[calc(100vh-220px)] overflow-auto rounded-[30px] bg-[#E9E9E2] p-6"
     >
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={onSaveDefaultLayout}
+          disabled={isSavingDefaultLayout}
+          className="rounded-full bg-[#006B3F] px-5 py-2 text-xs font-black text-white shadow-sm transition hover:bg-[#005231] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isSavingDefaultLayout ? 'Saving default...' : 'Save as Default Layout'}
+        </button>
+      </div>
       <div
         className="mx-auto origin-top"
         style={{ width: page.width * scale, height: page.height * scale }}
@@ -210,6 +240,8 @@ export default function CvBuilderCanvas({
             <CanvasElement
               key={element.id}
               element={element}
+              primaryColor={primaryColor}
+              accentColor={accentColor}
               pageHeight={page.height}
               pageWidth={page.width}
               scale={scale}
@@ -226,6 +258,8 @@ export default function CvBuilderCanvas({
 
 function CanvasElement({
   element,
+  primaryColor,
+  accentColor,
   pageHeight,
   pageWidth,
   scale,
@@ -234,6 +268,8 @@ function CanvasElement({
   onChange,
 }: {
   element: CvBuilderLayoutElement;
+  primaryColor: string;
+  accentColor: string;
   pageHeight: number;
   pageWidth: number;
   scale: number;
@@ -244,6 +280,24 @@ function CanvasElement({
   const isHorizontalLine = element.type === 'horizontalLine' || element.type === 'line';
   const isVerticalLine = element.type === 'verticalLine';
   const lineWidth = Math.max(1, element.style.borderWidth ?? (isVerticalLine ? element.width : element.height) ?? 2);
+  const resolvedTextColor = resolveThemeColor(
+    element.style.color,
+    element.style.colorRole,
+    primaryColor,
+    accentColor,
+  );
+  const resolvedFillColor = resolveThemeColor(
+    element.style.backgroundColor,
+    element.style.backgroundColorRole,
+    primaryColor,
+    accentColor,
+  );
+  const resolvedBorderColor = resolveThemeColor(
+    element.style.borderColor,
+    element.style.borderColorRole,
+    primaryColor,
+    accentColor,
+  );
 
   const baseStyle: CSSProperties = {
     left: element.x,
@@ -251,12 +305,12 @@ function CanvasElement({
     width: isVerticalLine ? lineWidth : element.width,
     height: isHorizontalLine ? lineWidth : element.height,
     zIndex: element.zIndex,
-    color: element.style.color,
+    color: resolvedTextColor,
     backgroundColor:
       isHorizontalLine || isVerticalLine
-        ? element.style.borderColor ?? element.style.backgroundColor ?? '#111827'
-        : element.style.backgroundColor,
-    borderColor: element.style.borderColor ?? 'transparent',
+        ? resolvedBorderColor ?? resolvedFillColor ?? '#111827'
+        : resolvedFillColor,
+    borderColor: resolvedBorderColor ?? 'transparent',
     borderWidth: isHorizontalLine || isVerticalLine ? 0 : element.style.borderWidth ?? 0,
     borderStyle: 'solid',
     borderRadius: element.type === 'circle' ? '9999px' : element.style.borderRadius ?? 0,
@@ -371,32 +425,32 @@ function CanvasElement({
   return (
     <div
       onPointerDown={startDrag}
-      className={`absolute overflow-hidden ${element.locked ? 'cursor-not-allowed' : 'cursor-move'} ${
+      className={`absolute ${selected ? 'overflow-visible' : 'overflow-hidden'} ${element.locked ? 'cursor-not-allowed' : 'cursor-move'} ${
         selected ? 'ring-2 ring-[#006B3F] ring-offset-2' : ''
       }`}
       style={baseStyle}
     >
-      <ElementContent element={element} />
+      <ElementContent element={element} primaryColor={primaryColor} accentColor={accentColor} />
       {selected ? (
         <>
           {!isVerticalLine ? (
             <span
               data-resize-handle="true"
               onPointerDown={(event) => resize('right', event)}
-              className="absolute -right-1 top-0 h-full w-2 cursor-ew-resize bg-transparent"
+              className="absolute right-0 top-0 z-30 h-full w-2 cursor-ew-resize bg-[#006B3F]/20 hover:bg-[#006B3F]/40"
             />
           ) : null}
           {!isHorizontalLine ? (
             <span
               data-resize-handle="true"
               onPointerDown={(event) => resize('bottom', event)}
-              className="absolute -bottom-1 left-0 h-2 w-full cursor-ns-resize bg-transparent"
+              className="absolute bottom-0 left-0 z-30 h-2 w-full cursor-ns-resize bg-[#006B3F]/20 hover:bg-[#006B3F]/40"
             />
           ) : null}
           <span
             data-resize-handle="true"
             onPointerDown={(event) => resize('corner', event)}
-            className="absolute -bottom-1 -right-1 size-4 cursor-nwse-resize bg-transparent"
+            className="absolute bottom-0 right-0 z-40 size-4 cursor-nwse-resize rounded-full border-2 border-[#006B3F] bg-white shadow"
           />
         </>
       ) : null}
@@ -404,7 +458,7 @@ function CanvasElement({
   );
 }
 
-function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
+function ElementContent({ element, primaryColor, accentColor }: { element: CvBuilderLayoutElement; primaryColor: string; accentColor: string }) {
   if (
     element.type === 'rectangle' ||
     element.type === 'circle' ||
@@ -417,7 +471,7 @@ function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
 
   if (element.type === 'section') {
     if (element.sectionDesignerJson?.elements?.length) {
-      return <SectionDesignerPreview element={element} />;
+      return <SectionDesignerPreview element={element} primaryColor={primaryColor} accentColor={accentColor} />;
     }
 
     return (
@@ -439,6 +493,27 @@ function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
 
   const value = previewValues[element.contentBinding?.fieldKey ?? element.fieldKey] ?? element.placeholder;
 
+  if (element.type === 'list') {
+    const items = stripHtml(value).split(/\n+/).map((item) => item.replace(/^•\s*/, '').trim()).filter(Boolean);
+    const isNumberList = element.listStyle === 'number';
+    const ListTag = isNumberList ? 'ol' : 'ul';
+    return (
+      <ListTag
+        className="h-full w-full overflow-hidden p-0.5 leading-tight"
+        style={{
+          listStylePosition: 'inside',
+          listStyleType: isNumberList ? 'decimal' : 'disc',
+        }}
+      >
+        {items.length ? items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>) : <li>{element.label}</li>}
+      </ListTag>
+    );
+  }
+
+  if (element.type === 'dynamicItems') {
+    return <div className="h-full w-full whitespace-pre-line p-0.5 leading-tight">{stripHtml(value)}</div>;
+  }
+
   if (element.type === 'textarea' || element.richTextFormat === 'html') {
     const htmlValue = value.trim().startsWith('<') ? value : stripHtml(value);
 
@@ -454,7 +529,7 @@ function ElementContent({ element }: { element: CvBuilderLayoutElement }) {
   );
 }
 
-function SectionDesignerPreview({ element }: { element: CvBuilderLayoutElement }) {
+function SectionDesignerPreview({ element, primaryColor, accentColor }: { element: CvBuilderLayoutElement; primaryColor: string; accentColor: string }) {
   const designerJson = element.sectionDesignerJson;
   if (!designerJson) return null;
 
@@ -462,30 +537,33 @@ function SectionDesignerPreview({ element }: { element: CvBuilderLayoutElement }
   const scaleY = element.height / designerJson.canvas.height;
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-transparent">
+    <div className="pointer-events-none relative h-full w-full overflow-hidden bg-transparent">
       {designerJson.elements
         .slice()
         .sort((first, second) => first.zIndex - second.zIndex)
         .map((child) => (
-          <SectionPreviewElement key={child.id} element={child} scaleX={scaleX} scaleY={scaleY} />
+          <SectionPreviewElement key={child.id} element={child} scaleX={scaleX} scaleY={scaleY} primaryColor={primaryColor} accentColor={accentColor} />
         ))}
     </div>
   );
 }
 
-function SectionPreviewElement({ element, scaleX, scaleY }: { element: CvTemplateSectionDesignerElement; scaleX: number; scaleY: number }) {
+function SectionPreviewElement({ element, scaleX, scaleY, primaryColor, accentColor }: { element: CvTemplateSectionDesignerElement; scaleX: number; scaleY: number; primaryColor: string; accentColor: string }) {
   const isHorizontalLine = element.type === 'horizontalLine' || element.type === 'line';
   const isVerticalLine = element.type === 'verticalLine';
   const lineWidth = Math.max(1, element.style.borderWidth ?? 2);
+  const resolvedTextColor = resolveThemeColor(element.style.color, element.style.colorRole, primaryColor, accentColor);
+  const resolvedFillColor = resolveThemeColor(element.style.backgroundColor, element.style.backgroundColorRole, primaryColor, accentColor);
+  const resolvedBorderColor = resolveThemeColor(element.style.borderColor, element.style.borderColorRole, primaryColor, accentColor);
   const style: CSSProperties = {
     left: element.x * scaleX,
     top: element.y * scaleY,
     width: (isVerticalLine ? lineWidth : element.width) * scaleX,
     height: (isHorizontalLine ? lineWidth : element.height) * scaleY,
     zIndex: element.zIndex,
-    color: element.style.color,
-    backgroundColor: isHorizontalLine || isVerticalLine ? element.style.borderColor ?? '#111827' : element.style.backgroundColor,
-    borderColor: element.style.borderColor ?? 'transparent',
+    color: resolvedTextColor,
+    backgroundColor: isHorizontalLine || isVerticalLine ? resolvedBorderColor ?? '#111827' : resolvedFillColor,
+    borderColor: resolvedBorderColor ?? 'transparent',
     borderWidth: isHorizontalLine || isVerticalLine ? 0 : element.style.borderWidth ?? 0,
     borderStyle: 'solid',
     borderRadius: element.type === 'circle' ? '9999px' : element.style.borderRadius ?? 0,
@@ -509,6 +587,23 @@ function SectionPreviewContent({ element }: { element: CvTemplateSectionDesigner
   if (element.type === 'circle' && element.isField && element.previewValue.startsWith('http')) return <img src={element.previewValue} alt="Section preview" className="h-full w-full object-cover" />;
   if (element.type === 'circle') return null;
   if (element.type === 'icon') return <div className="flex h-full w-full items-center justify-center"><IconGraphic name={element.iconName ?? 'linkedin'} className="shrink-0" style={{ width: element.style.fontSize ?? Math.min(element.width, element.height) * 0.7, height: element.style.fontSize ?? Math.min(element.width, element.height) * 0.7 }} /></div>;
+  if (element.type === 'list') {
+    const items = stripHtml(element.previewValue || '').split(/\n+/).map((item) => item.replace(/^•\s*/, '').trim()).filter(Boolean);
+    const isNumberList = element.listStyle === 'number';
+    const ListTag = isNumberList ? 'ol' : 'ul';
+    return (
+      <ListTag
+        className="h-full w-full overflow-hidden p-0.5 leading-tight"
+        style={{
+          listStylePosition: 'inside',
+          listStyleType: isNumberList ? 'decimal' : 'disc',
+        }}
+      >
+        {items.map((item, index) => <li key={`${item}-${index}`}>{item}</li>)}
+      </ListTag>
+    );
+  }
+  if (element.type === 'dynamicItems') return <div className="h-full w-full overflow-hidden whitespace-pre-line p-0.5 leading-tight">{element.previewValue || element.label}</div>;
   if (element.type === 'textarea' || element.richTextFormat === 'html') return <div className="h-full w-full overflow-hidden p-0.5 leading-tight [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5" dangerouslySetInnerHTML={{ __html: element.previewValue || '' }} />;
   const content = <div className="h-full w-full whitespace-pre-line p-0.5 leading-tight">{element.previewValue || element.label}</div>;
   return element.hyperlink ? <a href={element.hyperlink} target="_blank" rel="noreferrer" className="block h-full w-full">{content}</a> : content;

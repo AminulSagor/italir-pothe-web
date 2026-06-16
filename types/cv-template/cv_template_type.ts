@@ -11,7 +11,11 @@ export type CvBuilderElementType =
   | 'verticalLine'
   | 'line'
   | 'icon'
+  | 'list'
+  | 'dynamicItems'
   | 'section';
+
+export type CvBuilderThemeColorRole = 'primary' | 'accent' | 'custom';
 
 export type CvBuilderFieldKey =
   | 'fullName'
@@ -38,7 +42,16 @@ export type CvTemplateFieldType =
   | 'date'
   | 'imageUrl'
   | 'photoUrl'
-  | 'website';
+  | 'website'
+  | 'dynamicItems';
+
+export interface CvTemplateDynamicItemFieldSchema {
+  key: string;
+  label: string;
+  type: Exclude<CvTemplateFieldType, 'dynamicItems' | 'photoUrl' | 'imageUrl'>;
+  required?: boolean;
+  placeholder?: string;
+}
 
 export interface CvTemplateFieldSchema {
   key: string;
@@ -47,6 +60,9 @@ export interface CvTemplateFieldSchema {
   required: boolean;
   placeholder?: string;
   options?: string[];
+  listStyle?: 'bullet' | 'number';
+  repeatGap?: number;
+  itemFields?: CvTemplateDynamicItemFieldSchema[];
 }
 
 export interface CvTemplateSectionDesignerElement {
@@ -59,6 +75,7 @@ export interface CvTemplateSectionDesignerElement {
   richTextFormat?: 'plain' | 'html';
   hyperlink?: string;
   iconName?: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email';
+  listStyle?: 'bullet' | 'number';
   contentFlow?: CvBuilderElementFlowSchema;
   x: number;
   y: number;
@@ -66,6 +83,14 @@ export interface CvTemplateSectionDesignerElement {
   height: number;
   zIndex: number;
   style: CvBuilderElementStyle;
+}
+
+export interface CvTemplateSectionDynamicItemSchema {
+  enabled: boolean;
+  fieldKey: string;
+  fieldLabel: string;
+  repeatGap?: number;
+  itemFields: CvTemplateDynamicItemFieldSchema[];
 }
 
 export interface CvTemplateSectionDesignerSchema {
@@ -87,6 +112,7 @@ export interface CvTemplateSectionDesignerSchema {
     baseHeight: number;
   };
   elements: CvTemplateSectionDesignerElement[];
+  dynamicItem?: CvTemplateSectionDynamicItemSchema;
 }
 
 export interface CvTemplateSectionSchema {
@@ -95,6 +121,7 @@ export interface CvTemplateSectionSchema {
   required: boolean;
   fields: CvTemplateFieldSchema[];
   designerJson?: CvTemplateSectionDesignerSchema;
+  dynamicItem?: CvTemplateSectionDynamicItemSchema;
 }
 
 
@@ -119,6 +146,9 @@ export interface CvBuilderElementStyle {
   textAlign?: 'left' | 'center' | 'right' | 'justify';
   lineHeight?: number;
   opacity?: number;
+  colorRole?: CvBuilderThemeColorRole;
+  backgroundColorRole?: CvBuilderThemeColorRole;
+  borderColorRole?: CvBuilderThemeColorRole;
 }
 
 export interface CvBuilderElementFlowSchema {
@@ -157,6 +187,7 @@ export interface CvBuilderLayoutElement {
   hyperlink?: string;
   iconName?: 'github' | 'linkedin' | 'weblink' | 'phone' | 'location' | 'email';
   richTextFormat?: 'plain' | 'html';
+  listStyle?: 'bullet' | 'number';
   sectionDesignerJson?: CvTemplateSectionDesignerSchema;
   contentBinding?: CvBuilderContentBinding;
   style: CvBuilderElementStyle;
@@ -244,4 +275,34 @@ export interface CvTemplateDetailsResponse {
 export interface DeleteCvTemplateResponse {
   message: string;
   templateId: string;
+}
+
+export interface CvTemplateDefaultLayoutItem {
+  id: string;
+  styleType: CvTemplateStyleType;
+  pageSize: CvTemplatePageSize;
+  fontFamily: string;
+  primaryColor: string;
+  accentColor: string;
+  schema: CvTemplateSchema;
+  updatedByAdminId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CvTemplateDefaultLayoutResponse {
+  layout: CvTemplateDefaultLayoutItem | null;
+}
+
+export interface CvTemplateDefaultLayoutMutationResponse {
+  message: string;
+  layout: CvTemplateDefaultLayoutItem;
+}
+
+export interface CvTemplateDefaultLayoutPayload {
+  pageSize: CvTemplatePageSize;
+  fontFamily: string;
+  primaryColor: string;
+  accentColor: string;
+  schema: CvTemplateSchema;
 }

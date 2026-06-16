@@ -1,9 +1,13 @@
 import { serviceClient } from '@/service/base/service_client';
 import type {
+  CvTemplateDefaultLayoutMutationResponse,
+  CvTemplateDefaultLayoutPayload,
+  CvTemplateDefaultLayoutResponse,
   CvTemplateDetailsResponse,
   CvTemplateListResponse,
   CvTemplateMutationResponse,
   CvTemplatePayload,
+  CvTemplateStyleType,
   DeleteCvTemplateResponse,
 } from '@/types/cv-template/cv_template_type';
 
@@ -35,4 +39,18 @@ export const updateCvTemplate = (
 export const deleteCvTemplate = (templateId: string) =>
   serviceClient.delete<DeleteCvTemplateResponse>(
     `/admin/cv-templates/${templateId}`,
+  );
+
+export const getCvTemplateDefaultLayout = (styleType: CvTemplateStyleType) =>
+  serviceClient.get<CvTemplateDefaultLayoutResponse>(
+    `/admin/cv-templates/default-layouts/${styleType}`,
+  );
+
+export const saveCvTemplateDefaultLayout = (
+  styleType: CvTemplateStyleType,
+  payload: CvTemplateDefaultLayoutPayload,
+) =>
+  serviceClient.put<CvTemplateDefaultLayoutMutationResponse>(
+    `/admin/cv-templates/default-layouts/${styleType}`,
+    payload,
   );

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type {
   CvBuilderLayoutElement,
+  CvBuilderThemeColorRole,
   CvTemplatePageSize,
   CvTemplateSectionSchema,
 } from "@/types/cv-template/cv_template_type";
@@ -76,6 +77,33 @@ const stripHtml = (value: string) =>
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .trim();
+
+const normalizeHex = (value?: string) => (value ?? '').trim().toLowerCase();
+
+const inferColorRole = (
+  value: string | undefined,
+  explicitRole: CvBuilderThemeColorRole | undefined,
+  primaryColor: string,
+  accentColor: string,
+): CvBuilderThemeColorRole => {
+  if (explicitRole) return explicitRole;
+  const color = normalizeHex(value);
+  if (color && color === normalizeHex(primaryColor)) return 'primary';
+  if (color && color === normalizeHex(accentColor)) return 'accent';
+  return 'custom';
+};
+
+const colorFromRole = (
+  role: CvBuilderThemeColorRole,
+  customColor: string | undefined,
+  primaryColor: string,
+  accentColor: string,
+  fallbackColor: string,
+) => {
+  if (role === 'primary') return primaryColor;
+  if (role === 'accent') return accentColor;
+  return customColor && customColor !== 'transparent' ? customColor : fallbackColor;
+};
 
 const GithubIcon = ({ className, style }: { className?: string; style?: CSSProperties }) => (
   <svg
@@ -314,6 +342,8 @@ export default function CvBuilderSidebar({
           <ElementInspector
             element={selectedElement}
             formSections={formSections}
+            primaryColor={primaryColor}
+            accentColor={accentColor}
             onUpdate={onUpdateElement}
             onDelete={onDeleteElement}
           />
@@ -337,6 +367,8 @@ export default function CvBuilderSidebar({
         open={sectionDesignerOpen}
         section={editingSection}
         existingSections={formSections}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
         onClose={() => {
           setSectionDesignerOpen(false);
           setEditingSection(null);
@@ -375,11 +407,15 @@ function PaletteIcon({ type }: { type: string }) {
 function ElementInspector({
   element,
   formSections,
+  primaryColor,
+  accentColor,
   onUpdate,
   onDelete,
 }: {
   element: CvBuilderLayoutElement;
   formSections: CvTemplateSectionSchema[];
+  primaryColor: string;
+  accentColor: string;
   onUpdate: (element: CvBuilderLayoutElement) => void;
   onDelete: (elementId: string) => void;
 }) {
@@ -399,6 +435,49 @@ function ElementInspector({
   const photoFieldOptions = fieldOptions.filter(({ field }) =>
     ["photoUrl", "imageUrl"].includes(field.type),
   );
+  const fillRole = inferColorRole(
+    element.style.backgroundColor,
+    element.style.backgroundColorRole,
+    primaryColor,
+    accentColor,
+  );
+  const borderRole = inferColorRole(
+    element.style.borderColor,
+    element.style.borderColorRole,
+    primaryColor,
+    accentColor,
+  );
+  const updateFillRole = (role: CvBuilderThemeColorRole) => {
+    updateStyle({
+      backgroundColorRole: role,
+      backgroundColor: colorFromRole(
+        role,
+        element.style.backgroundColor,
+        primaryColor,
+        accentColor,
+        '#ffffff',
+      ),
+    });
+  };
+  const updateBorderRole = (role: CvBuilderThemeColorRole) => {
+    const color = colorFromRole(
+      role,
+      element.style.borderColor,
+      primaryColor,
+      accentColor,
+      '#111827',
+    );
+    updateStyle(
+      isLine
+        ? {
+            borderColorRole: role,
+            backgroundColorRole: role,
+            borderColor: color,
+            backgroundColor: color,
+          }
+        : { borderColorRole: role, borderColor: color },
+    );
+  };
 
   return (
     <div className="space-y-3">
@@ -624,56 +703,51 @@ function ElementInspector({
           </label>
         ) : null}
         {!isLine ? (
-          <div className={labelClass}>
-            Fill
-            <div className="flex gap-2">
-              <input
-                className={`${inputClass} flex-1`}
-                type="color"
-                value={
-                  element.style.backgroundColor === "transparent"
-                    ? "#ffffff"
-                    : (element.style.backgroundColor ?? "#ffffff")
-                }
-                onChange={(event) =>
-                  updateStyle({ backgroundColor: event.target.value })
-                }
-              />
-              <ClearColorButton
-                label="Clear fill"
-                onClick={() => updateStyle({ backgroundColor: "transparent" })}
-              />
-            </div>
-          </div>
+          <ThemeColorControl
+            label="Fill"
+            role={fillRole}
+            color={element.style.backgroundColor}
+            fallbackColor="#ffffff"
+            onRoleChange={updateFillRole}
+            onColorChange={(color) =>
+              updateStyle({ backgroundColorRole: 'custom', backgroundColor: color })
+            }
+            onClear={() =>
+              updateStyle({ backgroundColorRole: 'custom', backgroundColor: 'transparent' })
+            }
+          />
         ) : null}
-        <div className={labelClass}>
-          {isLine ? "Line" : "Border"}
-          <div className="flex gap-2">
-            <input
-              className={`${inputClass} flex-1`}
-              type="color"
-              value={
-                element.style.borderColor === "transparent"
-                  ? "#111827"
-                  : (element.style.borderColor ?? element.style.backgroundColor ?? "#111827")
-              }
-              onChange={(event) =>
-                updateStyle(
-                  isLine
-                    ? {
-                        borderColor: event.target.value,
-                        backgroundColor: event.target.value,
-                      }
-                    : { borderColor: event.target.value },
-                )
-              }
-            />
-            <ClearColorButton
-              label="Clear border"
-              onClick={() => updateStyle(isLine ? { borderColor: "transparent", backgroundColor: "transparent" } : { borderColor: "transparent" })}
-            />
-          </div>
-        </div>
+        <ThemeColorControl
+          label={isLine ? "Line" : "Border"}
+          role={borderRole}
+          color={element.style.borderColor}
+          fallbackColor="#111827"
+          onRoleChange={updateBorderRole}
+          onColorChange={(color) =>
+            updateStyle(
+              isLine
+                ? {
+                    borderColorRole: 'custom',
+                    backgroundColorRole: 'custom',
+                    borderColor: color,
+                    backgroundColor: color,
+                  }
+                : { borderColorRole: 'custom', borderColor: color },
+            )
+          }
+          onClear={() =>
+            updateStyle(
+              isLine
+                ? {
+                    borderColorRole: 'custom',
+                    backgroundColorRole: 'custom',
+                    borderColor: 'transparent',
+                    backgroundColor: 'transparent',
+                  }
+                : { borderColorRole: 'custom', borderColor: 'transparent' },
+            )
+          }
+        />
         <NumberInput
           label={isLine ? "Line width" : "Border"}
           value={element.style.borderWidth ?? (isLine ? 2 : 0)}
@@ -714,6 +788,54 @@ function IconGraphic({
   if (name === "location") return <MapPin className={className} style={style} />;
   if (name === "email") return <Mail className={className} style={style} />;
   return <Globe className={className} style={style} />;
+}
+
+function ThemeColorControl({
+  label,
+  role,
+  color,
+  fallbackColor,
+  onRoleChange,
+  onColorChange,
+  onClear,
+}: {
+  label: string;
+  role: CvBuilderThemeColorRole;
+  color?: string;
+  fallbackColor: string;
+  onRoleChange: (role: CvBuilderThemeColorRole) => void;
+  onColorChange: (color: string) => void;
+  onClear: () => void;
+}) {
+  const colorValue = color === 'transparent' ? fallbackColor : (color ?? fallbackColor);
+
+  return (
+    <div className={labelClass}>
+      {label}
+      <select
+        className={inputClass}
+        value={role}
+        onChange={(event) =>
+          onRoleChange(event.target.value as CvBuilderThemeColorRole)
+        }
+      >
+        <option value="primary">Primary</option>
+        <option value="accent">Accent</option>
+        <option value="custom">Custom</option>
+      </select>
+      {role === 'custom' ? (
+        <div className="flex gap-2">
+          <input
+            className={`${inputClass} flex-1`}
+            type="color"
+            value={colorValue}
+            onChange={(event) => onColorChange(event.target.value)}
+          />
+          <ClearColorButton label={`Clear ${label}`} onClick={onClear} />
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function ClearColorButton({
