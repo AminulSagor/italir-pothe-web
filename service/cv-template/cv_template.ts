@@ -7,6 +7,7 @@ import type {
   CvTemplateListResponse,
   CvTemplateMutationResponse,
   CvTemplatePayload,
+  CvTemplateStatus,
   CvTemplateStyleType,
   DeleteCvTemplateResponse,
 } from '@/types/cv-template/cv_template_type';
@@ -34,6 +35,15 @@ export const updateCvTemplate = (
   serviceClient.patch<CvTemplateMutationResponse>(
     `/admin/cv-templates/${templateId}`,
     payload,
+  );
+
+export const updateCvTemplateStatus = (
+  templateId: string,
+  status: CvTemplateStatus,
+) =>
+  serviceClient.patch<CvTemplateMutationResponse>(
+    `/admin/cv-templates/${templateId}/status`,
+    { status },
   );
 
 export const deleteCvTemplate = (templateId: string) =>

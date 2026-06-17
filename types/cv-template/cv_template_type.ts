@@ -1,4 +1,4 @@
-export type CvTemplateStatus = 'draft' | 'active' | 'archived';
+export type CvTemplateStatus = 'draft' | 'active';
 export type CvTemplateStyleType = 'ats' | 'modern_column' | 'classic' | 'creative';
 export type CvTemplatePageSize = 'a4' | 'letter';
 

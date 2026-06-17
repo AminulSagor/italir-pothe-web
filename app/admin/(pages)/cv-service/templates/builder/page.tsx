@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import Button from '@/components/UI/buttons/button';
+import { uploadCvTemplateThumbnail } from '@/service/files/file_upload';
 import {
   createCvTemplate,
   getCvTemplateById,
@@ -32,6 +33,207 @@ import {
   pageSizes,
   paletteItems,
 } from './_components/cv-builder-defaults';
+
+
+const stripHtml = (value: string) =>
+  value
+    .replace(/<br\s*\/?\s*>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<li>/gi, '• ')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .trim();
+
+const resolveThumbnailColor = (
+  value: string | undefined,
+  role: string | undefined,
+  primaryColor: string,
+  accentColor: string,
+) => {
+  if (role === 'primary') return primaryColor;
+  if (role === 'accent') return accentColor;
+  return value && value !== 'transparent' ? value : undefined;
+};
+
+const drawWrappedText = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxWidth: number,
+  lineHeight: number,
+) => {
+  let currentY = y;
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const words = line.split(/\s+/).filter(Boolean);
+    let currentLine = '';
+    for (const word of words.length ? words : ['']) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      if (context.measureText(testLine).width > maxWidth && currentLine) {
+        context.fillText(currentLine, x, currentY);
+        currentY += lineHeight;
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) context.fillText(currentLine, x, currentY);
+    currentY += lineHeight;
+  }
+};
+
+const renderCvThumbnailBlob = async (params: {
+  elements: CvBuilderLayoutElement[];
+  pageSize: CvTemplatePageSize;
+  primaryColor: string;
+  accentColor: string;
+  fontFamily: string;
+}): Promise<Blob | null> => {
+  if (typeof document === 'undefined') return null;
+
+  const page = pageSizes[params.pageSize];
+  const targetWidth = 420;
+  const scale = targetWidth / page.width;
+  const canvas = document.createElement('canvas');
+  canvas.width = targetWidth;
+  canvas.height = Math.round(page.height * scale);
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+
+  context.fillStyle = '#FFFFFF';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  const drawElement = (element: CvBuilderLayoutElement) => {
+    const style = element.style ?? {};
+    const x = element.x * scale;
+    const y = element.y * scale;
+    const width = element.width * scale;
+    const height = element.height * scale;
+    const fill = resolveThumbnailColor(
+      style.backgroundColor,
+      style.backgroundColorRole,
+      params.primaryColor,
+      params.accentColor,
+    );
+    const border = resolveThumbnailColor(
+      style.borderColor,
+      style.borderColorRole,
+      params.primaryColor,
+      params.accentColor,
+    );
+    const textColor = resolveThumbnailColor(
+      style.color,
+      style.colorRole,
+      params.primaryColor,
+      params.accentColor,
+    ) ?? '#111827';
+    const borderWidth = Math.max(0, style.borderWidth ?? 0) * scale;
+
+    context.save();
+    context.globalAlpha = style.opacity ?? 1;
+    if (element.type === 'rectangle' || element.type === 'circle') {
+      context.beginPath();
+      if (element.type === 'circle') {
+        context.ellipse(x + width / 2, y + height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+      } else {
+        context.rect(x, y, width, height);
+      }
+      if (fill) {
+        context.fillStyle = fill;
+        context.fill();
+      }
+      if (border && borderWidth > 0) {
+        context.lineWidth = borderWidth;
+        context.strokeStyle = border;
+        context.stroke();
+      }
+      context.restore();
+      return;
+    }
+
+    if (element.type === 'horizontalLine' || element.type === 'line' || element.type === 'verticalLine') {
+      context.strokeStyle = border ?? fill ?? '#111827';
+      context.lineWidth = Math.max(1, borderWidth || 1);
+      context.beginPath();
+      if (element.type === 'verticalLine') {
+        context.moveTo(x + width / 2, y);
+        context.lineTo(x + width / 2, y + height);
+      } else {
+        context.moveTo(x, y + height / 2);
+        context.lineTo(x + width, y + height / 2);
+      }
+      context.stroke();
+      context.restore();
+      return;
+    }
+
+    if (element.type === 'section' && element.sectionDesignerJson?.elements?.length) {
+      const sectionCanvas = element.sectionDesignerJson.canvas;
+      element.sectionDesignerJson.elements
+        .slice()
+        .sort((first, second) => first.zIndex - second.zIndex)
+        .forEach((child) => {
+          drawElement({
+            ...child,
+            placeholder: child.previewValue,
+            x: element.x + child.x * (element.width / sectionCanvas.width),
+            y: element.y + child.y * (element.height / sectionCanvas.height),
+            width: child.width * (element.width / sectionCanvas.width),
+            height: child.height * (element.height / sectionCanvas.height),
+            contentBinding: { mode: 'static' },
+            sectionDesignerJson: undefined,
+          } as CvBuilderLayoutElement);
+        });
+      context.restore();
+      return;
+    }
+
+    if (fill) {
+      context.fillStyle = fill;
+      context.fillRect(x, y, width, height);
+    }
+    if (border && borderWidth > 0) {
+      context.strokeStyle = border;
+      context.lineWidth = borderWidth;
+      context.strokeRect(x, y, width, height);
+    }
+
+    const fontSize = Math.max(6, (style.fontSize ?? 12) * scale);
+    const fontWeight = style.fontWeight ?? 500;
+    context.fillStyle = textColor;
+    context.font = `${fontWeight} ${fontSize}px ${style.fontFamily ?? params.fontFamily}`;
+    context.textBaseline = 'top';
+    context.textAlign = style.textAlign === 'center' ? 'center' : style.textAlign === 'right' ? 'right' : 'left';
+    const textX = context.textAlign === 'center' ? x + width / 2 : context.textAlign === 'right' ? x + width : x;
+    const value = stripHtml(element.placeholder || element.label || '');
+    if (element.type === 'list') {
+      const listItems = value.split('\n').map((item) => item.trim()).filter(Boolean);
+      drawWrappedText(
+        context,
+        listItems.map((item, index) => element.listStyle === 'number' ? `${index + 1}. ${item}` : `• ${item}`).join('\n'),
+        textX,
+        y,
+        width,
+        fontSize * 1.25,
+      );
+    } else if (element.type !== 'icon') {
+      drawWrappedText(context, value, textX, y, width, fontSize * 1.25);
+    }
+    context.restore();
+  };
+
+  params.elements
+    .slice()
+    .sort((first, second) => first.zIndex - second.zIndex)
+    .forEach(drawElement);
+
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png', 0.92));
+};
 
 const defaultColorOptions = ['#006B3F', '#646C7A', '#0B4A7D', '#7B4A2F', '#1F2937'];
 
@@ -592,7 +794,7 @@ export default function CvTemplateBuilderPage() {
     elements,
   };
 
-  const payload: CvTemplatePayload = {
+  const buildPayload = (thumbnailUrl = previewImageUrl): CvTemplatePayload => ({
     title,
     description: description || null,
     styleType,
@@ -602,13 +804,38 @@ export default function CvTemplateBuilderPage() {
     accentColor,
     isPremium,
     status,
-    previewImageUrl: previewImageUrl || null,
+    previewImageUrl: thumbnailUrl || null,
     schema: {
       sections: formSections,
       colorOptions: Array.from(new Set([primaryColor, accentColor, ...defaultColorOptions])),
       designJson,
       layout: designJson,
     },
+  });
+
+  const payload = buildPayload();
+
+  const captureAndUploadThumbnail = async () => {
+    const thumbnailBlob = await renderCvThumbnailBlob({
+      elements,
+      pageSize,
+      primaryColor,
+      accentColor,
+      fontFamily,
+    });
+
+    if (!thumbnailBlob) {
+      throw new Error('Template thumbnail could not be generated.');
+    }
+
+    const thumbnailFile = new File(
+      [thumbnailBlob],
+      `cv-template-${Date.now()}.png`,
+      { type: 'image/png' },
+    );
+    const thumbnailUrl = await uploadCvTemplateThumbnail(thumbnailFile);
+    setPreviewImageUrl(thumbnailUrl);
+    return thumbnailUrl;
   };
 
   const handleSaveDefaultLayout = async () => {
@@ -653,10 +880,12 @@ export default function CvTemplateBuilderPage() {
     setError(null);
     setIsSubmitting(true);
     try {
+      const thumbnailUrl = await captureAndUploadThumbnail();
+      const nextPayload = buildPayload(thumbnailUrl);
       if (templateId) {
-        await updateCvTemplate(templateId, payload);
+        await updateCvTemplate(templateId, nextPayload);
       } else {
-        await createCvTemplate(payload);
+        await createCvTemplate(nextPayload);
       }
       router.push('/admin/cv-service/templates');
     } catch (apiError) {
@@ -709,7 +938,6 @@ export default function CvTemplateBuilderPage() {
           >
             <option value="draft">Draft</option>
             <option value="active">Active / Publish</option>
-            <option value="archived">Archived</option>
           </select>
           <select
             value={isPremium ? 'premium' : 'free'}

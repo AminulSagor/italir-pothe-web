@@ -1,42 +1,81 @@
-import Image from 'next/image';
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { Eye, Pencil, ShieldCheck, Star, Trash2 } from 'lucide-react';
+import { Pencil, ShieldCheck, Star, Trash2 } from 'lucide-react';
 
 import Card from '@/components/UI/cards/card';
-import type { CvTemplateItem } from '@/types/cv-template/cv_template_type';
+import { service_URL } from '@/config/env';
+import type { CvTemplateItem, CvTemplateStatus } from '@/types/cv-template/cv_template_type';
+
+import CvTemplateVisualThumbnail from './cv-template-visual-thumbnail';
 
 interface CVTemplateCardProps {
   template: CvTemplateItem;
   onDelete: (templateId: string) => void;
+  onStatusChange: (templateId: string, status: CvTemplateStatus) => void;
+  isUpdatingStatus?: boolean;
 }
 
 const styleLabel: Record<string, string> = {
-  ats: 'ATS FORMAT',
   modern_column: 'MODERN COLUMN',
   classic: 'CLASSIC',
-  creative: 'CREATIVE',
 };
 
-export default function CVTemplateCard({ template, onDelete }: CVTemplateCardProps) {
+const normalizePreviewImageUrl = (value: string) => {
+  const trimmedValue = value.trim();
+  if (!trimmedValue) return '';
+  if (/^(https?:|data:|blob:)/i.test(trimmedValue)) return trimmedValue;
+  if (trimmedValue.startsWith('//')) return `https:${trimmedValue}`;
+
+  const baseUrl = service_URL.replace(/\/$/, '');
+  return `${baseUrl}/${trimmedValue.replace(/^\/+/, '')}`;
+};
+
+const getPreviewImageUrl = (template: CvTemplateItem) => {
+  const templateWithAliases = template as CvTemplateItem & {
+    thumbnailUrl?: string | null;
+    thumbnailImageUrl?: string | null;
+    imageUrl?: string | null;
+  };
+
+  const rawUrl =
+    template.previewImageUrl ||
+    templateWithAliases.thumbnailUrl ||
+    templateWithAliases.thumbnailImageUrl ||
+    templateWithAliases.imageUrl ||
+    '';
+
+  return normalizePreviewImageUrl(rawUrl);
+};
+
+export default function CVTemplateCard({
+  template,
+  onDelete,
+  onStatusChange,
+  isUpdatingStatus = false,
+}: CVTemplateCardProps) {
+  const [imageFailed, setImageFailed] = useState(false);
   const isPremium = template.isPremium;
   const isActive = template.status === 'active';
+  const nextStatus: CvTemplateStatus = isActive ? 'draft' : 'active';
+  const previewImageUrl = getPreviewImageUrl(template);
+  const shouldShowPreviewImage = previewImageUrl.length > 0 && !imageFailed;
 
   return (
     <Card padding="md" rounded="3xl" shadow="sm" className="bg-white">
-      <div className="relative h-[180px] overflow-hidden rounded-2xl bg-[#0E3E34]">
-        {template.previewImageUrl ? (
-          <Image
-            src={template.previewImageUrl}
+      <div className="relative h-[360px] min-h-[360px] max-h-[360px] overflow-hidden rounded-2xl border border-black/5 bg-[#F6F7F4]">
+        {shouldShowPreviewImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewImageUrl}
             alt={template.title}
-            fill
-            sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover"
+            className="absolute inset-0 h-full w-full object-contain p-3"
+            referrerPolicy="no-referrer"
+            onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="flex h-full flex-col justify-end bg-[#102A24] p-5 text-white">
-            <p className="text-xl font-black">{template.title}</p>
-            <p className="mt-2 text-xs text-white/70">{template.pageSize.toUpperCase()} • {template.fontFamily}</p>
-          </div>
+          <CvTemplateVisualThumbnail template={template} />
         )}
 
         <span
@@ -63,24 +102,29 @@ export default function CVTemplateCard({ template, onDelete }: CVTemplateCardPro
       <div className="mt-7 border-t border-black/5 pt-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-[#202420]">
-            <Link href={`/admin/cv-service/templates/builder?id=${template.id}`}>
+            <Link href={`/admin/cv-service/templates/builder?id=${template.id}`} aria-label="Edit template">
               <Pencil className="size-4" />
             </Link>
-            <Link href={`/admin/cv-service/templates/builder?id=${template.id}`}>
-              <Eye className="size-4" />
-            </Link>
-            <button type="button" onClick={() => onDelete(template.id)}>
+            <button type="button" onClick={() => onDelete(template.id)} aria-label="Delete template">
               <Trash2 className="size-4" />
             </button>
           </div>
 
           <div className="flex items-center gap-3">
             <span className={`text-xs font-bold uppercase ${isActive ? 'text-[#008542]' : 'text-black/45'}`}>
-              {template.status}
+              {isActive ? 'active' : 'draft'}
             </span>
-            <span className={`relative h-6 w-11 rounded-full transition ${isActive ? 'bg-[#56EF59]' : 'bg-[#E1E5DF]'}`}>
+            <button
+              type="button"
+              disabled={isUpdatingStatus}
+              onClick={() => onStatusChange(template.id, nextStatus)}
+              className={`relative h-6 w-11 rounded-full transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                isActive ? 'bg-[#56EF59]' : 'bg-[#E1E5DF]'
+              }`}
+              aria-label={`Set template as ${nextStatus}`}
+            >
               <span className={`absolute top-1 size-4 rounded-full bg-white transition ${isActive ? 'left-6' : 'left-1'}`} />
-            </span>
+            </button>
           </div>
         </div>
       </div>

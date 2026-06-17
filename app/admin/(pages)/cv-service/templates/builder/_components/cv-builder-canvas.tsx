@@ -24,7 +24,7 @@ interface CvBuilderCanvasProps {
   isSavingDefaultLayout: boolean;
 }
 
-type ResizeDirection = 'right' | 'bottom' | 'corner';
+type ResizeDirection = 'top' | 'right' | 'bottom' | 'left' | 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight';
 
 
 const GithubIcon = ({ className, style }: { className?: string; style?: CSSProperties }) => (
@@ -110,6 +110,18 @@ const getResizeBounds = (params: {
   maxWidth: params.pageWidth - params.element.x,
   maxHeight: params.pageHeight - params.element.y,
 });
+
+const isLeftResize = (direction: ResizeDirection) =>
+  direction === 'left' || direction === 'topLeft' || direction === 'bottomLeft';
+
+const isRightResize = (direction: ResizeDirection) =>
+  direction === 'right' || direction === 'topRight' || direction === 'bottomRight';
+
+const isTopResize = (direction: ResizeDirection) =>
+  direction === 'top' || direction === 'topLeft' || direction === 'topRight';
+
+const isBottomResize = (direction: ResizeDirection) =>
+  direction === 'bottom' || direction === 'bottomLeft' || direction === 'bottomRight';
 
 const stripHtml = (value: string) =>
   value
@@ -358,35 +370,41 @@ function CanvasElement({
   };
 
   const resize = (direction: ResizeDirection, event: ReactPointerEvent<HTMLSpanElement>) => {
+    if (element.locked) return;
     event.preventDefault();
     event.stopPropagation();
     onSelect(element.id);
 
     const startX = event.clientX;
     const startY = event.clientY;
+    const startLeft = element.x;
+    const startTop = element.y;
     const startWidth = element.width;
     const startHeight = element.height;
+    const startRight = startLeft + startWidth;
+    const startBottom = startTop + startHeight;
 
     const onPointerMove = (moveEvent: PointerEvent) => {
       const dx = (moveEvent.clientX - startX) / scale;
       const dy = (moveEvent.clientY - startY) / scale;
-      const resizeBounds = getResizeBounds({ element, pageWidth, pageHeight });
+      const minWidth = element.type === 'circle' ? 24 : isVerticalLine ? lineWidth : isHorizontalLine ? 12 : 24;
+      const minHeight = element.type === 'circle' ? 24 : isHorizontalLine ? lineWidth : isVerticalLine ? 12 : 12;
 
-      if (element.type === 'circle') {
-        const size = clamp(
-          Math.round(Math.max(startWidth + dx, startHeight + dy, 24)),
-          24,
-          Math.min(resizeBounds.maxWidth, resizeBounds.maxHeight),
-        );
-        onChange({ ...element, width: size, height: size });
-        return;
-      }
+      let nextLeft = startLeft;
+      let nextTop = startTop;
+      let nextRight = startRight;
+      let nextBottom = startBottom;
+
+      if (isLeftResize(direction)) nextLeft = clamp(startLeft + dx, 0, startRight - minWidth);
+      if (isRightResize(direction)) nextRight = clamp(startRight + dx, startLeft + minWidth, pageWidth);
+      if (isTopResize(direction)) nextTop = clamp(startTop + dy, 0, startBottom - minHeight);
+      if (isBottomResize(direction)) nextBottom = clamp(startBottom + dy, startTop + minHeight, pageHeight);
 
       if (isHorizontalLine) {
-        const width = direction === 'right' || direction === 'corner' ? startWidth + dx : startWidth;
         onChange({
           ...element,
-          width: clamp(Math.round(width), 12, resizeBounds.maxWidth),
+          x: Math.round(nextLeft),
+          width: clamp(Math.round(nextRight - nextLeft), 12, pageWidth - nextLeft),
           height: lineWidth,
           style: { ...element.style, borderWidth: lineWidth },
         });
@@ -394,22 +412,30 @@ function CanvasElement({
       }
 
       if (isVerticalLine) {
-        const height = direction === 'bottom' || direction === 'corner' ? startHeight + dy : startHeight;
         onChange({
           ...element,
+          y: Math.round(nextTop),
           width: lineWidth,
-          height: clamp(Math.round(height), 12, resizeBounds.maxHeight),
+          height: clamp(Math.round(nextBottom - nextTop), 12, pageHeight - nextTop),
           style: { ...element.style, borderWidth: lineWidth },
         });
         return;
       }
 
-      const width = direction === 'right' || direction === 'corner' ? startWidth + dx : startWidth;
-      const height = direction === 'bottom' || direction === 'corner' ? startHeight + dy : startHeight;
+      if (element.type === 'circle') {
+        const proposedSize = Math.max(nextRight - nextLeft, nextBottom - nextTop, 24);
+        const maxSize = Math.min(pageWidth - nextLeft, pageHeight - nextTop);
+        const size = clamp(Math.round(proposedSize), 24, maxSize);
+        onChange({ ...element, x: Math.round(nextLeft), y: Math.round(nextTop), width: size, height: size });
+        return;
+      }
+
       onChange({
         ...element,
-        width: clamp(Math.round(width), 24, resizeBounds.maxWidth),
-        height: clamp(Math.round(height), 12, resizeBounds.maxHeight),
+        x: Math.round(nextLeft),
+        y: Math.round(nextTop),
+        width: clamp(Math.round(nextRight - nextLeft), 24, pageWidth - nextLeft),
+        height: clamp(Math.round(nextBottom - nextTop), 12, pageHeight - nextTop),
       });
     };
 
@@ -422,6 +448,17 @@ function CanvasElement({
     window.addEventListener('pointerup', onPointerUp);
   };
 
+  const resizeHandles: Array<{ direction: ResizeDirection; className: string }> = [
+    { direction: 'topLeft', className: 'absolute -left-2 -top-2 size-4 cursor-nwse-resize bg-transparent' },
+    { direction: 'top', className: 'absolute -top-1 left-0 h-2 w-full cursor-ns-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30' },
+    { direction: 'topRight', className: 'absolute -right-2 -top-2 size-4 cursor-nesw-resize bg-transparent' },
+    { direction: 'right', className: 'absolute -right-1 top-0 h-full w-2 cursor-ew-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30' },
+    { direction: 'bottomRight', className: 'absolute -bottom-2 -right-2 size-4 cursor-nwse-resize bg-transparent' },
+    { direction: 'bottom', className: 'absolute -bottom-1 left-0 h-2 w-full cursor-ns-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30' },
+    { direction: 'bottomLeft', className: 'absolute -bottom-2 -left-2 size-4 cursor-nesw-resize bg-transparent' },
+    { direction: 'left', className: 'absolute -left-1 top-0 h-full w-2 cursor-ew-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30' },
+  ];
+
   return (
     <div
       onPointerDown={startDrag}
@@ -431,29 +468,20 @@ function CanvasElement({
       style={baseStyle}
     >
       <ElementContent element={element} primaryColor={primaryColor} accentColor={accentColor} />
-      {selected ? (
-        <>
-          {!isVerticalLine ? (
-            <span
-              data-resize-handle="true"
-              onPointerDown={(event) => resize('right', event)}
-              className="absolute right-0 top-0 z-30 h-full w-2 cursor-ew-resize bg-[#006B3F]/20 hover:bg-[#006B3F]/40"
-            />
-          ) : null}
-          {!isHorizontalLine ? (
-            <span
-              data-resize-handle="true"
-              onPointerDown={(event) => resize('bottom', event)}
-              className="absolute bottom-0 left-0 z-30 h-2 w-full cursor-ns-resize bg-[#006B3F]/20 hover:bg-[#006B3F]/40"
-            />
-          ) : null}
-          <span
-            data-resize-handle="true"
-            onPointerDown={(event) => resize('corner', event)}
-            className="absolute bottom-0 right-0 z-40 size-4 cursor-nwse-resize rounded-full border-2 border-[#006B3F] bg-white shadow"
-          />
-        </>
-      ) : null}
+      {selected
+        ? resizeHandles.map((handle) => {
+            if (isHorizontalLine && (isTopResize(handle.direction) || isBottomResize(handle.direction))) return null;
+            if (isVerticalLine && (isLeftResize(handle.direction) || isRightResize(handle.direction))) return null;
+            return (
+              <span
+                key={handle.direction}
+                data-resize-handle="true"
+                onPointerDown={(event) => resize(handle.direction, event)}
+                className={handle.className}
+              />
+            );
+          })
+        : null}
     </div>
   );
 }
@@ -529,26 +557,115 @@ function ElementContent({ element, primaryColor, accentColor }: { element: CvBui
   );
 }
 
+
+type PositionedSectionPreviewElement = {
+  element: CvTemplateSectionDesignerElement;
+  sourceX: number;
+  sourceY: number;
+  width: number;
+  height: number;
+  originalX: number;
+  originalY: number;
+  originalHeight: number;
+};
+
+const isAutoHeightPreviewElement = (element: CvTemplateSectionDesignerElement) => {
+  const flow = element.contentFlow;
+  return (
+    flow?.autoHeight === true ||
+    element.type === 'text' ||
+    element.type === 'textarea' ||
+    element.type === 'list'
+  );
+};
+
+const estimateSectionPreviewTextHeight = (element: CvTemplateSectionDesignerElement) => {
+  if (!isAutoHeightPreviewElement(element)) return element.height;
+  const fontSize = element.style.fontSize ?? (element.type === 'text' ? 16 : 13);
+  const lineHeight = element.style.lineHeight ?? 1.25;
+  const width = Math.max(24, element.width - 8);
+  const charsPerLine = Math.max(8, Math.floor(width / Math.max(4, fontSize * 0.52)));
+  const rawValue = stripHtml(element.previewValue || element.label || '');
+  const sourceLines = rawValue.split(/\n+/).filter((line) => line.trim().length > 0);
+  const lines = (sourceLines.length ? sourceLines : ['']).reduce((total, line) => {
+    const length = line.trim().length || 1;
+    return total + Math.max(1, Math.ceil(length / charsPerLine));
+  }, 0);
+  return Math.max(8, Math.ceil(lines * fontSize * lineHeight + 8));
+};
+
+const horizontalOverlap = (
+  firstX: number,
+  firstWidth: number,
+  secondX: number,
+  secondWidth: number,
+) => firstX < secondX + secondWidth && secondX < firstX + firstWidth;
+
+const flowSortSectionElements = (elements: CvTemplateSectionDesignerElement[]) =>
+  elements
+    .slice()
+    .sort((first, second) => {
+      const firstOrder = first.contentFlow?.flowOrder ?? Number.MAX_SAFE_INTEGER;
+      const secondOrder = second.contentFlow?.flowOrder ?? Number.MAX_SAFE_INTEGER;
+      if (firstOrder !== secondOrder) return firstOrder - secondOrder;
+      if (first.y !== second.y) return first.y - second.y;
+      return first.x - second.x;
+    });
+
+const layoutSectionPreviewElements = (
+  elements: CvTemplateSectionDesignerElement[],
+): PositionedSectionPreviewElement[] => {
+  const placed: PositionedSectionPreviewElement[] = [];
+
+  for (const child of flowSortSectionElements(elements)) {
+    const originalX = child.x;
+    const originalY = child.y;
+    const originalHeight = child.height;
+    const width = child.width;
+    const height = estimateSectionPreviewTextHeight(child);
+    let nextY = originalY;
+
+    for (const previous of placed) {
+      if (!horizontalOverlap(originalX, width, previous.originalX, previous.width)) continue;
+      if (previous.originalY + previous.originalHeight > originalY + 0.01) continue;
+      const originalGap = Math.max(0, originalY - (previous.originalY + previous.originalHeight));
+      nextY = Math.max(nextY, previous.sourceY + previous.height + originalGap);
+    }
+
+    placed.push({
+      element: child,
+      sourceX: originalX,
+      sourceY: nextY,
+      width,
+      height,
+      originalX,
+      originalY,
+      originalHeight,
+    });
+  }
+
+  return placed.sort((first, second) => first.element.zIndex - second.element.zIndex);
+};
+
 function SectionDesignerPreview({ element, primaryColor, accentColor }: { element: CvBuilderLayoutElement; primaryColor: string; accentColor: string }) {
   const designerJson = element.sectionDesignerJson;
   if (!designerJson) return null;
 
   const scaleX = element.width / designerJson.canvas.width;
   const scaleY = element.height / designerJson.canvas.height;
+  const layoutElements = layoutSectionPreviewElements(designerJson.elements);
 
   return (
     <div className="pointer-events-none relative h-full w-full overflow-hidden bg-transparent">
-      {designerJson.elements
-        .slice()
-        .sort((first, second) => first.zIndex - second.zIndex)
-        .map((child) => (
-          <SectionPreviewElement key={child.id} element={child} scaleX={scaleX} scaleY={scaleY} primaryColor={primaryColor} accentColor={accentColor} />
-        ))}
+      {layoutElements.map((child) => (
+        <SectionPreviewElement key={child.element.id} item={child} scaleX={scaleX} scaleY={scaleY} primaryColor={primaryColor} accentColor={accentColor} />
+      ))}
     </div>
   );
 }
 
-function SectionPreviewElement({ element, scaleX, scaleY, primaryColor, accentColor }: { element: CvTemplateSectionDesignerElement; scaleX: number; scaleY: number; primaryColor: string; accentColor: string }) {
+function SectionPreviewElement({ item, scaleX, scaleY, primaryColor, accentColor }: { item: PositionedSectionPreviewElement; scaleX: number; scaleY: number; primaryColor: string; accentColor: string }) {
+  const element = item.element;
   const isHorizontalLine = element.type === 'horizontalLine' || element.type === 'line';
   const isVerticalLine = element.type === 'verticalLine';
   const lineWidth = Math.max(1, element.style.borderWidth ?? 2);
@@ -556,10 +673,10 @@ function SectionPreviewElement({ element, scaleX, scaleY, primaryColor, accentCo
   const resolvedFillColor = resolveThemeColor(element.style.backgroundColor, element.style.backgroundColorRole, primaryColor, accentColor);
   const resolvedBorderColor = resolveThemeColor(element.style.borderColor, element.style.borderColorRole, primaryColor, accentColor);
   const style: CSSProperties = {
-    left: element.x * scaleX,
-    top: element.y * scaleY,
-    width: (isVerticalLine ? lineWidth : element.width) * scaleX,
-    height: (isHorizontalLine ? lineWidth : element.height) * scaleY,
+    left: item.sourceX * scaleX,
+    top: item.sourceY * scaleY,
+    width: (isVerticalLine ? lineWidth : item.width) * scaleX,
+    height: (isHorizontalLine ? lineWidth : item.height) * scaleY,
     zIndex: element.zIndex,
     color: resolvedTextColor,
     backgroundColor: isHorizontalLine || isVerticalLine ? resolvedBorderColor ?? '#111827' : resolvedFillColor,
@@ -568,7 +685,7 @@ function SectionPreviewElement({ element, scaleX, scaleY, primaryColor, accentCo
     borderStyle: 'solid',
     borderRadius: element.type === 'circle' ? '9999px' : element.style.borderRadius ?? 0,
     fontFamily: element.style.fontFamily,
-    fontSize: (element.style.fontSize ?? 12) * Math.min(scaleX, scaleY),
+    fontSize: element.style.fontSize ?? 12,
     fontWeight: element.style.fontWeight,
     fontStyle: element.style.fontStyle,
     textAlign: element.style.textAlign,

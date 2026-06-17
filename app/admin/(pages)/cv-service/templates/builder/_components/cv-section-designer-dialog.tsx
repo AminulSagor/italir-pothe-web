@@ -99,7 +99,7 @@ const sectionPaletteItems: Array<{
   { label: "Icon", type: "icon" },
 ];
 
-type ResizeDirection = "right" | "bottom" | "corner";
+type ResizeDirection = "top" | "right" | "bottom" | "left" | "topLeft" | "topRight" | "bottomLeft" | "bottomRight";
 type IconName = (typeof iconOptions)[number];
 
 interface CvSectionDesignerDialogProps {
@@ -142,6 +142,45 @@ const getElementBounds = (element: CvTemplateSectionDesignerElement) => {
     right: element.x + size.width,
     bottom: element.y + size.height,
   };
+};
+
+const isLeftResize = (direction: ResizeDirection) =>
+  direction === "left" || direction === "topLeft" || direction === "bottomLeft";
+
+const isRightResize = (direction: ResizeDirection) =>
+  direction === "right" || direction === "topRight" || direction === "bottomRight";
+
+const isTopResize = (direction: ResizeDirection) =>
+  direction === "top" || direction === "topLeft" || direction === "topRight";
+
+const isBottomResize = (direction: ResizeDirection) =>
+  direction === "bottom" || direction === "bottomLeft" || direction === "bottomRight";
+
+const estimateTextElementHeight = (element: CvTemplateSectionDesignerElement) => {
+  if (element.type !== "text" && element.type !== "textarea" && element.type !== "list") {
+    return element.height;
+  }
+
+  const fontSize = element.style.fontSize ?? (element.type === "text" ? 16 : 13);
+  const lineHeight = element.style.lineHeight ?? 1.25;
+  const content = element.previewValue
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<li>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .trim();
+  const width = Math.max(24, element.width - 8);
+  const charsPerLine = Math.max(8, Math.floor(width / Math.max(4, fontSize * 0.52)));
+  const lines = (content ? content.split(/\n+/) : [""]).reduce((total, line) => {
+    const length = line.trim().length || 1;
+    return total + Math.max(1, Math.ceil(length / charsPerLine));
+  }, 0);
+
+  return Math.max(20, Math.ceil(lines * fontSize * lineHeight + 10));
 };
 
 const getFieldAwareElement = (
@@ -529,7 +568,11 @@ export default function CvSectionDesignerDialog({
     const currentTitle = section?.title ?? "Custom Section";
     const currentKey =
       section?.key ?? makeUniqueSectionKey(currentTitle, existingSections);
-    const currentCanvas = section?.designerJson?.canvas ?? defaultCanvas;
+    const savedCanvas = section?.designerJson?.canvas ?? defaultCanvas;
+    const currentCanvas = {
+      width: Math.max(defaultCanvas.width, savedCanvas.width),
+      height: Math.max(defaultCanvas.height, savedCanvas.height),
+    };
 
     const dynamicField = section?.fields.find((field) => isDynamicItemsType(field.type));
     const dynamicItemConfig = section?.dynamicItem ?? section?.designerJson?.dynamicItem;
@@ -678,7 +721,11 @@ export default function CvSectionDesignerDialog({
 
   const updateSelectedPreview = (value: string) => {
     if (!selectedElement) return;
-    updateElement({ ...selectedElement, previewValue: value });
+    const nextElement = { ...selectedElement, previewValue: value };
+    updateElement({
+      ...nextElement,
+      height: estimateTextElementHeight(nextElement),
+    });
     if (selectedField) {
       updateField(selectedField.key, { ...selectedField, placeholder: value });
     }
@@ -986,8 +1033,8 @@ export default function CvSectionDesignerDialog({
 
         <main className="h-full overflow-auto bg-[#E9E9E2] p-6">
           <div
-            className="mx-auto rounded-3xl bg-white p-4 shadow-xl"
-            style={{ width: canvasSize.width + 32 }}
+            className="mx-auto rounded-3xl bg-white p-10 shadow-xl"
+            style={{ width: canvasSize.width + 96, minHeight: canvasSize.height + 96 }}
           >
             <div
               className="relative overflow-hidden rounded-2xl border border-black/10 bg-white"
@@ -1251,23 +1298,53 @@ export default function CvSectionDesignerDialog({
                 selectedElement.type === "list" ||
                 selectedElement.type === "dynamicItems" ||
                 selectedElement.type === "icon" ? (
-                  <label className={labelClass}>
-                    Text/Icon
-                    <input
-                      className={inputClass}
-                      type="color"
-                      value={selectedElement.style.color ?? "#111827"}
-                      onChange={(event) =>
-                        updateElement({
-                          ...selectedElement,
-                          style: {
-                            ...selectedElement.style,
-                            color: event.target.value,
-                          },
-                        })
-                      }
-                    />
-                  </label>
+                  <ThemeColorControl
+                    label="Text / icon"
+                    role={inferColorRole(
+                      selectedElement.style.color,
+                      selectedElement.style.colorRole,
+                      primaryColor,
+                      accentColor,
+                    )}
+                    color={selectedElement.style.color}
+                    fallbackColor="#111827"
+                    onRoleChange={(role) =>
+                      updateElement({
+                        ...selectedElement,
+                        style: {
+                          ...selectedElement.style,
+                          colorRole: role,
+                          color: colorFromRole(
+                            role,
+                            selectedElement.style.color,
+                            primaryColor,
+                            accentColor,
+                            "#111827",
+                          ),
+                        },
+                      })
+                    }
+                    onColorChange={(color) =>
+                      updateElement({
+                        ...selectedElement,
+                        style: {
+                          ...selectedElement.style,
+                          colorRole: "custom",
+                          color,
+                        },
+                      })
+                    }
+                    onClear={() =>
+                      updateElement({
+                        ...selectedElement,
+                        style: {
+                          ...selectedElement.style,
+                          colorRole: "custom",
+                          color: "#111827",
+                        },
+                      })
+                    }
+                  />
                 ) : null}
                 {selectedElement.type !== "horizontalLine" &&
                 selectedElement.type !== "verticalLine" ? (
@@ -1563,17 +1640,10 @@ function NormalTextInspector({
           </select>
         </label>
       </div>
-      <label className={`${labelClass} mt-2`}>
-        Hyperlink
-        <input
-          className={inputClass}
-          value={element.hyperlink ?? ""}
-          onChange={(event) =>
-            onChange({ ...element, hyperlink: event.target.value })
-          }
-          placeholder="https://example.com"
-        />
-      </label>
+      <LinkUrlControl
+        value={element.hyperlink ?? ""}
+        onChange={(hyperlink) => onChange({ ...element, hyperlink })}
+      />
     </section>
   );
 }
@@ -1784,6 +1854,8 @@ function RichTextareaInspector({
   onTextChange: (value: string) => void;
 }) {
   const editorRef = useRef<HTMLDivElement>(null);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [pendingLink, setPendingLink] = useState(element.hyperlink ?? "");
 
   useEffect(() => {
     if (
@@ -1853,10 +1925,9 @@ function RichTextareaInspector({
     applyCommand(commandMap[textAlign]);
   };
 
-  const applyLink = () => {
-    const url = window.prompt("Enter hyperlink URL");
-    if (!url) return;
-    applyCommand("createLink", url);
+  const applyLink = (url: string) => {
+    if (!url.trim()) return;
+    applyCommand("createLink", url.trim());
   };
 
   return (
@@ -1880,7 +1951,10 @@ function RichTextareaInspector({
         />
         <FormatButton
           icon={<LinkIcon className="size-4" />}
-          onClick={applyLink}
+          onClick={() => {
+            setPendingLink(element.hyperlink ?? "");
+            setLinkDialogOpen(true);
+          }}
         />
       </div>
       <div className="mb-2">
@@ -1931,17 +2005,41 @@ function RichTextareaInspector({
           onTextChange(event.currentTarget.innerHTML)
         }
       />
-      <label className={`${labelClass} mt-2`}>
-        Default hyperlink
-        <input
-          className={inputClass}
-          value={element.hyperlink ?? ""}
-          onChange={(event) =>
-            onChange({ ...element, hyperlink: event.target.value })
-          }
-          placeholder="https://example.com"
-        />
-      </label>
+      <LinkUrlControl
+        value={element.hyperlink ?? ""}
+        onChange={(hyperlink) => onChange({ ...element, hyperlink })}
+      />
+      {linkDialogOpen ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-[24px] bg-white p-5 shadow-2xl">
+            <h4 className="text-base font-black text-[#202420]">Add hyperlink</h4>
+            <p className="mt-1 text-xs leading-5 text-black/55">Enter the URL that should be attached to the selected text.</p>
+            <input
+              className={`${inputClass} mt-4`}
+              value={pendingLink}
+              onChange={(event) => setPendingLink(event.target.value)}
+              placeholder="https://example.com"
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setLinkDialogOpen(false)} className="rounded-full border border-black/10 px-4 py-2 text-xs font-black text-black/60">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange({ ...element, hyperlink: pendingLink.trim() });
+                  applyLink(pendingLink);
+                  setLinkDialogOpen(false);
+                }}
+                className="rounded-full bg-[#006B3F] px-4 py-2 text-xs font-black text-white"
+              >
+                Apply link
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -2007,7 +2105,7 @@ function DesignerElement({
     fontWeight: element.style.fontWeight,
     fontStyle: element.style.fontStyle as CSSProperties["fontStyle"],
     textAlign: element.style.textAlign,
-    overflow: "hidden",
+    overflow: selected ? "visible" : "hidden",
   };
 
   const startDrag = (event: ReactPointerEvent<HTMLDivElement>) => {
@@ -2052,28 +2150,32 @@ function DesignerElement({
     onSelect(element.id);
     const startX = event.clientX;
     const startY = event.clientY;
+    const startLeft = element.x;
+    const startTop = element.y;
     const startWidth = element.width;
     const startHeight = element.height;
+    const startRight = startLeft + startWidth;
+    const startBottom = startTop + startHeight;
     const onPointerMove = (moveEvent: PointerEvent) => {
       const dx = moveEvent.clientX - startX;
       const dy = moveEvent.clientY - startY;
-      if (element.type === "circle") {
-        const size = clamp(
-          Math.round(Math.max(startWidth + dx, startHeight + dy, 32)),
-          32,
-          Math.min(canvasSize.width - element.x, canvasSize.height - element.y),
-        );
-        onChange({ ...element, width: size, height: size });
-        return;
-      }
+      const minWidth = element.type === "circle" ? 32 : isVerticalLine ? lineWidth : isHorizontalLine ? 16 : 32;
+      const minHeight = element.type === "circle" ? 32 : isHorizontalLine ? lineWidth : isVerticalLine ? 16 : 20;
+      let nextLeft = startLeft;
+      let nextTop = startTop;
+      let nextRight = startRight;
+      let nextBottom = startBottom;
+
+      if (isLeftResize(direction)) nextLeft = clamp(startLeft + dx, 0, startRight - minWidth);
+      if (isRightResize(direction)) nextRight = clamp(startRight + dx, startLeft + minWidth, canvasSize.width);
+      if (isTopResize(direction)) nextTop = clamp(startTop + dy, 0, startBottom - minHeight);
+      if (isBottomResize(direction)) nextBottom = clamp(startBottom + dy, startTop + minHeight, canvasSize.height);
+
       if (isHorizontalLine) {
         onChange({
           ...element,
-          width: clamp(
-            Math.round(startWidth + dx),
-            16,
-            canvasSize.width - element.x,
-          ),
+          x: Math.round(nextLeft),
+          width: clamp(Math.round(nextRight - nextLeft), 16, canvasSize.width - nextLeft),
           height: lineWidth,
         });
         return;
@@ -2081,31 +2183,30 @@ function DesignerElement({
       if (isVerticalLine) {
         onChange({
           ...element,
+          y: Math.round(nextTop),
           width: lineWidth,
-          height: clamp(
-            Math.round(startHeight + dy),
-            16,
-            canvasSize.height - element.y,
-          ),
+          height: clamp(Math.round(nextBottom - nextTop), 16, canvasSize.height - nextTop),
         });
         return;
       }
-      const nextWidth =
-        direction === "right" || direction === "corner"
-          ? startWidth + dx
-          : startWidth;
-      const nextHeight =
-        direction === "bottom" || direction === "corner"
-          ? startHeight + dy
-          : startHeight;
-      onChange({
+      if (element.type === "circle") {
+        const proposedSize = Math.max(nextRight - nextLeft, nextBottom - nextTop, 32);
+        const maxSize = Math.min(canvasSize.width - nextLeft, canvasSize.height - nextTop);
+        const size = clamp(Math.round(proposedSize), 32, maxSize);
+        onChange({ ...element, x: Math.round(nextLeft), y: Math.round(nextTop), width: size, height: size });
+        return;
+      }
+
+      const resizedElement = {
         ...element,
-        width: clamp(Math.round(nextWidth), 32, canvasSize.width - element.x),
-        height: clamp(
-          Math.round(nextHeight),
-          20,
-          canvasSize.height - element.y,
-        ),
+        x: Math.round(nextLeft),
+        y: Math.round(nextTop),
+        width: clamp(Math.round(nextRight - nextLeft), 32, canvasSize.width - nextLeft),
+        height: clamp(Math.round(nextBottom - nextTop), 20, canvasSize.height - nextTop),
+      };
+      onChange({
+        ...resizedElement,
+        height: estimateTextElementHeight(resizedElement),
       });
     };
     const onPointerUp = () => {
@@ -2116,6 +2217,17 @@ function DesignerElement({
     window.addEventListener("pointerup", onPointerUp);
   };
 
+  const resizeHandles: Array<{ direction: ResizeDirection; className: string }> = [
+    { direction: "topLeft", className: "absolute -left-2 -top-2 z-20 size-4 cursor-nwse-resize bg-transparent" },
+    { direction: "top", className: "absolute -top-1 left-0 z-10 h-2 w-full cursor-ns-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30" },
+    { direction: "topRight", className: "absolute -right-2 -top-2 z-20 size-4 cursor-nesw-resize bg-transparent" },
+    { direction: "right", className: "absolute -right-1 top-0 z-10 h-full w-2 cursor-ew-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30" },
+    { direction: "bottomRight", className: "absolute -bottom-2 -right-2 z-20 size-4 cursor-nwse-resize bg-transparent" },
+    { direction: "bottom", className: "absolute -bottom-1 left-0 z-10 h-2 w-full cursor-ns-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30" },
+    { direction: "bottomLeft", className: "absolute -bottom-2 -left-2 z-20 size-4 cursor-nesw-resize bg-transparent" },
+    { direction: "left", className: "absolute -left-1 top-0 z-10 h-full w-2 cursor-ew-resize bg-[#006B3F]/10 hover:bg-[#006B3F]/30" },
+  ];
+
   return (
     <div
       onPointerDown={startDrag}
@@ -2123,29 +2235,20 @@ function DesignerElement({
       style={style}
     >
       <DesignerElementContent element={element} />
-      {selected ? (
-        <>
-          {!isVerticalLine ? (
-            <span
-              data-resize-handle="true"
-              onPointerDown={(event) => resize("right", event)}
-              className="absolute -right-1 top-0 h-full w-2 cursor-ew-resize bg-transparent"
-            />
-          ) : null}
-          {!isHorizontalLine ? (
-            <span
-              data-resize-handle="true"
-              onPointerDown={(event) => resize("bottom", event)}
-              className="absolute -bottom-1 left-0 h-2 w-full cursor-ns-resize bg-transparent"
-            />
-          ) : null}
-          <span
-            data-resize-handle="true"
-            onPointerDown={(event) => resize("corner", event)}
-            className="absolute -bottom-1 -right-1 size-4 cursor-nwse-resize bg-transparent"
-          />
-        </>
-      ) : null}
+      {selected
+        ? resizeHandles.map((handle) => {
+            if (isHorizontalLine && (isTopResize(handle.direction) || isBottomResize(handle.direction))) return null;
+            if (isVerticalLine && (isLeftResize(handle.direction) || isRightResize(handle.direction))) return null;
+            return (
+              <span
+                key={handle.direction}
+                data-resize-handle="true"
+                onPointerDown={(event) => resize(handle.direction, event)}
+                className={handle.className}
+              />
+            );
+          })
+        : null}
     </div>
   );
 }
@@ -2291,6 +2394,68 @@ function FormatButton({
     >
       {icon ?? <span className="text-xs font-black">{label}</span>}
     </button>
+  );
+}
+
+function LinkUrlControl({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [draftUrl, setDraftUrl] = useState(value);
+
+  useEffect(() => {
+    if (!open) setDraftUrl(value);
+  }, [open, value]);
+
+  return (
+    <div className={`${labelClass} mt-2`}>
+      Hyperlink
+      <button
+        type="button"
+        onClick={() => {
+          setDraftUrl(value);
+          setOpen(true);
+        }}
+        className="flex h-10 w-full items-center justify-between rounded-xl border border-black/10 bg-white px-3 text-xs normal-case text-[#202420] outline-none hover:border-[#006B3F]"
+      >
+        <span className="truncate text-left">{value || "Add URL link"}</span>
+        <LinkIcon className="size-4 text-[#006B3F]" />
+      </button>
+      {open ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-[24px] bg-white p-5 shadow-2xl">
+            <h4 className="text-base font-black text-[#202420]">Hyperlink URL</h4>
+            <p className="mt-1 text-xs leading-5 text-black/55">Set the URL for this component. Leave it empty to remove the link.</p>
+            <input
+              className={`${inputClass} mt-4`}
+              value={draftUrl}
+              onChange={(event) => setDraftUrl(event.target.value)}
+              placeholder="https://example.com"
+              autoFocus
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" onClick={() => setOpen(false)} className="rounded-full border border-black/10 px-4 py-2 text-xs font-black text-black/60">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(draftUrl.trim());
+                  setOpen(false);
+                }}
+                className="rounded-full bg-[#006B3F] px-4 py-2 text-xs font-black text-white"
+              >
+                Save URL
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

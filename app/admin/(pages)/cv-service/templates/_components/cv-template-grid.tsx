@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { deleteCvTemplate, getCvTemplates } from '@/service/cv-template/cv_template';
-import type { CvTemplateItem } from '@/types/cv-template/cv_template_type';
+import { deleteCvTemplate, getCvTemplates, updateCvTemplateStatus } from '@/service/cv-template/cv_template';
+import type { CvTemplateItem, CvTemplateStatus } from '@/types/cv-template/cv_template_type';
 
 import CVTemplateCard from './cv-template-card';
 
@@ -11,6 +11,7 @@ export default function CVTemplateGrid() {
   const [templates, setTemplates] = useState<CvTemplateItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   const loadTemplates = async () => {
     setIsLoading(true);
@@ -31,6 +32,25 @@ export default function CVTemplateGrid() {
   useEffect(() => {
     loadTemplates();
   }, []);
+
+
+  const handleStatusChange = async (templateId: string, status: CvTemplateStatus) => {
+    setUpdatingStatusId(templateId);
+    setError(null);
+
+    try {
+      const response = await updateCvTemplateStatus(templateId, status);
+      setTemplates((current) =>
+        current.map((item) =>
+          item.id === templateId ? response.template : item,
+        ),
+      );
+    } catch (apiError) {
+      setError(apiError instanceof Error ? apiError.message : 'Status update failed.');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
 
   const handleDelete = async (templateId: string) => {
     const confirmed = window.confirm('Delete this CV template?');
@@ -66,7 +86,13 @@ export default function CVTemplateGrid() {
   return (
     <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
       {templates.map((template) => (
-        <CVTemplateCard key={template.id} template={template} onDelete={handleDelete} />
+        <CVTemplateCard
+          key={template.id}
+          template={template}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+          isUpdatingStatus={updatingStatusId === template.id}
+        />
       ))}
     </div>
   );

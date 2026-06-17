@@ -435,6 +435,12 @@ function ElementInspector({
   const photoFieldOptions = fieldOptions.filter(({ field }) =>
     ["photoUrl", "imageUrl"].includes(field.type),
   );
+  const textRole = inferColorRole(
+    element.style.color,
+    element.style.colorRole,
+    primaryColor,
+    accentColor,
+  );
   const fillRole = inferColorRole(
     element.style.backgroundColor,
     element.style.backgroundColorRole,
@@ -447,6 +453,18 @@ function ElementInspector({
     primaryColor,
     accentColor,
   );
+  const updateTextRole = (role: CvBuilderThemeColorRole) => {
+    updateStyle({
+      colorRole: role,
+      color: colorFromRole(
+        role,
+        element.style.color,
+        primaryColor,
+        accentColor,
+        '#111827',
+      ),
+    });
+  };
   const updateFillRole = (role: CvBuilderThemeColorRole) => {
     updateStyle({
       backgroundColorRole: role,
@@ -692,15 +710,19 @@ function ElementInspector({
 
       <div className="grid grid-cols-2 gap-2">
         {!isShape && !isLine && !isSection ? (
-          <label className={labelClass}>
-            Text
-            <input
-              className={inputClass}
-              type="color"
-              value={element.style.color ?? "#111827"}
-              onChange={(event) => updateStyle({ color: event.target.value })}
-            />
-          </label>
+          <ThemeColorControl
+            label="Text"
+            role={textRole}
+            color={element.style.color}
+            fallbackColor="#111827"
+            onRoleChange={updateTextRole}
+            onColorChange={(color) =>
+              updateStyle({ colorRole: 'custom', color })
+            }
+            onClear={() =>
+              updateStyle({ colorRole: 'custom', color: '#111827' })
+            }
+          />
         ) : null}
         {!isLine ? (
           <ThemeColorControl
