@@ -2,15 +2,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  Eye,
   SlidersHorizontal,
   UsersRound,
 } from "lucide-react";
+
 import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
-import { courseEnrollmentStudents } from "@/mock/course-details/course-enrollment.mock";
+import type { Course } from "@/types/course-directory/course.type";
 
-const EnrollmentListTable = () => {
+interface EnrollmentListTableProps {
+  course: Course;
+}
+
+const EnrollmentListTable = ({ course }: EnrollmentListTableProps) => {
+  const totalStudents = course.totalStudentEnrollments || 0;
+
   return (
     <Card padding="none" rounded="3xl" shadow="sm" className="overflow-hidden">
       <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -55,62 +61,22 @@ const EnrollmentListTable = () => {
           </thead>
 
           <tbody>
-            {courseEnrollmentStudents.map((student) => (
-              <tr
-                key={student.id}
-                className={`border-t border-black/5 ${
-                  student.isMuted ? "opacity-45" : ""
-                }`}
+            <tr className="border-t border-black/5">
+              <td
+                colSpan={4}
+                className="px-10 py-12 text-center text-sm text-black/60"
               >
-                <td className="px-10 py-5">
-                  <div className="flex items-center gap-4">
-                    <div className="size-11 overflow-hidden rounded-full bg-[#E9FBEF]">
-                      <img
-                        src={student.avatar}
-                        alt={student.name}
-                        className="size-full object-cover"
-                      />
-                    </div>
-
-                    <div>
-                      <p className="max-w-40 font-bold leading-tight text-[#202420]">
-                        {student.name}
-                      </p>
-                      <p className="text-sm text-black/60">
-                        ID: {student.studentId}
-                      </p>
-                    </div>
-                  </div>
-                </td>
-
-                <td className="px-6 py-5">
-                  <p className="text-sm font-medium text-[#202420]">
-                    {student.phone}
-                  </p>
-                  <p className="text-sm text-black/50">{student.email}</p>
-                </td>
-
-                <td className="px-6 py-5 font-bold text-[#006B3F]">
-                  {student.amountPaid}
-                </td>
-
-                <td className="px-6 py-5 text-center">
-                  <button
-                    type="button"
-                    className="inline-flex size-10 items-center justify-center rounded-full bg-[#E9EEE9]"
-                    aria-label="View student"
-                  >
-                    <Eye className="size-5 text-[#3F463F]" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                No enrollment list API is connected yet for this course.
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
 
       <div className="flex flex-col gap-4 border-t border-black/5 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-black/60">Showing 4 of 1,248 students</p>
+        <p className="text-sm text-black/60">
+          Showing 0 of {totalStudents.toLocaleString()} students
+        </p>
 
         <div className="flex items-center gap-5">
           <ChevronLeft className="size-4 text-black/70" />
@@ -118,9 +84,6 @@ const EnrollmentListTable = () => {
           <button className="size-9 rounded-full bg-[#006B3F] font-semibold text-white">
             1
           </button>
-
-          <button className="text-sm font-semibold text-black/70">2</button>
-          <button className="text-sm font-semibold text-black/70">3</button>
 
           <ChevronRight className="size-4 text-black/70" />
         </div>

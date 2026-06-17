@@ -1,6 +1,10 @@
 import BackButton from "@/components/UI/buttons/back-button";
 
-export default function SyllabusHeader() {
+interface SyllabusHeaderProps {
+  courseTitle?: string;
+}
+
+export default function SyllabusHeader({ courseTitle }: SyllabusHeaderProps) {
   return (
     <div>
       <div className="mb-4 flex items-center gap-2 text-xs text-[#66736B]">
@@ -8,7 +12,7 @@ export default function SyllabusHeader() {
 
         <span>Courses</span>
         <span>{">"}</span>
-        <span>Level A1</span>
+        <span>{courseTitle || "Course"}</span>
         <span>{">"}</span>
         <span className="font-semibold text-[#006B3F]">Syllabus</span>
       </div>

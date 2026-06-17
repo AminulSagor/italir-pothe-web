@@ -1,9 +1,16 @@
 import { ChevronRight, Languages, NotebookText, Puzzle } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import Link from "next/link";
 
-export default function ExercisesCard() {
+interface ExercisesCardProps {
+  onManageVocabulary: () => void;
+  onManageQuiz: () => void;
+}
+
+export default function ExercisesCard({
+  onManageVocabulary,
+  onManageQuiz,
+}: ExercisesCardProps) {
   return (
     <Card
       padding="lg"
@@ -15,12 +22,14 @@ export default function ExercisesCard() {
         <div className="flex size-8 items-center justify-center rounded-full bg-[#DFF8DC]">
           <Puzzle className="size-4 text-[#009F5A]" />
         </div>
+
         <h2 className="text-lg font-bold text-[#202420]">Exercises</h2>
       </div>
 
       <div className="space-y-4">
-        <Link
-          href="/admin/course-directory/syllabus-builder/lesson-edit/manage-vocabulary"
+        <button
+          type="button"
+          onClick={onManageVocabulary}
           className="flex w-full items-center justify-between gap-3 rounded-full border border-[#DDE6DD] bg-[#F7FBF4] px-5 py-3 text-sm font-semibold text-[#202420]"
         >
           <span className="flex items-center gap-3">
@@ -29,10 +38,11 @@ export default function ExercisesCard() {
           </span>
 
           <ChevronRight className="size-4 text-[#A5B0A8]" />
-        </Link>
+        </button>
 
-        <Link
-          href="/admin/course-directory/syllabus-builder/lesson-edit/quiz-builder"
+        <button
+          type="button"
+          onClick={onManageQuiz}
           className="flex w-full items-center justify-between gap-3 rounded-full border border-[#DDE6DD] bg-[#F7FBF4] px-5 py-3 text-sm font-semibold text-[#202420]"
         >
           <span className="flex items-center gap-3">
@@ -41,7 +51,7 @@ export default function ExercisesCard() {
           </span>
 
           <ChevronRight className="size-4 text-[#A5B0A8]" />
-        </Link>
+        </button>
       </div>
     </Card>
   );

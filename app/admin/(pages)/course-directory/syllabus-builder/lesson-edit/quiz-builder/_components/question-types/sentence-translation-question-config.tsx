@@ -1,28 +1,132 @@
 "use client";
 
-import { useState } from "react";
-import { Puzzle } from "lucide-react";
+import { KeyboardEvent, useMemo, useState } from "react";
+import { Languages, X } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
+import type {
+  QuizQuestionSequenceItem,
+  QuizQuestionStatus,
+} from "@/types/course-directory/quiz.type";
 
-const previewWords = ["Io", "vorrei", "un", "caffè."];
-const defaultDecoyWords = ["Grazie", "per", "favore"];
+interface SentenceTranslationQuestionConfigProps {
+  promptText: string;
+  translationText: string;
+  sequenceItems: QuizQuestionSequenceItem[];
+  points: number;
+  sortOrder: number;
+  status: QuizQuestionStatus;
+  onPromptTextChange: (value: string) => void;
+  onTranslationTextChange: (value: string) => void;
+  onSequenceItemsChange: (items: QuizQuestionSequenceItem[]) => void;
+  onPointsChange: (value: number) => void;
+  onSortOrderChange: (value: number) => void;
+  onStatusChange: (value: QuizQuestionStatus) => void;
+}
 
-export default function SentenceTranslationQuestionConfig() {
-  const [sentence, setSentence] = useState("Io vorrei un caffè.");
-  const [decoyWords, setDecoyWords] = useState(defaultDecoyWords);
+const splitWords = (value: string) =>
+  value
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean);
+
+const normalizeItems = (items: QuizQuestionSequenceItem[]) =>
+  items.map((item, index) => ({
+    ...item,
+    sortOrder: index + 1,
+  }));
+
+const buildRequiredItemsFromTranslation = (
+  translationText: string,
+  existingItems: QuizQuestionSequenceItem[],
+): QuizQuestionSequenceItem[] => {
+  const requiredWords = splitWords(translationText);
+
+  const requiredItems: QuizQuestionSequenceItem[] = requiredWords.map(
+    (word, index) => {
+      const existingItem = existingItems.find(
+        (item) => item.isRequired && item.wordText === word,
+      );
+
+      return {
+        ...existingItem,
+        wordText: word,
+        isRequired: true,
+        sortOrder: index + 1,
+      };
+    },
+  );
+
+  const decoyItems = existingItems.filter((item) => !item.isRequired);
+
+  return normalizeItems([...requiredItems, ...decoyItems]);
+};
+
+export default function SentenceTranslationQuestionConfig({
+  promptText,
+  translationText,
+  sequenceItems,
+  points,
+  sortOrder,
+  status,
+  onPromptTextChange,
+  onTranslationTextChange,
+  onSequenceItemsChange,
+  onPointsChange,
+  onSortOrderChange,
+  onStatusChange,
+}: SentenceTranslationQuestionConfigProps) {
   const [decoyInput, setDecoyInput] = useState("");
 
-  const handleAddDecoyWord = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key !== "Enter" || !decoyInput.trim()) return;
+  const requiredItems = useMemo(
+    () => sequenceItems.filter((item) => item.isRequired),
+    [sequenceItems],
+  );
 
-    event.preventDefault();
-    setDecoyWords((prev) => [...prev, decoyInput.trim()]);
+  const decoyItems = useMemo(
+    () => sequenceItems.filter((item) => !item.isRequired),
+    [sequenceItems],
+  );
+
+  const handleTranslationChange = (value: string) => {
+    onTranslationTextChange(value);
+    onSequenceItemsChange(
+      buildRequiredItemsFromTranslation(value, sequenceItems),
+    );
+  };
+
+  const handleAddDecoy = () => {
+    const nextWord = decoyInput.trim();
+
+    if (!nextWord) return;
+
+    const nextItems = normalizeItems([
+      ...sequenceItems,
+      {
+        wordText: nextWord,
+        isRequired: false,
+        sortOrder: sequenceItems.length + 1,
+      },
+    ]);
+
+    onSequenceItemsChange(nextItems);
     setDecoyInput("");
   };
 
-  const handleRemoveDecoyWord = (word: string) => {
-    setDecoyWords((prev) => prev.filter((item) => item !== word));
+  const handleDecoyKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+    handleAddDecoy();
+  };
+
+  const handleRemoveDecoy = (itemIndex: number) => {
+    const targetItem = decoyItems[itemIndex];
+
+    const nextItems = sequenceItems.filter((item) => item !== targetItem);
+
+    onSequenceItemsChange(normalizeItems(nextItems));
   };
 
   return (
@@ -32,76 +136,144 @@ export default function SentenceTranslationQuestionConfig() {
       shadow="sm"
       className="border border-[#E2E8E1]"
     >
-      <div className="mb-7 flex items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-full bg-[#DDF3E8]">
-          <Puzzle className="size-5 text-[#007A4A]" />
+      <div className="mb-8 flex items-center gap-4">
+        <div className="flex size-12 items-center justify-center rounded-full bg-[#62F25A]/20">
+          <Languages className="size-5 text-[#007A4A]" />
         </div>
 
         <h3 className="text-xl font-bold text-[#202420]">
-          Transcription Assembly
+          Italian Translation Assembly
         </h3>
       </div>
 
       <div className="space-y-7">
         <label>
-          <span className="mb-3 block text-[10px] font-bold uppercase text-[#8A968E]">
-            Sentence to Assemble
+          <span className="mb-2 block text-[10px] font-bold uppercase text-[#8A968E]">
+            Sentence To Translate
           </span>
 
-          <div className="rounded-full bg-[#EEF3EC] px-6 py-4">
-            <input
-              value={sentence}
-              onChange={(event) => setSentence(event.target.value)}
-              placeholder="Audio Text will be placed here and turned into pills"
-              className="mb-1 w-full bg-transparent text-xs text-[#8A968E] outline-none placeholder:text-[#8A968E]"
-            />
+          <input
+            value={promptText}
+            onChange={(event) => onPromptTextChange(event.target.value)}
+            placeholder="Type the sentence in English"
+            className="h-20 w-full rounded-full bg-[#EEF3EC] px-8 text-lg font-semibold text-[#202420] outline-none placeholder:text-[#A8B2AA]"
+          />
+        </label>
 
-            <p className="text-base font-semibold text-[#007A4A]">{sentence}</p>
-          </div>
+        <label>
+          <span className="mb-2 block text-[10px] font-bold uppercase text-[#8A968E]">
+            Exact Translation
+          </span>
+
+          <input
+            value={translationText}
+            onChange={(event) => handleTranslationChange(event.target.value)}
+            placeholder="Type the exact translation"
+            className="h-20 w-full rounded-full bg-[#EEF3EC] px-8 text-lg font-semibold text-[#202420] outline-none placeholder:text-[#A8B2AA]"
+          />
         </label>
 
         <div>
-          <p className="mb-3 text-[10px] font-bold uppercase text-[#8A968E]">
+          <span className="mb-3 block text-[10px] font-bold uppercase text-[#8A968E]">
             App Preview (Pills)
-          </p>
+          </span>
 
-          <div className="flex flex-wrap justify-center gap-3 rounded-full bg-[#EEF3EC] px-5 py-6">
-            {previewWords.map((word) => (
-              <span
-                key={word}
-                className="rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#202420] shadow-sm"
-              >
-                {word}
+          <div className="flex min-h-24 flex-wrap items-center justify-center gap-3 rounded-full bg-[#EEF3EC] px-8 py-5">
+            {requiredItems.length ? (
+              requiredItems.map((item, index) => (
+                <span
+                  key={`${item.wordText}-${index}`}
+                  className="rounded-full bg-white px-6 py-3 text-base font-bold text-[#202420] shadow-sm"
+                >
+                  {item.wordText}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm font-medium text-[#8A968E]">
+                Translation words will appear here.
               </span>
-            ))}
+            )}
           </div>
         </div>
 
         <div>
-          <p className="mb-3 text-[10px] font-bold uppercase text-[#8A968E]">
+          <span className="mb-3 block text-[10px] font-bold uppercase text-[#8A968E]">
             Add Decoy Words
-          </p>
+          </span>
 
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#E2E8E1] bg-white px-4 py-3">
-            {decoyWords.map((word) => (
+          <div className="flex min-h-20 flex-wrap items-center gap-3 rounded-3xl border border-[#DDE6DD] bg-white px-5 py-4">
+            {decoyItems.map((item, index) => (
               <button
-                key={word}
+                key={`${item.wordText}-${index}`}
                 type="button"
-                onClick={() => handleRemoveDecoyWord(word)}
-                className="rounded-full bg-[#EEF3EC] px-4 py-2 text-xs font-semibold text-[#526057]"
+                onClick={() => handleRemoveDecoy(index)}
+                className="inline-flex items-center gap-2 rounded-full bg-[#EEF3EC] px-4 py-2 text-sm font-bold text-[#202420]"
               >
-                {word} ×
+                {item.wordText}
+                <X className="size-3 text-[#66736B]" />
               </button>
             ))}
 
             <input
               value={decoyInput}
               onChange={(event) => setDecoyInput(event.target.value)}
-              onKeyDown={handleAddDecoyWord}
+              onKeyDown={handleDecoyKeyDown}
+              onBlur={handleAddDecoy}
               placeholder="Type and press enter to add..."
-              className="min-w-[180px] flex-1 bg-transparent text-sm outline-none placeholder:text-[#8A968E]"
+              className="min-w-56 flex-1 bg-transparent text-sm text-[#202420] outline-none placeholder:text-[#8A968E]"
             />
           </div>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-3">
+          <label>
+            <span className="mb-2 block text-[10px] font-bold uppercase text-[#66736B]">
+              Points
+            </span>
+
+            <input
+              type="number"
+              min={1}
+              value={points}
+              onChange={(event) => onPointsChange(Number(event.target.value))}
+              className="h-14 w-full rounded-full bg-[#EEF3EC] px-6 text-sm text-[#202420] outline-none"
+            />
+          </label>
+
+          <label>
+            <span className="mb-2 block text-[10px] font-bold uppercase text-[#66736B]">
+              Sort Order
+            </span>
+
+            <input
+              type="number"
+              min={1}
+              value={sortOrder}
+              onChange={(event) =>
+                onSortOrderChange(Number(event.target.value))
+              }
+              className="h-14 w-full rounded-full bg-[#EEF3EC] px-6 text-sm text-[#202420] outline-none"
+            />
+          </label>
+
+          <label>
+            <span className="mb-2 block text-[10px] font-bold uppercase text-[#66736B]">
+              Status
+            </span>
+
+            <select
+              value={status}
+              onChange={(event) =>
+                onStatusChange(event.target.value as QuizQuestionStatus)
+              }
+              className="h-14 w-full rounded-full bg-[#EEF3EC] px-6 text-sm text-[#202420] outline-none"
+            >
+              <option value="draft">Draft</option>
+              <option value="active">Active</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </label>
         </div>
       </div>
     </Card>

@@ -1,18 +1,28 @@
-import BackButton from "@/components/UI/buttons/back-button";
+import { ArrowLeft } from "lucide-react";
 
-export default function VocabularyHeader() {
+interface VocabularyHeaderProps {
+  onBack: () => void;
+}
+
+export default function VocabularyHeader({ onBack }: VocabularyHeaderProps) {
   return (
     <div>
       <div className="mb-4 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-wide text-[#7A867D]">
-        <BackButton />
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex size-9 items-center justify-center rounded-full bg-white text-[#007A4A] shadow-sm"
+        >
+          <ArrowLeft className="size-4" />
+        </button>
 
         <span>Courses</span>
         <span>/</span>
         <span>Level A1</span>
         <span>/</span>
-        <span>Chapter 1</span>
+        <span>Chapter</span>
         <span>/</span>
-        <span>Lesson 1.1</span>
+        <span>Lesson</span>
         <span>/</span>
         <span className="text-[#007A4A]">Vocabulary</span>
       </div>

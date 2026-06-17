@@ -1,17 +1,7 @@
-import CourseDirectoryFilters from "./_components/course-directory-filters";
-import CourseDirectoryHeader from "./_components/course-directory-header";
-import CourseDirectoryStats from "./_components/course-directory-stats";
-import CourseDirectoryTable from "./_components/course-directory-table";
+import CourseDirectoryContent from "./_components/course-directory-content";
 
 const CourseDirectoryPage = () => {
-  return (
-    <section className="space-y-7">
-      <CourseDirectoryHeader />
-      <CourseDirectoryStats />
-      <CourseDirectoryFilters />
-      <CourseDirectoryTable />
-    </section>
-  );
+  return <CourseDirectoryContent />;
 };
 
 export default CourseDirectoryPage;

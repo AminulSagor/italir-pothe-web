@@ -1,17 +1,26 @@
+import type { LucideIcon } from "lucide-react";
+
 interface Props {
-  icon: string;
+  Icon: LucideIcon;
   backgroundColor: string;
+  onClick: () => void;
 }
 
-export default function SituationIconPreview({ icon, backgroundColor }: Props) {
+export default function SituationIconPreview({
+  Icon,
+  backgroundColor,
+  onClick,
+}: Props) {
   return (
-    <div
-      className="flex h-[140px] w-[140px] flex-col items-center justify-center rounded-[32px] border border-dashed border-[#B7CCD6]"
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-[140px] w-[140px] flex-col items-center justify-center rounded-[32px] border border-dashed border-[#B7CCD6] transition hover:scale-[1.02]"
       style={{ backgroundColor }}
     >
-      <div className="text-4xl">{icon}</div>
+      <Icon className="size-10 text-[#007A3D]" />
 
       <p className="mt-3 text-sm font-medium text-[#0C7A43]">CHANGE ICON</p>
-    </div>
+    </button>
   );
 }
