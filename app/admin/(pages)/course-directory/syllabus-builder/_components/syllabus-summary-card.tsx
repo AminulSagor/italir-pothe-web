@@ -6,11 +6,13 @@ import Card from "@/components/UI/cards/card";
 interface SyllabusSummaryCardProps {
   totalChapters: number;
   totalLessons: number;
+  onAddChapter: () => void;
 }
 
 export default function SyllabusSummaryCard({
   totalChapters,
   totalLessons,
+  onAddChapter,
 }: SyllabusSummaryCardProps) {
   return (
     <Card
@@ -43,7 +45,11 @@ export default function SyllabusSummaryCard({
         </div>
       </div>
 
-      <Button size="sm" className="w-full gap-2 sm:w-auto">
+      <Button
+        size="sm"
+        className="w-full gap-2 sm:w-auto"
+        onClick={onAddChapter}
+      >
         <Plus className="size-4" />
         Add Chapter
       </Button>

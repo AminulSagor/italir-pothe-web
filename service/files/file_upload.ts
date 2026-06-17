@@ -1,6 +1,25 @@
 import { serviceClient } from "@/service/base/service_client";
 
-export type FilePurpose = "webinar_thumbnail";
+export type FilePurpose =
+  | "course_cover"
+  | "lesson_video"
+  | "lesson_audio"
+  | "lesson_image"
+  | "lesson_pdf"
+  | "quiz_audio"
+  | "quiz_image"
+  | "exam_speaking_audio"
+  | "certificate_pdf"
+  | "survival_audio"
+  | "survival_image"
+  | "survival_pdf"
+  | "skill_builder_video"
+  | "skill_builder_audio"
+  | "skill_builder_pdf"
+  | "caf_hero_video"
+  | "caf_checklist_pdf"
+  | "profile_avatar"
+  | "webinar_thumbnail";
 export type FileVisibility = "private" | "public";
 export type MediaType = "image" | "audio" | "video" | "pdf";
 

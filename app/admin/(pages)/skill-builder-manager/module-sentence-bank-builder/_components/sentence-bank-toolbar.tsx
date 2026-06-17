@@ -1,6 +1,22 @@
 import { Search, SlidersHorizontal } from "lucide-react";
 
-export default function SentenceBankToolbar() {
+import type { SkillBuilderSortOrder } from "@/types/skill-builder/skill-builder.type";
+
+interface SentenceBankToolbarProps {
+  totalSentences: number;
+  searchValue: string;
+  sortOrder: SkillBuilderSortOrder;
+  onSearchChange: (value: string) => void;
+  onSortToggle: () => void;
+}
+
+export default function SentenceBankToolbar({
+  totalSentences,
+  searchValue,
+  sortOrder,
+  onSearchChange,
+  onSortToggle,
+}: SentenceBankToolbarProps) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
@@ -9,7 +25,7 @@ export default function SentenceBankToolbar() {
         </h2>
 
         <p className="mt-1 text-sm text-[#66736B]">
-          48 total sentences in current module
+          {totalSentences} total sentences in current module
         </p>
       </div>
 
@@ -19,14 +35,18 @@ export default function SentenceBankToolbar() {
 
           <input
             type="text"
+            value={searchValue}
             placeholder="Search sentences..."
+            onChange={(event) => onSearchChange(event.target.value)}
             className="h-14 w-full rounded-full bg-[#EEF2ED] pl-14 pr-5 text-sm outline-none placeholder:text-[#98A198]"
           />
         </div>
 
         <button
           type="button"
-          className="flex size-14 items-center justify-center rounded-full border border-[#DCE5DA] bg-white"
+          title={`Sort by sortOrder ${sortOrder}`}
+          onClick={onSortToggle}
+          className="flex size-14 items-center justify-center rounded-full border border-[#DCE5DA] bg-white transition hover:border-[#006B3F]"
         >
           <SlidersHorizontal className="size-5 text-[#202420]" />
         </button>

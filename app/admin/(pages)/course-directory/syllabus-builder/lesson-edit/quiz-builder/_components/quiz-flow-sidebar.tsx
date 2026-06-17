@@ -1,18 +1,30 @@
 import { Check, Pencil, Plus } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import { QuizFlowQuestionMock } from "@/mock/quiz-builder/quiz-builder.types";
+import type { QuizQuestionType } from "@/types/course-directory/quiz.type";
+
+export interface QuizFlowQuestionItem {
+  id?: string;
+  localId: string;
+  title: string;
+  type: string;
+  questionType: QuizQuestionType;
+}
 
 interface QuizFlowSidebarProps {
-  questions: QuizFlowQuestionMock[];
-  activeQuestionId: number;
-  onQuestionSelect: (id: number) => void;
+  questions: QuizFlowQuestionItem[];
+  activeQuestionKey: string;
+  lessonTitle?: string;
+  onQuestionSelect: (key: string) => void;
+  onAddQuestion: () => void;
 }
 
 export default function QuizFlowSidebar({
   questions,
-  activeQuestionId,
+  activeQuestionKey,
+  lessonTitle,
   onQuestionSelect,
+  onAddQuestion,
 }: QuizFlowSidebarProps) {
   return (
     <Card
@@ -24,15 +36,20 @@ export default function QuizFlowSidebar({
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-[#007A4A]">Quiz Flow</h2>
+
           <p className="text-xl font-semibold italic text-[#9BA59E]">
-            {questions.length} Question
+            {questions.length}{" "}
+            {questions.length === 1 ? "Question" : "Questions"}
           </p>
-          <p className="text-xs text-[#8A968E]">Italian Basics • Lesson 1.1</p>
+
+          <p className="text-xs text-[#8A968E]">{lessonTitle || "Lesson"}</p>
         </div>
 
         <button
           type="button"
+          onClick={onAddQuestion}
           className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#62F25A] text-[#007A4A]"
+          aria-label="Add quiz question"
         >
           <Plus className="size-5" />
         </button>
@@ -40,13 +57,13 @@ export default function QuizFlowSidebar({
 
       <div className="space-y-3">
         {questions.map((question, index) => {
-          const isActive = question.id === activeQuestionId;
+          const isActive = question.localId === activeQuestionKey;
 
           return (
             <button
-              key={`${question.id}-${question.questionType}`}
+              key={`${question.localId}-${question.questionType}`}
               type="button"
-              onClick={() => onQuestionSelect(question.id)}
+              onClick={() => onQuestionSelect(question.localId)}
               className={`flex w-full items-center justify-between gap-3 rounded-full px-4 py-3 text-left transition ${
                 isActive
                   ? "bg-[#007A4A] text-white"
@@ -66,8 +83,9 @@ export default function QuizFlowSidebar({
 
                 <span className="min-w-0">
                   <span className="block truncate text-sm font-bold">
-                    {question.title}
+                    {question.questionType || `Question ${index + 1}`}
                   </span>
+
                   <span className="block truncate text-[10px] uppercase tracking-wide opacity-70">
                     {question.type}
                   </span>

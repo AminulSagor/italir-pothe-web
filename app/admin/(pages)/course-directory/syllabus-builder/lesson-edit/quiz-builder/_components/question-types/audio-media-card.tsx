@@ -1,71 +1,233 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChangeEvent, useEffect, useState } from "react";
-import { FileAudio, Music, Play, Sparkles, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import {
+  FileAudio,
+  Music,
+  Pause,
+  Play,
+  Trash2,
+  Upload,
+  Volume2,
+  Wand2,
+} from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
 import FileUploader from "@/components/UI/uploaders/file-uploader";
-import { QuizAudioTab } from "@/mock/quiz-builder/quiz-builder.types";
 
-interface UploadedAudio {
-  filename: string;
-  size: string;
-  previewUrl: string;
+type AudioTab = "generate" | "upload";
+
+interface AudioMediaCardProps {
+  mediaFileId: string;
+  mediaUrl: string;
+  generatedAudioText: string;
+  isUploading?: boolean;
+  isGenerating?: boolean;
+  onGeneratedAudioTextChange: (value: string) => void;
+  onFileSelect: (file: File) => void;
+  onRemoveMedia: () => void;
+  onGenerateAudio?: () => void;
 }
 
-const audioTabs: { label: string; value: QuizAudioTab }[] = [
-  { label: "Generate Audio", value: "generate" },
-  { label: "Upload Audio", value: "upload" },
-];
+const formatTime = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
 
-export default function AudioMediaCard() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
 
-  const currentTab =
-    searchParams.get("audioTab") === "upload" ? "upload" : "generate";
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
 
-  const [generateText, setGenerateText] = useState("");
-  const [uploadedAudio, setUploadedAudio] = useState<UploadedAudio | null>(
-    null,
+function AudioPreview({
+  mediaUrl,
+  label,
+}: {
+  mediaUrl: string;
+  label: string;
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+
+  useEffect(() => {
+    setIsPlaying(false);
+    setHasError(false);
+    setCurrentTime(0);
+    setDuration(0);
+  }, [mediaUrl]);
+
+  const handleTogglePlay = async () => {
+    const audio = audioRef.current;
+
+    if (!audio || !mediaUrl || hasError) return;
+
+    try {
+      if (audio.paused) {
+        await audio.play();
+        setIsPlaying(true);
+        return;
+      }
+
+      audio.pause();
+      setIsPlaying(false);
+    } catch {
+      setIsPlaying(false);
+      setHasError(true);
+    }
+  };
+
+  const handleSeek = (value: number) => {
+    const audio = audioRef.current;
+
+    if (!audio || !duration) return;
+
+    audio.currentTime = value;
+    setCurrentTime(value);
+  };
+
+  const handleVolumeChange = (value: number) => {
+    const audio = audioRef.current;
+
+    if (!audio) return;
+
+    audio.volume = value;
+    setVolume(value);
+  };
+
+  if (!mediaUrl) {
+    return (
+      <div className="rounded-3xl bg-white px-6 py-5 text-sm font-medium text-[#66736B]">
+        Audio file is attached. Preparing playable URL...
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-3xl bg-white px-6 py-5">
+      <audio
+        ref={audioRef}
+        src={mediaUrl}
+        preload="metadata"
+        onLoadedMetadata={(event) => {
+          setDuration(event.currentTarget.duration || 0);
+        }}
+        onTimeUpdate={(event) => {
+          setCurrentTime(event.currentTarget.currentTime || 0);
+        }}
+        onEnded={() => {
+          setIsPlaying(false);
+          setCurrentTime(0);
+        }}
+        onError={() => {
+          setIsPlaying(false);
+          setHasError(true);
+        }}
+      />
+
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h4 className="truncate text-sm font-bold text-[#202420]">{label}</h4>
+          <p className="text-xs font-semibold uppercase text-[#66736B]">
+            Quiz audio file
+          </p>
+        </div>
+
+        <p className="text-sm font-bold text-[#007A4A]">
+          {formatTime(currentTime)} / {formatTime(duration)}
+        </p>
+      </div>
+
+      {hasError ? (
+        <p className="rounded-2xl bg-[#FCEBEC] px-4 py-3 text-sm font-medium text-[#D92D20]">
+          Audio URL is not playable. Please replace this audio file.
+        </p>
+      ) : (
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={handleTogglePlay}
+            className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#007A4A] text-white"
+          >
+            {isPlaying ? (
+              <Pause className="size-5 fill-white" />
+            ) : (
+              <Play className="ml-0.5 size-5 fill-white" />
+            )}
+          </button>
+
+          <input
+            type="range"
+            min={0}
+            max={duration || 1}
+            step={0.1}
+            value={currentTime}
+            disabled={!duration}
+            onChange={(event) => handleSeek(Number(event.target.value))}
+            className="h-1 flex-1 accent-[#007A4A]"
+          />
+
+          <div className="hidden items-center gap-2 md:flex">
+            <Volume2 className="size-4 text-[#007A4A]" />
+
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={volume}
+              onChange={(event) =>
+                handleVolumeChange(Number(event.target.value))
+              }
+              className="h-1 w-24 accent-[#007A4A]"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function AudioMediaCard({
+  mediaFileId,
+  mediaUrl,
+  generatedAudioText,
+  isUploading = false,
+  isGenerating = false,
+  onGeneratedAudioTextChange,
+  onFileSelect,
+  onRemoveMedia,
+  onGenerateAudio,
+}: AudioMediaCardProps) {
+  const [activeTab, setActiveTab] = useState<AudioTab>(
+    mediaFileId ? "upload" : "generate",
   );
 
   useEffect(() => {
-    return () => {
-      if (uploadedAudio?.previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(uploadedAudio.previewUrl);
-      }
-    };
-  }, [uploadedAudio]);
-
-  const handleTabChange = (tab: QuizAudioTab) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("audioTab", tab);
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const handleAudioSelect = (file: File) => {
-    const previewUrl = URL.createObjectURL(file);
-
-    setUploadedAudio({
-      filename: file.name,
-      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-      previewUrl,
-    });
-  };
-
-  const handleDeleteAudio = () => {
-    if (uploadedAudio?.previewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(uploadedAudio.previewUrl);
+    if (mediaFileId) {
+      setActiveTab("upload");
     }
+  }, [mediaFileId]);
 
-    setUploadedAudio(null);
-  };
+  const renderTabButton = (tab: AudioTab, label: string) => {
+    const isActive = activeTab === tab;
 
-  const handleGenerateInput = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    setGenerateText(event.target.value);
+    return (
+      <button
+        type="button"
+        onClick={() => setActiveTab(tab)}
+        className={`border-b-2 pb-3 text-lg font-bold transition ${
+          isActive
+            ? "border-[#007A4A] text-[#007A4A]"
+            : "border-transparent text-[#66736B]"
+        }`}
+      >
+        {label}
+      </button>
+    );
   };
 
   return (
@@ -81,122 +243,117 @@ export default function AudioMediaCard() {
         </div>
 
         <div>
-          <h3 className="text-xl font-bold text-[#202420]">Audio Media</h3>
-          <p className="text-sm text-[#66736B]">
+          <h3 className="text-2xl font-bold text-[#202420]">Audio Media</h3>
+
+          <p className="text-base text-[#66736B]">
             MP3, WAV, or AAC formats supported
           </p>
         </div>
       </div>
 
-      <div className="mb-6 flex gap-6 border-b border-[#DDE6DD]">
-        {audioTabs.map((tab) => (
-          <button
-            key={tab.value}
-            type="button"
-            onClick={() => handleTabChange(tab.value)}
-            className={`border-b-2 pb-3 text-sm font-bold transition ${
-              currentTab === tab.value
-                ? "border-[#007A4A] text-[#007A4A]"
-                : "border-transparent text-[#66736B]"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="mb-6 flex items-center gap-8 border-b border-[#DDE6DD]">
+        {renderTabButton("generate", "Generate Audio")}
+        {renderTabButton("upload", "Upload Audio")}
       </div>
 
-      {currentTab === "generate" ? (
-        <div>
-          <div className="rounded-3xl bg-[#EEF3EC] p-5">
+      {activeTab === "generate" ? (
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4 rounded-3xl bg-[#EEF3EC] p-6 lg:flex-row lg:items-center">
             <textarea
-              value={generateText}
-              onChange={handleGenerateInput}
+              value={generatedAudioText}
+              onChange={(event) =>
+                onGeneratedAudioTextChange(event.target.value)
+              }
               placeholder="Enter text to generate audio..."
-              className="min-h-20 w-full resize-none bg-transparent text-sm text-[#202420] outline-none placeholder:text-[#B2BDB5]"
+              className="min-h-24 flex-1 resize-none bg-transparent text-lg text-[#202420] outline-none placeholder:text-[#B7C2BA]"
             />
 
-            <div className="flex justify-end">
-              <button
-                type="button"
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-[#007A4A] px-6 text-sm font-bold text-white shadow-md"
-              >
-                <Sparkles className="size-4" />
-                AI Generate
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-5 flex items-center gap-4 rounded-full border border-[#DDE6DD] bg-white px-4 py-3">
             <button
               type="button"
-              className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#007A4A] text-white"
+              disabled={!generatedAudioText.trim() || isGenerating}
+              onClick={onGenerateAudio}
+              className="inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[#007A4A] px-8 text-base font-bold text-white shadow-md disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <Play className="ml-0.5 size-4 fill-white" />
-            </button>
-
-            <div className="h-1 flex-1 rounded-full bg-[#DDE6DD]" />
-
-            <span className="text-xs text-[#A8B2AA]">0:00</span>
-          </div>
-        </div>
-      ) : uploadedAudio ? (
-        <div className="rounded-3xl border border-[#DDE6DD] bg-[#EEF5EC] p-6">
-          <div className="mb-5 flex items-start justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-4">
-              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#62F25A]">
-                <FileAudio className="size-5 text-[#007A4A]" />
-              </div>
-
-              <div className="min-w-0">
-                <h4 className="truncate text-base font-bold text-[#202420]">
-                  {uploadedAudio.filename}
-                </h4>
-                <p className="text-xs uppercase text-[#66736B]">
-                  {uploadedAudio.size} • MP3 Audio
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDeleteAudio}
-              className="text-[#66736B] hover:text-red-600"
-            >
-              <Trash2 className="size-5" />
+              <Wand2 className="size-5" />
+              {isGenerating ? "Generating..." : "AI Generate"}
             </button>
           </div>
 
-          <div className="flex items-center gap-4 rounded-2xl bg-white px-5 py-4">
-            <button
-              type="button"
-              className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#007A4A] text-white"
-            >
-              <Play className="ml-0.5 size-5 fill-white" />
-            </button>
-
-            <audio src={uploadedAudio.previewUrl} controls className="hidden" />
-
-            <div className="h-2 flex-1 rounded-full bg-[#DDE6DD]">
-              <div className="h-2 w-1/3 rounded-full bg-[#007A4A]" />
+          {mediaFileId ? (
+            <AudioPreview
+              mediaUrl={mediaUrl}
+              label="Generated audio attached"
+            />
+          ) : (
+            <div className="rounded-3xl bg-white px-6 py-5 text-sm text-[#66736B]">
+              No generated audio attached yet.
             </div>
-
-            <span className="whitespace-nowrap text-xs font-semibold text-[#007A4A]">
-              0:12
-            </span>
-            <span className="whitespace-nowrap text-xs text-[#A8B2AA]">
-              / 0:45
-            </span>
-          </div>
+          )}
         </div>
       ) : (
-        <FileUploader
-          title="Drop your MP3, WAV, or AAC file here or click to browse"
-          description=""
-          accept="audio/mpeg,audio/wav,audio/aac"
-          icon={<FileAudio className="size-6" />}
-          className="min-h-44"
-          onFileSelect={handleAudioSelect}
-        />
+        <div>
+          {mediaFileId ? (
+            <div className="rounded-[32px] border border-[#DDE6DD] bg-[#EEF5EC] p-6">
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#62F25A]">
+                    <FileAudio className="size-5 text-[#007A4A]" />
+                  </div>
+
+                  <div className="min-w-0">
+                    <h4 className="truncate text-lg font-bold text-[#202420]">
+                      Audio attached
+                    </h4>
+
+                    <p className="text-xs font-semibold uppercase text-[#66736B]">
+                      Uploaded quiz audio
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onRemoveMedia}
+                  className="text-[#66736B] hover:text-red-600"
+                  aria-label="Remove audio"
+                >
+                  <Trash2 className="size-5" />
+                </button>
+              </div>
+
+              <AudioPreview mediaUrl={mediaUrl} label="Quiz audio attached" />
+
+              <label className="mt-6 inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-[#007A4A]">
+                <Upload className="size-4" />
+                {isUploading ? "Uploading..." : "Replace Audio"}
+
+                <input
+                  type="file"
+                  accept="audio/mpeg,audio/wav,audio/aac,audio/x-wav"
+                  disabled={isUploading}
+                  className="hidden"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+
+                    if (file) {
+                      onFileSelect(file);
+                    }
+
+                    event.target.value = "";
+                  }}
+                />
+              </label>
+            </div>
+          ) : (
+            <FileUploader
+              title={isUploading ? "Uploading..." : "Upload Audio"}
+              description="Drag & drop audio file here or click to browse. Supported formats: MP3, WAV, AAC."
+              accept="audio/mpeg,audio/wav,audio/aac,audio/x-wav"
+              icon={<FileAudio className="size-6" />}
+              onFileSelect={onFileSelect}
+            />
+          )}
+        </div>
       )}
     </Card>
   );

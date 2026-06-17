@@ -1,15 +1,13 @@
-import CourseDetailsHeader from "./_components/course-details-header";
-import CourseDetailsStats from "./_components/course-details-stats";
-import EnrollmentListTable from "./_components/enrollment-list-table";
+import CourseDetailsContent from "./_components/course-details-content";
 
-const CourseDetailsPage = () => {
-  return (
-    <section className="space-y-7">
-      <CourseDetailsHeader />
-      <CourseDetailsStats />
-      <EnrollmentListTable />
-    </section>
-  );
+interface CourseDetailsPageProps {
+  params: {
+    courseId: string;
+  };
+}
+
+const CourseDetailsPage = ({ params }: CourseDetailsPageProps) => {
+  return <CourseDetailsContent courseId={params.courseId} />;
 };
 
 export default CourseDetailsPage;

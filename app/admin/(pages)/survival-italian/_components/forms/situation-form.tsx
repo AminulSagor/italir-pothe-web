@@ -1,33 +1,97 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { FileText } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
+import FileUploader from "@/components/UI/uploaders/file-uploader";
+import type {
+  SurvivalSituation,
+  UpdateSurvivalSituationPayload,
+} from "@/types/survival-italian/survival-italian.type";
 
+import { getSurvivalPdfFileName } from "../../_utils/survival-italian-ui.util";
 import ColorPicker from "./color-picker";
 import UploadedPdfCard from "./uploaded-pdf-card";
-import FileUploader from "@/components/UI/uploaders/file-uploader";
 
 interface Props {
-  onPublish: () => void;
+  situation: SurvivalSituation | null;
+  selectedIconKey: string;
+  selectedColor: string;
+  error?: string;
+  isSaving?: boolean;
+  onColorChange: (color: string) => void;
+  onDiscard: () => void;
+  onPublish: (
+    payload: UpdateSurvivalSituationPayload,
+    uploadedPdf: File | null,
+  ) => Promise<void>;
 }
 
-export default function SituationForm({ onPublish }: Props) {
+const defaultCardVariant = "normal";
+
+export default function SituationForm({
+  situation,
+  selectedIconKey,
+  selectedColor,
+  error = "",
+  isSaving = false,
+  onColorChange,
+  onDiscard,
+  onPublish,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [selectedColor, setSelectedColor] = useState("#DCEBF6");
-
+  const [title, setTitle] = useState("");
+  const [subtitleBn, setSubtitleBn] = useState("");
+  const [cardVariant, setCardVariant] = useState(defaultCardVariant);
+  const [sortOrder, setSortOrder] = useState(1);
+  const [resourceFileId, setResourceFileId] = useState<
+    string | null | undefined
+  >(undefined);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
-  const handleReplace = () => {
-    inputRef.current?.click();
+  useEffect(() => {
+    setTitle(situation?.title || "");
+    setSubtitleBn(situation?.subtitleBn || "");
+    setCardVariant(situation?.cardVariant || defaultCardVariant);
+    setSortOrder(situation?.sortOrder || 1);
+    setResourceFileId(situation ? situation.resourceFileId : undefined);
+    setUploadedFile(null);
+  }, [situation]);
+
+  const existingFileName = situation ? getSurvivalPdfFileName(situation) : "";
+  const shownPdfName =
+    uploadedFile?.name || (resourceFileId ? existingFileName : "");
+  const shownPdfSize = uploadedFile
+    ? `${(uploadedFile.size / 1024 / 1024).toFixed(1)} MB`
+    : "PDF attached";
+
+  const handlePublish = () => {
+    const trimmedTitle = title.trim();
+    const trimmedSubtitleBn = subtitleBn.trim();
+
+    onPublish(
+      {
+        title: trimmedTitle,
+        ...(trimmedSubtitleBn ? { subtitleBn: trimmedSubtitleBn } : {}),
+        iconKey: selectedIconKey,
+        cardColor: selectedColor,
+        cardVariant,
+        ...(resourceFileId !== undefined ? { resourceFileId } : {}),
+        sortOrder,
+      },
+      uploadedFile,
+    );
   };
 
   return (
     <div className="space-y-6 p-6 md:p-8">
       <div>
         <h2 className="text-2xl font-bold text-[#202420]">
-          Edit Situation: Bus & Tickets
+          {situation
+            ? `Edit Situation: ${situation.title}`
+            : "Add New Situation"}
         </h2>
 
         <p className="mt-1 text-sm text-[#66736B]">
@@ -35,14 +99,22 @@ export default function SituationForm({ onPublish }: Props) {
         </p>
       </div>
 
+      {error ? (
+        <div className="rounded-2xl border border-[#F7C6C7] bg-[#FFF8F8] px-4 py-3 text-sm text-[#D92D20]">
+          {error}
+        </div>
+      ) : null}
+
       <div>
         <label className="mb-2 block text-sm text-[#66736B]">
           SITUATION NAME (ENGLISH)
         </label>
 
         <input
-          defaultValue="Bus & Tickets"
-          className="h-14 w-full rounded-full bg-[#F3F5F1] px-6 text-sm outline-none"
+          value={title}
+          disabled={isSaving}
+          onChange={(event) => setTitle(event.target.value)}
+          className="h-14 w-full rounded-full bg-[#F3F5F1] px-6 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
 
@@ -52,8 +124,10 @@ export default function SituationForm({ onPublish }: Props) {
         </label>
 
         <input
-          defaultValue="বাস এবং টিকিট"
-          className="h-14 w-full rounded-full bg-[#F3F5F1] px-6 text-sm outline-none"
+          value={subtitleBn}
+          disabled={isSaving}
+          onChange={(event) => setSubtitleBn(event.target.value)}
+          className="h-14 w-full rounded-full bg-[#F3F5F1] px-6 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
 
@@ -62,10 +136,7 @@ export default function SituationForm({ onPublish }: Props) {
           CARD STYLING (BACKGROUND COLOR)
         </label>
 
-        <ColorPicker
-          selectedColor={selectedColor}
-          onChange={setSelectedColor}
-        />
+        <ColorPicker selectedColor={selectedColor} onChange={onColorChange} />
       </div>
 
       <div>
@@ -73,7 +144,7 @@ export default function SituationForm({ onPublish }: Props) {
           INSTRUCTIONAL RESOURCE
         </label>
 
-        {uploadedFile ? (
+        {shownPdfName ? (
           <>
             <input
               ref={inputRef}
@@ -85,35 +156,53 @@ export default function SituationForm({ onPublish }: Props) {
 
                 if (file) {
                   setUploadedFile(file);
+                  setResourceFileId(undefined);
                 }
               }}
             />
 
             <UploadedPdfCard
-              fileName={uploadedFile.name}
-              fileSize={`${(uploadedFile.size / 1024 / 1024).toFixed(1)} MB`}
-              onReplace={handleReplace}
-              onDelete={() => setUploadedFile(null)}
+              fileName={shownPdfName}
+              fileSize={shownPdfSize}
+              onReplace={() => inputRef.current?.click()}
+              onDelete={() => {
+                setUploadedFile(null);
+                setResourceFileId(situation ? null : undefined);
+              }}
             />
           </>
         ) : (
           <FileUploader
             title="Drag & drop instructional PDF here"
-            description="MAX FILE SIZE 25MB • PDF ONLY"
+            description="or browse files from your computer"
             accept=".pdf"
-            onFileSelect={(file) => setUploadedFile(file)}
+            icon={<FileText className="size-5 text-[#D92D20]" />}
+            onFileSelect={(file) => {
+              setUploadedFile(file);
+              setResourceFileId(undefined);
+            }}
           />
         )}
       </div>
 
       <div className="border-t border-[#EEF2EE] pt-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <button type="button" className="text-sm text-[#4D574F]">
+          <button
+            type="button"
+            disabled={isSaving}
+            className="text-sm text-[#4D574F] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={onDiscard}
+          >
             Discard Changes
           </button>
 
-          <Button size="lg" className="px-10" onClick={onPublish}>
-            PUBLISH TO APP ▷
+          <Button
+            size="lg"
+            disabled={isSaving || !title.trim()}
+            className="px-10"
+            onClick={handlePublish}
+          >
+            {isSaving ? "PUBLISHING..." : "PUBLISH TO APP ▷"}
           </Button>
         </div>
       </div>

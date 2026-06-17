@@ -1,10 +1,52 @@
-import Card from "@/components/UI/cards/card";
-import { courseDirectoryStats } from "@/mock/course-directory/course-directory-stats.mock";
+import { BookOpen, TrendingUp, UsersRound } from "lucide-react";
 
-const CourseDirectoryStats = () => {
+import Card from "@/components/UI/cards/card";
+import type { Course } from "@/types/course-directory/course.type";
+
+interface CourseDirectoryStatsProps {
+  courses: Course[];
+  totalCourses: number;
+}
+
+const CourseDirectoryStats = ({
+  courses,
+  totalCourses,
+}: CourseDirectoryStatsProps) => {
+  const activeStudents = courses.reduce(
+    (total, course) => total + (course.totalStudentEnrollments || 0),
+    0,
+  );
+
+  const stats = [
+    {
+      id: "total-courses",
+      title: "Total Courses",
+      value: totalCourses.toLocaleString(),
+      icon: BookOpen,
+      iconBg: "bg-[#DDFBE6]",
+      iconColor: "text-[#006B3F]",
+    },
+    {
+      id: "active-students",
+      title: "Active Students",
+      value: activeStudents.toLocaleString(),
+      icon: UsersRound,
+      iconBg: "bg-[#FFEBDD]",
+      iconColor: "text-[#C46A00]",
+    },
+    {
+      id: "avg-completion",
+      title: "Avg. Completion Rate",
+      value: "0%",
+      icon: TrendingUp,
+      iconBg: "bg-[#DFF3F4]",
+      iconColor: "text-[#006B3F]",
+    },
+  ];
+
   return (
     <section className="grid gap-5 md:grid-cols-3">
-      {courseDirectoryStats.map((stat) => {
+      {stats.map((stat) => {
         const Icon = stat.icon;
 
         return (

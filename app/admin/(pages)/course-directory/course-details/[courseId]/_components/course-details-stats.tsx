@@ -1,13 +1,65 @@
-import Card from "@/components/UI/cards/card";
-import { courseDetailsStats } from "@/mock/course-details/course-details-stats.mock";
+import { Radio, RotateCcw, UserRound, WalletCards } from "lucide-react";
 
-const CourseDetailsStats = () => {
+import Card from "@/components/UI/cards/card";
+import type { Course } from "@/types/course-directory/course.type";
+
+interface CourseDetailsStatsProps {
+  course: Course;
+}
+
+const getPriceNumber = (course: Course) => {
+  if (course.price === null || course.price === undefined) return 0;
+
+  const numericPrice = Number(course.price);
+
+  return Number.isNaN(numericPrice) ? 0 : numericPrice;
+};
+
+const CourseDetailsStats = ({ course }: CourseDetailsStatsProps) => {
+  const totalStudents = course.totalStudentEnrollments || 0;
+  const revenue = getPriceNumber(course) * totalStudents;
+
+  const stats = [
+    {
+      id: "total-students",
+      title: "Total Students",
+      value: totalStudents.toLocaleString(),
+      badge: "Current enrollments",
+      icon: UserRound,
+      variant: "primary",
+    },
+    {
+      id: "active-now",
+      title: "Active Now",
+      value: "0",
+      badge: "No live data",
+      icon: Radio,
+      variant: "default",
+    },
+    {
+      id: "revenue",
+      title: "Revenue (YTD)",
+      value: `€${revenue.toFixed(2)}`,
+      badge: "Calculated",
+      icon: WalletCards,
+      variant: "default",
+    },
+    {
+      id: "refunded",
+      title: "Refunded",
+      value: "0",
+      badge: "No refunds",
+      icon: RotateCcw,
+      variant: "danger",
+    },
+  ];
+
   return (
     <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-      {courseDetailsStats.map((stat) => {
+      {stats.map((stat) => {
         const Icon = stat.icon;
         const isPrimary = stat.variant === "primary";
-        const isRefunded = stat.title === "Refunded";
+        const isRefunded = stat.variant === "danger";
 
         return (
           <Card
