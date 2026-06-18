@@ -1,6 +1,11 @@
 import { GripVertical } from "lucide-react";
 
-import { ConnectedModule } from "@/mock/skill-builder-manager/career-track-studio/career-track-studio.types";
+interface ConnectedModule {
+  id: string | number;
+  title: string;
+  moduleNumber: string;
+  totalSentences: number;
+}
 
 interface ModuleItemProps {
   module: ConnectedModule;
