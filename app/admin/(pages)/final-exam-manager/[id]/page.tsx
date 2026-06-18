@@ -5,15 +5,16 @@ import { isValidUuid } from "@/utils/uuid";
 import FinalExamSetupClient from "./_components/final-exam-setup-client";
 
 interface FinalExamSetupPageProps {
-  params: {
+  params: Promise<{
     id?: string;
-  };
+  }>;
 }
 
-export default function FinalExamSetupPage({
+export default async function FinalExamSetupPage({
   params,
 }: FinalExamSetupPageProps) {
-  const finalExamId = params.id;
+  const resolvedParams = await params;
+  const finalExamId = resolvedParams.id;
 
   if (!isValidUuid(finalExamId)) {
     notFound();

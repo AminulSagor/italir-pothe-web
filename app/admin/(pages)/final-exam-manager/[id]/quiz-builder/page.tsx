@@ -5,15 +5,16 @@ import { isValidUuid } from "@/utils/uuid";
 import FinalExamQuizBuilderClient from "./_components/final-exam-quiz-builder-client";
 
 interface FinalExamQuizBuilderPageProps {
-  params: {
+  params: Promise<{
     id?: string;
-  };
+  }>;
 }
 
-export default function FinalExamQuizBuilderPage({
+export default async function FinalExamQuizBuilderPage({
   params,
 }: FinalExamQuizBuilderPageProps) {
-  const finalExamId = params.id;
+  const resolvedParams = await params;
+  const finalExamId = resolvedParams.id;
 
   if (!isValidUuid(finalExamId)) {
     notFound();

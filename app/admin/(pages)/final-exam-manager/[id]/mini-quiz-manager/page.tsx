@@ -5,15 +5,16 @@ import { isValidUuid } from "@/utils/uuid";
 import ListeningMiniQuizBuilderClient from "./_components/listening-mini-quiz-builder-client";
 
 interface MiniQuizManagerPageProps {
-  params: {
+  params: Promise<{
     id?: string;
-  };
+  }>;
 }
 
-export default function MiniQuizManagerPage({
+export default async function MiniQuizManagerPage({
   params,
 }: MiniQuizManagerPageProps) {
-  const finalExamId = params.id;
+  const resolvedParams = await params;
+  const finalExamId = resolvedParams.id;
 
   if (!isValidUuid(finalExamId)) {
     notFound();
