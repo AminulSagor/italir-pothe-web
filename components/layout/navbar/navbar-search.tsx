@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 interface NavbarSearchConfig {
   pathname: string;
@@ -36,11 +36,23 @@ const getActiveSearchConfig = (pathname: string) => {
   });
 };
 
+const getCurrentQueryValue = (queryKey?: string) => {
+  if (!queryKey || typeof window === "undefined") return "";
+
+  const params = new URLSearchParams(window.location.search);
+
+  return params.get(queryKey) || "";
+};
+
+const getCurrentSearchParamsString = () => {
+  if (typeof window === "undefined") return "";
+
+  return window.location.search.replace(/^\?/, "");
+};
+
 const NavbarSearch = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const searchParamsString = searchParams.toString();
 
   const activeConfig = useMemo(
     () => getActiveSearchConfig(pathname),
@@ -48,19 +60,21 @@ const NavbarSearch = () => {
   );
 
   const queryKey = activeConfig?.queryKey;
-  const currentQueryValue = queryKey ? searchParams.get(queryKey) || "" : "";
 
-  const [searchValue, setSearchValue] = useState(currentQueryValue);
+  const [searchParamsString, setSearchParamsString] = useState("");
+  const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
-    setSearchValue(currentQueryValue);
-  }, [currentQueryValue, pathname]);
+    setSearchParamsString(getCurrentSearchParamsString());
+    setSearchValue(getCurrentQueryValue(queryKey));
+  }, [pathname, queryKey]);
 
   useEffect(() => {
     if (!queryKey) return;
 
     const timeoutId = window.setTimeout(() => {
       const trimmedValue = searchValue.trim();
+      const currentQueryValue = getCurrentQueryValue(queryKey);
 
       if (trimmedValue === currentQueryValue) return;
 
@@ -74,20 +88,15 @@ const NavbarSearch = () => {
 
       const queryString = params.toString();
 
+      setSearchParamsString(queryString);
+
       router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
         scroll: false,
       });
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [
-    currentQueryValue,
-    pathname,
-    queryKey,
-    router,
-    searchParamsString,
-    searchValue,
-  ]);
+  }, [pathname, queryKey, router, searchParamsString, searchValue]);
 
   if (!activeConfig) return null;
 
