@@ -55,11 +55,12 @@ const getCoursePrice = (course: Course | null) => {
   return Number.isNaN(price) ? "0.00" : price.toFixed(2);
 };
 
-const CreateCourseForm = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+interface CreateCourseFormProps {
+  courseId?: string;
+}
 
-  const courseId = searchParams.get("courseId") || "";
+const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
+  const router = useRouter();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [title, setTitle] = useState("");

@@ -1,21 +1,15 @@
-import { Suspense } from "react";
-
 import CreateCourseForm from "./_components/create-course-form";
 
-const CreateCourseLoading = () => {
-  return (
-    <div className="flex min-h-[420px] items-center justify-center text-sm text-[#66736B]">
-      Loading course setup...
-    </div>
-  );
-};
+interface CreateCoursePageProps {
+  searchParams: Promise<{
+    courseId?: string;
+  }>;
+}
 
-const CreateCoursePage = () => {
-  return (
-    <Suspense fallback={<CreateCourseLoading />}>
-      <CreateCourseForm />
-    </Suspense>
-  );
+const CreateCoursePage = async ({ searchParams }: CreateCoursePageProps) => {
+  const resolvedSearchParams = await searchParams;
+
+  return <CreateCourseForm courseId={resolvedSearchParams.courseId || ""} />;
 };
 
 export default CreateCoursePage;
