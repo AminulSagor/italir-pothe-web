@@ -1,7 +1,8 @@
-import { Plus } from "lucide-react";
+import { Plus } from 'lucide-react';
+import Link from 'next/link';
 
-import Button from "@/components/UI/buttons/button";
-import BackButton from "@/components/UI/buttons/back-button";
+import Button from '@/components/UI/buttons/button';
+import BackButton from '@/components/UI/buttons/back-button';
 
 export default function CVTemplateHeader() {
   return (
@@ -14,16 +15,18 @@ export default function CVTemplateHeader() {
             CV Template Manager
           </h1>
           <p className="mt-1 text-sm text-black/60">
-            Optimize and curate your high-fidelity template ecosystem with
-            precision.
+            Create reusable CV templates with controlled layout, fonts, page size,
+            colors, and required user input sections.
           </p>
         </div>
       </div>
 
-      <Button rounded="full" size="lg" className="min-w-[220px] shadow-lg">
-        <Plus className="size-5" />
-        Upload New Template
-      </Button>
+      <Link href="/admin/cv-service/templates/builder">
+        <Button rounded="full" size="lg" className="min-w-[220px] shadow-lg">
+          <Plus className="size-5" />
+          Schedule New Template
+        </Button>
+      </Link>
     </div>
   );
 }

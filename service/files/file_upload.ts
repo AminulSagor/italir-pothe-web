@@ -19,7 +19,8 @@ export type FilePurpose =
   | "caf_hero_video"
   | "caf_checklist_pdf"
   | "profile_avatar"
-  | "webinar_thumbnail";
+  | "webinar_thumbnail" 
+  | "cv_template_thumbnail";
 export type FileVisibility = "private" | "public";
 export type MediaType = "image" | "audio" | "video" | "pdf";
 
@@ -103,10 +104,9 @@ export const uploadToSignedUrl = async (
   }
 };
 
-export const uploadWebinarThumbnail = async (file: File) => {
-  const filePurpose: FilePurpose = "webinar_thumbnail";
+const uploadImageFile = async (file: File, filePurpose: FilePurpose) => {
   const visibility: FileVisibility = "public";
-  const mimeType = file.type || "image/jpeg";
+  const mimeType = file.type || "image/png";
 
   const signedUpload = await createSignedUploadUrl({
     originalName: file.name,
@@ -131,3 +131,9 @@ export const uploadWebinarThumbnail = async (file: File) => {
 
   return confirmedUpload.publicUrl || signedUpload.publicUrl;
 };
+
+export const uploadWebinarThumbnail = async (file: File) =>
+  uploadImageFile(file, "webinar_thumbnail");
+
+export const uploadCvTemplateThumbnail = async (file: File) =>
+  uploadImageFile(file, "cv_template_thumbnail");
