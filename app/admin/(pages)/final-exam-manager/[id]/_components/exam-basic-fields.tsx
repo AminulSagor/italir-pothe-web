@@ -1,10 +1,16 @@
-// app/admin/(pages)/final-exam-manager/[id]/_components/exam-basic-fields.tsx
-
 import { ChevronDown } from "lucide-react";
 
-import { examSetupInfo } from "@/mock/final-exam-manager/final-exam-setup.mock";
+interface ExamBasicFieldsProps {
+  examName: string;
+  linkedCourse: string;
+  onExamNameChange: (value: string) => void;
+}
 
-const ExamBasicFields = () => {
+const ExamBasicFields = ({
+  examName,
+  linkedCourse,
+  onExamNameChange,
+}: ExamBasicFieldsProps) => {
   return (
     <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
       <div>
@@ -12,9 +18,11 @@ const ExamBasicFields = () => {
           Exam Name
         </label>
 
-        <div className="rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#202420] shadow-sm">
-          {examSetupInfo.examName}
-        </div>
+        <input
+          value={examName}
+          onChange={(event) => onExamNameChange(event.target.value)}
+          className="w-full rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#202420] shadow-sm outline-none"
+        />
       </div>
 
       <div>
@@ -23,7 +31,7 @@ const ExamBasicFields = () => {
         </label>
 
         <div className="flex items-center justify-between gap-4 rounded-full bg-white px-6 py-4 text-sm font-semibold text-[#202420] shadow-sm">
-          <span>{examSetupInfo.linkedCourse}</span>
+          <span>{linkedCourse || "No course linked"}</span>
           <ChevronDown className="size-4 text-[#4F5B55]" />
         </div>
       </div>

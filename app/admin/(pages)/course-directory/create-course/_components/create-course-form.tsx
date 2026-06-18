@@ -472,7 +472,11 @@ const CreateCourseForm = () => {
             onStatusChange={handleStatusChange}
           />
 
-          <FinalExaminationCard />
+          <FinalExaminationCard
+            courseId={activeCourseId}
+            courseTitle={title}
+            disabled={isLoading || isSaving}
+          />
         </aside>
       </div>
 

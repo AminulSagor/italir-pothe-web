@@ -1,8 +1,16 @@
-import { PlusCircle } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 
-const FinalExamHeader = () => {
+interface FinalExamHeaderProps {
+  isCreating?: boolean;
+  onCreateExam: () => void;
+}
+
+const FinalExamHeader = ({
+  isCreating = false,
+  onCreateExam,
+}: FinalExamHeaderProps) => {
   return (
     <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
       <div>
@@ -11,9 +19,20 @@ const FinalExamHeader = () => {
         </h1>
       </div>
 
-      <Button className="gap-2 shadow-lg shadow-[#006B3F]/20" size="lg">
-        <PlusCircle className="size-5" />
-        Create New Exam
+      <Button
+        type="button"
+        className="gap-2 shadow-lg shadow-[#006B3F]/20"
+        size="lg"
+        disabled={isCreating}
+        onClick={onCreateExam}
+      >
+        {isCreating ? (
+          <Loader2 className="size-5 animate-spin" />
+        ) : (
+          <PlusCircle className="size-5" />
+        )}
+
+        {isCreating ? "Creating..." : "Create New Exam"}
       </Button>
     </div>
   );

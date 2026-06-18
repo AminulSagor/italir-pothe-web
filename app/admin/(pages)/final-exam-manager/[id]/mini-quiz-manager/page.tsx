@@ -1,9 +1,23 @@
+import { notFound } from "next/navigation";
+
+import { isValidUuid } from "@/utils/uuid";
+
 import ListeningMiniQuizBuilderClient from "./_components/listening-mini-quiz-builder-client";
 
-import { listeningMiniQuizMock } from "@/mock/final-exam-manager/listening-mini-quiz.mock";
+interface MiniQuizManagerPageProps {
+  params: {
+    id?: string;
+  };
+}
 
-const MiniQuizManagerPage = () => {
-  return <ListeningMiniQuizBuilderClient data={listeningMiniQuizMock} />;
-};
+export default function MiniQuizManagerPage({
+  params,
+}: MiniQuizManagerPageProps) {
+  const finalExamId = params.id;
 
-export default MiniQuizManagerPage;
+  if (!isValidUuid(finalExamId)) {
+    notFound();
+  }
+
+  return <ListeningMiniQuizBuilderClient finalExamId={finalExamId} />;
+}

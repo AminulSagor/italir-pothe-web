@@ -1,16 +1,36 @@
-// app/admin/(pages)/final-exam-manager/[id]/_components/exam-speaking-lab.tsx
-
 import { ChevronDown } from "lucide-react";
 
 import Accordion from "@/components/UI/accordion/accordion";
 
-import { ExamPart } from "@/mock/final-exam-manager/final-exam-setup.types";
+import type { ExamPartView } from "./exam-part-card";
 
-interface Props {
-  part: ExamPart;
+interface ExamSpeakingLabProps {
+  part: ExamPartView;
+  title: string;
+  titleBn: string;
+  instruction: string;
+  maxDurationSeconds: number;
+  unlimitedRerecords: boolean;
+  onTitleChange: (value: string) => void;
+  onTitleBnChange: (value: string) => void;
+  onInstructionChange: (value: string) => void;
+  onMaxDurationSecondsChange: (value: number) => void;
+  onUnlimitedRerecordsChange: (value: boolean) => void;
 }
 
-const ExamSpeakingLab = ({ part }: Props) => {
+const ExamSpeakingLab = ({
+  part,
+  title,
+  titleBn,
+  instruction,
+  maxDurationSeconds,
+  unlimitedRerecords,
+  onTitleChange,
+  onTitleBnChange,
+  onInstructionChange,
+  onMaxDurationSecondsChange,
+  onUnlimitedRerecordsChange,
+}: ExamSpeakingLabProps) => {
   const Icon = part.icon;
 
   return (
@@ -35,19 +55,42 @@ const ExamSpeakingLab = ({ part }: Props) => {
       }
     >
       <div className="space-y-5">
-        <Field text="Task Title (e.g. Describe your last vacation)" />
+        <input
+          value={title}
+          onChange={(event) => onTitleChange(event.target.value)}
+          placeholder="Task Title (e.g. Describe your last vacation)"
+          className="w-full rounded-full bg-[#F6FBF4] px-6 py-4 text-sm text-[#202420] outline-none placeholder:text-[#7A8580]"
+        />
 
-        <div className="min-h-[105px] rounded-3xl bg-[#F6FBF4] px-6 py-5 text-sm text-[#7A8580]">
-          Instruction prompt for student...
-        </div>
+        <input
+          value={titleBn}
+          onChange={(event) => onTitleBnChange(event.target.value)}
+          placeholder="Task Title (Bengali)"
+          className="w-full rounded-full bg-[#F6FBF4] px-6 py-4 text-sm text-[#202420] outline-none placeholder:text-[#7A8580]"
+        />
+
+        <textarea
+          value={instruction}
+          onChange={(event) => onInstructionChange(event.target.value)}
+          placeholder="Instruction prompt for student..."
+          className="min-h-[105px] w-full resize-none rounded-3xl bg-[#F6FBF4] px-6 py-5 text-sm text-[#202420] outline-none placeholder:text-[#7A8580]"
+        />
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <InfoPill label="MAX DURATION (S)" value="60s" />
+          <InfoInput
+            label="MAX DURATION (S)"
+            value={maxDurationSeconds}
+            onChange={onMaxDurationSecondsChange}
+          />
 
-          <div className="flex items-center justify-between rounded-full bg-[#F6FBF4] px-6 py-4 text-sm font-bold text-[#202420]">
-            Unlimited Re-records
+          <button
+            type="button"
+            onClick={() => onUnlimitedRerecordsChange(!unlimitedRerecords)}
+            className="flex items-center justify-between rounded-full bg-[#F6FBF4] px-6 py-4 text-sm font-bold text-[#202420]"
+          >
+            {unlimitedRerecords ? "Unlimited Re-records" : "Limited Re-records"}
             <ChevronDown className="size-5" />
-          </div>
+          </button>
         </div>
       </div>
     </Accordion>
@@ -56,19 +99,24 @@ const ExamSpeakingLab = ({ part }: Props) => {
 
 export default ExamSpeakingLab;
 
-const Field = ({ text }: { text: string }) => {
-  return (
-    <div className="rounded-full bg-[#F6FBF4] px-6 py-4 text-sm text-[#7A8580]">
-      {text}
-    </div>
-  );
-};
+interface InfoInputProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+}
 
-const InfoPill = ({ label, value }: { label: string; value: string }) => {
+const InfoInput = ({ label, value, onChange }: InfoInputProps) => {
   return (
     <div className="flex items-center justify-between rounded-full bg-[#F6FBF4] px-6 py-4 text-sm">
       <span className="text-[#4F5B55]">{label}</span>
-      <span className="font-bold text-[#00823F]">{value}</span>
+
+      <input
+        type="number"
+        min={0}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        className="w-20 bg-transparent text-right font-bold text-[#00823F] outline-none"
+      />
     </div>
   );
 };
