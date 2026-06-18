@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, BookOpen, MonitorPlay } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -69,13 +69,18 @@ const buildSnapshot = (params: {
   return JSON.stringify(params);
 };
 
-export default function CareerTrackStudioContent() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+interface CareerTrackStudioContentProps {
+  careerTrackIdFromUrl?: string;
+  mode?: string;
+}
 
-  const careerTrackIdFromUrl = searchParams.get("careerTrackId") || "";
-  const isCreateMode =
-    searchParams.get("mode") === "create" || !careerTrackIdFromUrl;
+export default function CareerTrackStudioContent({
+  careerTrackIdFromUrl = "",
+  mode = "",
+}: CareerTrackStudioContentProps) {
+  const router = useRouter();
+
+  const isCreateMode = mode === "create" || !careerTrackIdFromUrl;
 
   const [careerTrackId, setCareerTrackId] = useState(careerTrackIdFromUrl);
   const [careerTrack, setCareerTrack] =

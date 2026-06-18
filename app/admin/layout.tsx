@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import Sidebar from "../../components/layout/sidebar/sidebar";
@@ -9,6 +9,14 @@ import Navbar from "../../components/layout/navbar/navbar";
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
+
+const AdminPageFallback = () => {
+  return (
+    <div className="flex min-h-[420px] items-center justify-center text-sm text-[#66736B]">
+      Loading...
+    </div>
+  );
+};
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const pathname = usePathname();
@@ -22,7 +30,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   if (isFullFocusPage) {
     return (
       <div className="min-h-screen bg-[#F5FAF3] p-6 text-black">
-        {children}
+        <Suspense fallback={<AdminPageFallback />}>{children}</Suspense>
       </div>
     );
   }
@@ -39,7 +47,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <Navbar onMenuClick={() => setIsSidebarOpen(true)} />
 
           <main className="flex-1 overflow-y-auto p-4 text-black lg:p-8">
-            {children}
+            <Suspense fallback={<AdminPageFallback />}>{children}</Suspense>
           </main>
         </div>
       </div>
