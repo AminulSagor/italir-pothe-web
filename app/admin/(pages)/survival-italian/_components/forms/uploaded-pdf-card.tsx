@@ -1,4 +1,4 @@
-import { FileText, Trash2 } from "lucide-react";
+import { FileText, RefreshCw, Trash2 } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 
@@ -31,7 +31,8 @@ export default function UploadedPdfCard({
 
       <div className="flex items-center gap-3">
         <Button variant="outline" size="sm" rounded="full" onClick={onReplace}>
-          ⛓ REPLACE
+          <RefreshCw className="mr-2 size-3.5" />
+          REPLACE
         </Button>
 
         <button type="button" onClick={onDelete} className="text-[#D92D20]">

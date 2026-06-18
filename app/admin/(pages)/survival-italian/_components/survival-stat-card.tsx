@@ -1,12 +1,14 @@
 import Card from "@/components/UI/cards/card";
-
-import { SurvivalStat } from "@/mock/survival-italian/survival-italian.types";
+import { getSurvivalStatIcon } from "../_utils/survival-italian-ui.util";
+import type { SurvivalStat } from "@/types/survival-italian/survival-italian.type";
 
 interface Props {
   stat: SurvivalStat;
 }
 
 export default function SurvivalStatCard({ stat }: Props) {
+  const Icon = getSurvivalStatIcon(stat.iconKey);
+
   return (
     <Card
       padding="lg"
@@ -15,9 +17,9 @@ export default function SurvivalStatCard({ stat }: Props) {
       className="flex items-center gap-4"
     >
       <div
-        className={`flex size-14 items-center justify-center rounded-2xl text-2xl ${stat.iconBg}`}
+        className={`flex size-14 items-center justify-center rounded-2xl ${stat.iconBg}`}
       >
-        {stat.icon}
+        <Icon className="size-6 text-[#007A3D]" />
       </div>
 
       <div>

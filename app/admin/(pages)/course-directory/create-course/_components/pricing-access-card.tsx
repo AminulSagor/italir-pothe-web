@@ -1,34 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { WalletCards } from "lucide-react";
+
 import Card from "@/components/UI/cards/card";
-import { createCoursePricing } from "@/mock/create-course/create-course-pricing.mock";
+
 import ConfirmPriceChangeDialog from "./confirm-price-change-dialog";
 
-const PricingAccessCard = () => {
-  const [isFree, setIsFree] = useState(false);
-  const [price, setPrice] = useState(createCoursePricing.price);
-  const [pendingPrice, setPendingPrice] = useState(createCoursePricing.price);
+interface PricingAccessCardProps {
+  isFree: boolean;
+  price: string;
+  couponCode: string;
+  disabled?: boolean;
+  courseTitle?: string;
+  onIsFreeChange: (value: boolean) => void;
+  onPriceChange: (value: string) => void;
+  onCouponCodeChange: (value: string) => void;
+}
+
+const normalizePrice = (value: string) => {
+  const numericValue = Number(value);
+
+  if (Number.isNaN(numericValue)) return "0.00";
+
+  return numericValue.toFixed(2);
+};
+
+const PricingAccessCard = ({
+  isFree,
+  price,
+  couponCode,
+  disabled = false,
+  courseTitle,
+  onIsFreeChange,
+  onPriceChange,
+  onCouponCodeChange,
+}: PricingAccessCardProps) => {
+  const [previousPrice, setPreviousPrice] = useState(normalizePrice(price));
+  const [pendingPrice, setPendingPrice] = useState(normalizePrice(price));
   const [isPriceDialogOpen, setIsPriceDialogOpen] = useState(false);
 
+  useEffect(() => {
+    const syncedPrice = normalizePrice(price);
+
+    setPreviousPrice(syncedPrice);
+    setPendingPrice(syncedPrice);
+  }, [price]);
+
   const handlePriceBlur = () => {
-    if (isFree || !pendingPrice || pendingPrice === price) return;
+    const normalizedPendingPrice = normalizePrice(pendingPrice);
+
+    setPendingPrice(normalizedPendingPrice);
+
+    if (isFree || normalizedPendingPrice === previousPrice || disabled) {
+      return;
+    }
+
     setIsPriceDialogOpen(true);
   };
 
   const handleConfirmPrice = () => {
-    setPrice(pendingPrice);
+    const normalizedPendingPrice = normalizePrice(pendingPrice);
+
+    setPreviousPrice(normalizedPendingPrice);
+    setPendingPrice(normalizedPendingPrice);
+    onPriceChange(normalizedPendingPrice);
     setIsPriceDialogOpen(false);
   };
 
   const handleCancelPrice = () => {
-    setPendingPrice(price);
+    setPendingPrice(previousPrice);
     setIsPriceDialogOpen(false);
   };
 
   const handleToggleFree = () => {
-    setIsFree((prev) => !prev);
+    if (disabled) return;
+
+    const nextValue = !isFree;
+
+    onIsFreeChange(nextValue);
+
+    if (nextValue) {
+      setPendingPrice("0.00");
+      setPreviousPrice("0.00");
+      onPriceChange("0.00");
+      return;
+    }
+
+    if (Number(previousPrice) === 0) {
+      setPendingPrice("0.00");
+      onPriceChange("0.00");
+    }
   };
 
   return (
@@ -44,8 +106,9 @@ const PricingAccessCard = () => {
 
         <button
           type="button"
+          disabled={disabled}
           onClick={handleToggleFree}
-          className="mb-5 flex w-full items-center justify-between rounded-full bg-[#EEF3EC] px-5 py-3"
+          className="mb-5 flex w-full items-center justify-between rounded-full bg-[#EEF3EC] px-5 py-3 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className="text-sm font-semibold text-[#202420]">
             Set as Free
@@ -72,7 +135,7 @@ const PricingAccessCard = () => {
 
             <input
               value={isFree ? "0.00" : pendingPrice}
-              disabled={isFree}
+              disabled={disabled || isFree}
               onChange={(event) => setPendingPrice(event.target.value)}
               onBlur={handlePriceBlur}
               className="w-full rounded-full bg-[#EEF3EC] px-5 py-3 text-sm text-[#202420] outline-none disabled:cursor-not-allowed disabled:opacity-60"
@@ -84,18 +147,13 @@ const PricingAccessCard = () => {
               Coupon Code
             </label>
 
-            <div className="flex items-center justify-between rounded-full bg-[#EEF3EC] px-5 py-3">
-              <span className="text-sm font-bold text-[#202420]">
-                {createCoursePricing.couponCode}
-              </span>
-
-              <button
-                type="button"
-                className="rounded-full bg-[#DDFBE6] px-3 py-1 text-xs font-bold text-[#00864F]"
-              >
-                APPLY
-              </button>
-            </div>
+            <input
+              value={couponCode}
+              disabled={disabled || isFree}
+              placeholder="WELCOME20"
+              onChange={(event) => onCouponCodeChange(event.target.value)}
+              className="w-full rounded-full bg-[#EEF3EC] px-5 py-3 text-sm font-bold text-[#202420] outline-none placeholder:text-black/35 disabled:cursor-not-allowed disabled:opacity-60"
+            />
           </div>
         </div>
       </Card>
@@ -104,7 +162,7 @@ const PricingAccessCard = () => {
         open={isPriceDialogOpen}
         onClose={handleCancelPrice}
         onConfirm={handleConfirmPrice}
-        previousPrice={price}
+        previousPrice={previousPrice}
         newPrice={pendingPrice}
       />
     </>

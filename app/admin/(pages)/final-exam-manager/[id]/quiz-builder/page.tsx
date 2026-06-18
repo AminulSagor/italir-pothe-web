@@ -1,10 +1,24 @@
-import QuizBuilderClient from "@/app/admin/(pages)/course-directory/syllabus-builder/lesson-edit/quiz-builder/_components/quiz-builder-client";
-import { quizBuilderMockData } from "@/mock/quiz-builder/quiz-builder.mock";
+import { notFound } from "next/navigation";
 
-const page = () => {
-  return (
-    <QuizBuilderClient data={quizBuilderMockData} headerVariant="final-exam" />
-  );
-};
+import { isValidUuid } from "@/utils/uuid";
 
-export default page;
+import FinalExamQuizBuilderClient from "./_components/final-exam-quiz-builder-client";
+
+interface FinalExamQuizBuilderPageProps {
+  params: Promise<{
+    id?: string;
+  }>;
+}
+
+export default async function FinalExamQuizBuilderPage({
+  params,
+}: FinalExamQuizBuilderPageProps) {
+  const resolvedParams = await params;
+  const finalExamId = resolvedParams.id;
+
+  if (!isValidUuid(finalExamId)) {
+    notFound();
+  }
+
+  return <FinalExamQuizBuilderClient finalExamId={finalExamId} />;
+}

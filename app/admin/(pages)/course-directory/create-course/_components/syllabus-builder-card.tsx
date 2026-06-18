@@ -1,9 +1,18 @@
 import { ArrowRight, Boxes } from "lucide-react";
-import Button from "@/components/UI/buttons/button";
-import Card from "@/components/UI/cards/card";
 import Link from "next/link";
 
-const SyllabusBuilderCard = () => {
+import Button from "@/components/UI/buttons/button";
+import Card from "@/components/UI/cards/card";
+
+interface SyllabusBuilderCardProps {
+  courseId?: string;
+}
+
+const SyllabusBuilderCard = ({ courseId }: SyllabusBuilderCardProps) => {
+  const href = courseId
+    ? `/admin/course-directory/syllabus-builder?courseId=${courseId}`
+    : "/admin/course-directory/syllabus-builder";
+
   return (
     <Card padding="lg" rounded="3xl" shadow="sm">
       <div className="mb-8 flex items-start gap-4">
@@ -25,7 +34,8 @@ const SyllabusBuilderCard = () => {
         Map out your educational journey. Define units, attach resources, and
         set prerequisite requirements for each module in your course.
       </p>
-      <Link href={"/admin/course-directory/syllabus-builder"}>
+
+      <Link href={href}>
         <Button size="lg" className="gap-2 px-10">
           Enter Syllabus Architect
           <ArrowRight className="size-4" />

@@ -1,20 +1,37 @@
-// app/admin/(pages)/final-exam-manager/[id]/_components/exam-part-card.tsx
-
+import type { LucideIcon } from "lucide-react";
 import { List, LockKeyhole } from "lucide-react";
 
 import Accordion from "@/components/UI/accordion/accordion";
 import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
 
-import { ExamPart } from "@/mock/final-exam-manager/final-exam-setup.types";
-import Link from "next/link";
-
-interface Props {
-  part: ExamPart;
-  variant?: "core" | "listening";
+export interface ExamPartView {
+  id: string;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+  accentClass: string;
+  iconWrapperClass: string;
+  iconClass: string;
+  passingPercent: number;
+  currentQuestions: number;
+  requiredQuestions: number;
+  actionLabel: string;
+  actionPath: string;
+  variant: "core" | "listening" | "writing" | "speaking";
 }
 
-const ExamPartCard = ({ part, variant = "core" }: Props) => {
+interface ExamPartCardProps {
+  part: ExamPartView;
+  variant?: "core" | "listening";
+  onNavigate: (path: string) => void;
+}
+
+const ExamPartCard = ({
+  part,
+  variant = "core",
+  onNavigate,
+}: ExamPartCardProps) => {
   const Icon = part.icon;
 
   if (variant === "core") {
@@ -36,6 +53,10 @@ const ExamPartCard = ({ part, variant = "core" }: Props) => {
             <div>
               <h3 className="text-lg font-bold text-[#202420]">{part.title}</h3>
               <p className="text-sm text-[#4F5B55]">{part.description}</p>
+
+              <p className="mt-1 text-xs font-semibold text-[#007A4A]">
+                {part.currentQuestions}/{part.requiredQuestions} Questions Ready
+              </p>
             </div>
           </div>
 
@@ -45,13 +66,17 @@ const ExamPartCard = ({ part, variant = "core" }: Props) => {
                 Passing %
               </p>
               <div className="mt-1 rounded-full bg-[#F3F7F1] px-8 py-3 text-center text-lg font-bold text-[#006B3F]">
-                70
+                {part.passingPercent}
               </div>
             </div>
 
-            <Link href={`/admin/final-exam-manager/${part.id}/quiz-builder`}>
-              <Button size="lg">Manage 30 Questions</Button>
-            </Link>
+            <Button
+              size="lg"
+              type="button"
+              onClick={() => onNavigate(part.actionPath)}
+            >
+              {part.actionLabel}
+            </Button>
           </div>
         </div>
       </Card>
@@ -75,6 +100,10 @@ const ExamPartCard = ({ part, variant = "core" }: Props) => {
           <div>
             <h3 className="text-lg font-bold text-[#202420]">{part.title}</h3>
             <p className="text-sm text-[#4F5B55]">{part.description}</p>
+
+            <p className="mt-1 text-xs font-semibold text-[#007A4A]">
+              {part.currentQuestions}/{part.requiredQuestions} Questions Ready
+            </p>
           </div>
         </div>
       }
@@ -91,15 +120,14 @@ const ExamPartCard = ({ part, variant = "core" }: Props) => {
           </span>
         </div>
 
-        <Link href={`/admin/final-exam-manager/${part.id}/mini-quiz-manager`}>
-          <button
-            type="button"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#E8EEE6] py-4 text-sm font-bold text-[#202420]"
-          >
-            <List className="size-5" />
-            Mini-MCQ Manager
-          </button>
-        </Link>
+        <button
+          type="button"
+          onClick={() => onNavigate(part.actionPath)}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-[#E8EEE6] py-4 text-sm font-bold text-[#202420]"
+        >
+          <List className="size-5" />
+          {part.actionLabel}
+        </button>
       </div>
     </Accordion>
   );

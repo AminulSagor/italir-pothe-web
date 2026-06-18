@@ -1,9 +1,14 @@
 import { Plus } from "lucide-react";
 
-const AddNextQuestionCard = () => {
+interface AddNextQuestionCardProps {
+  onClick: () => void;
+}
+
+const AddNextQuestionCard = ({ onClick }: AddNextQuestionCardProps) => {
   return (
     <button
       type="button"
+      onClick={onClick}
       className="flex min-h-[140px] w-full flex-col items-center justify-center rounded-3xl border-2 border-dashed border-[#D5DED5] bg-[#FBFCFA] transition hover:border-[#006B3F]"
     >
       <div className="mb-4 flex size-10 items-center justify-center rounded-full bg-[#EFF3ED]">

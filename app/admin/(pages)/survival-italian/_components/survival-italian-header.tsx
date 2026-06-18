@@ -1,8 +1,16 @@
+"use client";
+
 import { Plus } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 
-export default function SurvivalItalianHeader() {
+interface SurvivalItalianHeaderProps {
+  onAdd?: () => void;
+}
+
+export default function SurvivalItalianHeader({
+  onAdd,
+}: SurvivalItalianHeaderProps) {
   return (
     <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
       <div>
@@ -16,7 +24,7 @@ export default function SurvivalItalianHeader() {
         </p>
       </div>
 
-      <Button size="lg" className="gap-2 shadow-md">
+      <Button size="lg" className="gap-2 shadow-md" onClick={onAdd}>
         <Plus className="size-5" />
         Add New Situation
       </Button>

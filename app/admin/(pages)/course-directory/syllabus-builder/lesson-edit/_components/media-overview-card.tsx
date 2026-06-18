@@ -1,61 +1,208 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Play, Trash2, Video } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Pause, Play, Trash2, Video, Volume2, VolumeX } from "lucide-react";
+import toast from "react-hot-toast";
 
 import Card from "@/components/UI/cards/card";
 import FileUploader from "@/components/UI/uploaders/file-uploader";
-import { LessonEditMock } from "@/mock/syllabus-lesson-edit/syllabus-lesson-edit.types";
+import { createSignedReadUrl } from "@/service/files/file_upload";
 
 interface MediaOverviewCardProps {
-  lesson: LessonEditMock;
+  title: string;
+  videoFileId: string;
+  disabled?: boolean;
+  isUploadingVideo?: boolean;
+  onTitleChange: (value: string) => void;
+  onVideoSelect: (file: File) => void;
+  onDeleteVideo: () => void;
 }
 
-interface UploadedVideo {
+interface VideoPreview {
   filename: string;
   duration: string;
   size: string;
   previewUrl: string;
 }
 
-export default function MediaOverviewCard({ lesson }: MediaOverviewCardProps) {
-  const [uploadedVideo, setUploadedVideo] = useState<UploadedVideo | null>(
-    lesson.video
-      ? {
-          filename: lesson.video.filename,
-          duration: lesson.video.duration,
-          size: lesson.video.size,
-          previewUrl: lesson.video.thumbnail,
-        }
-      : null,
-  );
+type SignedReadUrlResponse = {
+  signedReadUrl?: string;
+  publicUrl?: string;
+  filename?: string;
+  originalName?: string;
+  name?: string;
+  sizeBytes?: number;
+  size?: number;
+  file?: {
+    filename?: string;
+    originalName?: string;
+    name?: string;
+    sizeBytes?: number;
+    size?: number;
+  };
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) return error.message;
+  return "Something went wrong. Please try again.";
+};
+
+const formatDuration = (seconds: number) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return "Attached";
+
+  const totalSeconds = Math.floor(seconds);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = String(totalSeconds % 60).padStart(2, "0");
+
+  return `${minutes}:${remainingSeconds}`;
+};
+
+const formatFileSize = (bytes?: number) => {
+  if (!bytes || !Number.isFinite(bytes)) return "Uploaded resource";
+
+  const mb = bytes / (1024 * 1024);
+
+  return `${mb.toFixed(1)} MB`;
+};
+
+const getVideoFilename = (response: SignedReadUrlResponse) =>
+  response.originalName ||
+  response.filename ||
+  response.name ||
+  response.file?.originalName ||
+  response.file?.filename ||
+  response.file?.name ||
+  "Lesson video attached";
+
+const getVideoSize = (response: SignedReadUrlResponse) =>
+  response.sizeBytes ||
+  response.size ||
+  response.file?.sizeBytes ||
+  response.file?.size;
+
+export default function MediaOverviewCard({
+  title,
+  videoFileId,
+  disabled = false,
+  isUploadingVideo = false,
+  onTitleChange,
+  onVideoSelect,
+  onDeleteVideo,
+}: MediaOverviewCardProps) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const [videoPreview, setVideoPreview] = useState<VideoPreview | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoVolume, setVideoVolume] = useState(1);
+  const [isVideoMuted, setIsVideoMuted] = useState(false);
 
   useEffect(() => {
-    return () => {
-      if (uploadedVideo?.previewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(uploadedVideo.previewUrl);
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    video.volume = videoVolume;
+    video.muted = isVideoMuted || videoVolume === 0;
+  }, [videoVolume, isVideoMuted, videoPreview?.previewUrl]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadVideoPreview = async () => {
+      if (!videoFileId) {
+        setVideoPreview(null);
+        setIsPlaying(false);
+        return;
+      }
+
+      try {
+        const response = (await createSignedReadUrl(
+          videoFileId,
+        )) as SignedReadUrlResponse;
+
+        const previewUrl = response.signedReadUrl || response.publicUrl || "";
+
+        if (!isMounted) return;
+
+        setVideoPreview({
+          filename: getVideoFilename(response),
+          duration: "Loading...",
+          size: formatFileSize(getVideoSize(response)),
+          previewUrl,
+        });
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+
+        if (isMounted) {
+          setVideoPreview({
+            filename: "Lesson video attached",
+            duration: "Attached",
+            size: "Uploaded resource",
+            previewUrl: "",
+          });
+        }
       }
     };
-  }, [uploadedVideo]);
+
+    loadVideoPreview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [videoFileId]);
 
   const handleVideoSelect = (file: File) => {
     const previewUrl = URL.createObjectURL(file);
-    const sizeInMb = `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
 
-    setUploadedVideo({
+    setVideoPreview({
       filename: file.name,
-      duration: "02:45",
-      size: sizeInMb,
+      duration: "Loading...",
+      size: formatFileSize(file.size),
       previewUrl,
     });
+
+    onVideoSelect(file);
+  };
+
+  const handleTogglePlay = async () => {
+    const video = videoRef.current;
+
+    if (!video || !videoPreview?.previewUrl) return;
+
+    try {
+      if (video.paused) {
+        await video.play();
+        setIsPlaying(true);
+      } else {
+        video.pause();
+        setIsPlaying(false);
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
+
+  const handleVideoVolumeChange = (value: string) => {
+    const nextVolume = Number(value);
+
+    setVideoVolume(nextVolume);
+    setIsVideoMuted(nextVolume === 0);
+  };
+
+  const handleToggleVideoMute = () => {
+    setIsVideoMuted((currentValue) => !currentValue);
   };
 
   const handleDeleteVideo = () => {
-    if (uploadedVideo?.previewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(uploadedVideo.previewUrl);
+    const previewUrl = videoPreview?.previewUrl;
+
+    if (previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
     }
 
-    setUploadedVideo(null);
+    setVideoPreview(null);
+    setIsPlaying(false);
+    onDeleteVideo();
   };
 
   return (
@@ -77,41 +224,115 @@ export default function MediaOverviewCard({ lesson }: MediaOverviewCardProps) {
         Lesson Title
       </p>
 
-      <h3 className="mt-3 border-b border-[#D8E0D8] pb-3 text-2xl font-bold text-[#202420] sm:text-3xl">
-        {lesson.title}
-      </h3>
+      <input
+        type="text"
+        value={title}
+        disabled={disabled}
+        placeholder="e.g., Greetings Basics"
+        onChange={(event) => onTitleChange(event.target.value)}
+        className="mt-3 w-full border-b border-[#D8E0D8] bg-transparent pb-3 text-2xl font-bold text-[#202420] outline-none placeholder:text-[#A8B2AA] disabled:cursor-not-allowed disabled:opacity-60 sm:text-3xl"
+      />
 
       <div className="mt-7">
-        {uploadedVideo ? (
+        {videoPreview || videoFileId ? (
           <div>
-            <div className="relative flex min-h-52 overflow-hidden rounded-3xl bg-black">
-              <video
-                src={uploadedVideo.previewUrl}
-                className="absolute inset-0 size-full object-cover"
-                muted
-              />
+            <div className="relative mx-auto aspect-video w-full max-w-[760px] overflow-hidden rounded-3xl bg-black">
+              {videoPreview?.previewUrl ? (
+                <video
+                  ref={videoRef}
+                  src={videoPreview.previewUrl}
+                  className="absolute inset-0 size-full object-contain"
+                  preload="metadata"
+                  playsInline
+                  onLoadedMetadata={(event) => {
+                    event.currentTarget.volume = videoVolume;
+                    event.currentTarget.muted =
+                      isVideoMuted || videoVolume === 0;
+
+                    const duration = formatDuration(
+                      event.currentTarget.duration,
+                    );
+
+                    setVideoPreview((currentPreview) =>
+                      currentPreview
+                        ? {
+                            ...currentPreview,
+                            duration,
+                          }
+                        : currentPreview,
+                    );
+                  }}
+                  onEnded={() => setIsPlaying(false)}
+                />
+              ) : null}
 
               <div className="absolute inset-0 bg-black/15" />
 
-              <div className="relative z-10 m-auto flex size-16 items-center justify-center rounded-full bg-white/35 backdrop-blur">
-                <Play className="ml-1 size-8 fill-white text-white" />
-              </div>
+              <button
+                type="button"
+                disabled={!videoPreview?.previewUrl}
+                onClick={handleTogglePlay}
+                className="absolute left-1/2 top-1/2 z-20 flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 backdrop-blur transition hover:bg-white/45 disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label={isPlaying ? "Pause video" : "Play video"}
+              >
+                {isPlaying ? (
+                  <Pause className="size-8 fill-white text-white" />
+                ) : (
+                  <Play className="ml-1 size-8 fill-white text-white" />
+                )}
+              </button>
 
               <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-black/35 px-4 py-3 text-white backdrop-blur">
-                <div className="grid grid-cols-3 gap-3 text-xs">
+                <div className="grid gap-3 text-xs sm:grid-cols-[1fr_90px_90px_170px]">
                   <div>
                     <p className="text-[10px] text-white/70">FILENAME</p>
-                    <p className="truncate">{uploadedVideo.filename}</p>
+                    <p className="truncate">
+                      {videoPreview?.filename || "Lesson video attached"}
+                    </p>
                   </div>
 
                   <div>
                     <p className="text-[10px] text-white/70">Duration</p>
-                    <p>{uploadedVideo.duration}</p>
+                    <p>{videoPreview?.duration || "Attached"}</p>
                   </div>
 
                   <div>
                     <p className="text-[10px] text-white/70">Size</p>
-                    <p>{uploadedVideo.size}</p>
+                    <p>{videoPreview?.size || "Uploaded resource"}</p>
+                  </div>
+
+                  <div>
+                    <p className="text-[10px] text-white/70">Volume</p>
+
+                    <div className="mt-1 flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleToggleVideoMute}
+                        className="text-white"
+                        aria-label={
+                          isVideoMuted ? "Unmute video" : "Mute video"
+                        }
+                      >
+                        {isVideoMuted || videoVolume === 0 ? (
+                          <VolumeX className="size-4" />
+                        ) : (
+                          <Volume2 className="size-4" />
+                        )}
+                      </button>
+
+                      <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.05"
+                        value={isVideoMuted ? 0 : videoVolume}
+                        onChange={(event) =>
+                          handleVideoVolumeChange(event.target.value)
+                        }
+                        className="w-full h-1 accent-white"
+                        aria-label="Video volume"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -120,8 +341,9 @@ export default function MediaOverviewCard({ lesson }: MediaOverviewCardProps) {
             <div className="mt-6 flex justify-end">
               <button
                 type="button"
+                disabled={disabled}
                 onClick={handleDeleteVideo}
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-[#FFD8D3] px-5 text-sm font-semibold text-[#D83324] transition hover:bg-[#FFC7C0]"
+                className="inline-flex h-10 items-center gap-2 rounded-full bg-[#FFD8D3] px-5 text-sm font-semibold text-[#D83324] transition hover:bg-[#FFC7C0] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Trash2 className="size-4" />
                 Delete Video
@@ -130,7 +352,11 @@ export default function MediaOverviewCard({ lesson }: MediaOverviewCardProps) {
           </div>
         ) : (
           <FileUploader
-            title="Upload Course Video"
+            title={
+              isUploadingVideo
+                ? "Uploading Course Video..."
+                : "Upload Course Video"
+            }
             description="Drag & drop course video here or click to browse. Supported formats: MP4, MOV. Max size 500MB."
             accept="video/mp4,video/quicktime"
             icon={<Video className="size-5" />}

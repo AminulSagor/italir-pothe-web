@@ -1,16 +1,30 @@
 "use client";
 
-import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
 
-import BackButton from "@/components/UI/buttons/back-button";
 import Button from "@/components/UI/buttons/button";
-import { IMAGE } from "@/constant/image.path";
 
-export default function ModuleSentenceBankHeader() {
+interface ModuleSentenceBankHeaderProps {
+  isSyncing?: boolean;
+  onBack: () => void;
+  onSaveAndSync: () => void;
+}
+
+export default function ModuleSentenceBankHeader({
+  isSyncing = false,
+  onBack,
+  onSaveAndSync,
+}: ModuleSentenceBankHeaderProps) {
   return (
     <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
       <div className="flex items-start gap-4">
-        <BackButton className="mt-1 shrink-0" />
+        <button
+          type="button"
+          onClick={onBack}
+          className="mt-1 flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm"
+        >
+          <ArrowLeft className="size-5 text-[#006B3F]" />
+        </button>
 
         <div>
           <h1 className="text-2xl font-bold text-[#202420] md:text-3xl">
@@ -23,25 +37,14 @@ export default function ModuleSentenceBankHeader() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-4 sm:justify-end">
-        <div className="flex -space-x-3">
-          <Image
-            src={IMAGE.customer}
-            alt="User"
-            width={42}
-            height={42}
-            className="rounded-full border-2 border-white"
-          />
-
-          <div className="flex size-[42px] items-center justify-center rounded-full border-2 border-white bg-[#006B3F] text-xs font-bold text-white">
-            +3
-          </div>
-        </div>
-
-        <Button size="lg" className="px-8 shadow-md">
-          Save & Sync
-        </Button>
-      </div>
+      <Button
+        size="lg"
+        disabled={isSyncing}
+        className="px-8 shadow-md"
+        onClick={onSaveAndSync}
+      >
+        {isSyncing ? "Saving..." : "Save & Sync"}
+      </Button>
     </div>
   );
 }

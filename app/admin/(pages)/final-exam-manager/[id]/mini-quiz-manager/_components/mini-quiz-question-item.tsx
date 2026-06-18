@@ -1,16 +1,24 @@
 import { CheckCircle2, Pencil } from "lucide-react";
 
-import { MiniQuizQuestion } from "@/mock/final-exam-manager/listening-mini-quiz.types";
-
-interface Props {
-  question: MiniQuizQuestion;
+interface MiniQuizQuestionItemProps {
+  questionNumber: number;
+  title: string;
+  subtitle: string;
   active?: boolean;
+  onClick: () => void;
 }
 
-const MiniQuizQuestionItem = ({ question, active }: Props) => {
+const MiniQuizQuestionItem = ({
+  questionNumber,
+  title,
+  subtitle,
+  active = false,
+  onClick,
+}: MiniQuizQuestionItemProps) => {
   return (
     <button
       type="button"
+      onClick={onClick}
       className={`flex w-full items-center gap-4 rounded-3xl border p-4 text-left transition ${
         active
           ? "border-[#006B3F] bg-[#006B3F]"
@@ -22,7 +30,7 @@ const MiniQuizQuestionItem = ({ question, active }: Props) => {
           active ? "bg-[#2BBF63] text-white" : "bg-[#E8EFE8] text-[#202420]"
         }`}
       >
-        {question.id}
+        {questionNumber}
       </div>
 
       <div className="min-w-0 flex-1">
@@ -31,7 +39,7 @@ const MiniQuizQuestionItem = ({ question, active }: Props) => {
             active ? "text-white" : "text-[#202420]"
           }`}
         >
-          {question.title}
+          {title}
         </h3>
 
         <p
@@ -39,7 +47,7 @@ const MiniQuizQuestionItem = ({ question, active }: Props) => {
             active ? "text-white/70" : "text-[#7A8580]"
           }`}
         >
-          {question.subtitle}
+          {subtitle}
         </p>
       </div>
 

@@ -21,9 +21,16 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+const isPathActive = (pathname: string, href?: string) => {
+  if (!href || href === "#") return false;
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+};
+
 const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const pathname = usePathname();
   const router = useRouter();
+
   const [user, setUser] = useState<AuthUser | null>(null);
   const [openMenus, setOpenMenus] = useState<string[]>([
     "Revenue & Analytics",
@@ -85,21 +92,23 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                   const Icon = item.icon;
                   const hasChildren = Boolean(item.children?.length);
                   const isMenuOpen = openMenus.includes(item.title);
-                  const isParentActive = item.href === pathname;
-                  const isChildActive = item.children?.some(
-                    (child) => child.href === pathname,
+
+                  const isParentActive = isPathActive(pathname, item.href);
+
+                  const isChildActive = item.children?.some((child) =>
+                    isPathActive(pathname, child.href),
                   );
+
+                  const isActive = isParentActive || Boolean(isChildActive);
 
                   if (hasChildren) {
                     return (
                       <div key={item.title}>
                         <div
                           className={`flex items-center justify-between rounded-2xl transition ${
-                            isParentActive
+                            isActive
                               ? "bg-[#75FF33] font-semibold text-[#00552E]"
-                              : isChildActive
-                                ? "bg-white/10 text-white"
-                                : "text-white/85 hover:bg-white/10 hover:text-white"
+                              : "text-white/85 hover:bg-white/10 hover:text-white"
                           }`}
                         >
                           <Link
@@ -129,7 +138,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                           <div className="ml-7 mt-1 space-y-1">
                             {item.children?.map((child) => {
                               const ChildIcon = child.icon;
-                              const isActive = child.href === pathname;
+                              const childIsActive = isPathActive(
+                                pathname,
+                                child.href,
+                              );
 
                               return (
                                 <Link
@@ -137,7 +149,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                   href={child.href}
                                   onClick={onClose}
                                   className={`flex items-center gap-3 rounded-xl px-3 py-2 transition ${
-                                    isActive
+                                    childIsActive
                                       ? "bg-[#75FF33] font-semibold text-[#00552E]"
                                       : "text-white/75 hover:bg-white/10 hover:text-white"
                                   }`}
@@ -159,7 +171,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                       href={item.href ?? "#"}
                       onClick={onClose}
                       className={`flex items-center gap-3 rounded-2xl px-3 py-2 transition ${
-                        isParentActive
+                        isActive
                           ? "bg-[#75FF33] font-semibold text-[#00552E]"
                           : "text-white/85 hover:bg-white/10 hover:text-white"
                       }`}

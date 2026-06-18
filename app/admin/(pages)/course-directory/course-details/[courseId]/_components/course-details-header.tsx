@@ -1,8 +1,14 @@
 import { ArrowLeft, UserCog } from "lucide-react";
 import Link from "next/link";
-import Button from "@/components/UI/buttons/button";
 
-const CourseDetailsHeader = () => {
+import Button from "@/components/UI/buttons/button";
+import type { Course } from "@/types/course-directory/course.type";
+
+interface CourseDetailsHeaderProps {
+  course: Course;
+}
+
+const CourseDetailsHeader = ({ course }: CourseDetailsHeaderProps) => {
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
       <div>
@@ -20,17 +26,19 @@ const CourseDetailsHeader = () => {
 
           <h1 className="max-w-4xl text-3xl font-bold leading-tight text-[#202420]">
             Student Enrollment:{" "}
-            <span className="text-[#006B3F]">
-              Master Italian for Professional Environments
-            </span>
+            <span className="text-[#006B3F]">{course.title}</span>
           </h1>
         </div>
       </div>
 
-      <Button size="lg" className="gap-3 px-8 shadow-lg shadow-[#006B3F]/25">
-        <UserCog className="size-5" />
-        Manage Course
-      </Button>
+      <Link
+        href={`/admin/course-directory/create-course?courseId=${course.id}`}
+      >
+        <Button size="lg" className="gap-3 px-8 shadow-lg shadow-[#006B3F]/25">
+          <UserCog className="size-5" />
+          Manage Course
+        </Button>
+      </Link>
     </div>
   );
 };

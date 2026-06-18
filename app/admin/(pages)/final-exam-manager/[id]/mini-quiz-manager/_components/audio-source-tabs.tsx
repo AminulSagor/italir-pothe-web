@@ -1,11 +1,11 @@
-import { AudioSourceType } from "@/mock/final-exam-manager/listening-mini-quiz.types";
+export type AudioSourceType = "manual_upload" | "ai_voice";
 
-interface Props {
+interface AudioSourceTabsProps {
   value: AudioSourceType;
   onChange: (value: AudioSourceType) => void;
 }
 
-const AudioSourceTabs = ({ value, onChange }: Props) => {
+const AudioSourceTabs = ({ value, onChange }: AudioSourceTabsProps) => {
   return (
     <div className="inline-flex rounded-full bg-[#EEF2EC] p-1">
       <button

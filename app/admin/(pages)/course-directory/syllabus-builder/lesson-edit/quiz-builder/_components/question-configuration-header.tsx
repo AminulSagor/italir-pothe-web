@@ -1,13 +1,25 @@
 import { ChevronDown, Settings } from "lucide-react";
 
+import type { QuizQuestionType } from "@/types/course-directory/quiz.type";
+
+interface QuestionTypeOption {
+  label: string;
+  value: QuizQuestionType;
+}
+
 interface QuestionConfigurationHeaderProps {
   title: string;
   format: string;
+  questionTypes: QuestionTypeOption[];
+  selectedQuestionType: QuizQuestionType;
+  onQuestionTypeChange: (value: QuizQuestionType) => void;
 }
 
 export default function QuestionConfigurationHeader({
   title,
-  format,
+  questionTypes,
+  selectedQuestionType,
+  onQuestionTypeChange,
 }: QuestionConfigurationHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -24,13 +36,23 @@ export default function QuestionConfigurationHeader({
           Question Format
         </p>
 
-        <button
-          type="button"
-          className="flex h-10 w-full items-center justify-between gap-3 rounded-full bg-[#EEF5EC] px-5 text-sm font-semibold text-[#007A4A] sm:w-[190px]"
-        >
-          {format}
-          <ChevronDown className="size-4" />
-        </button>
+        <div className="relative">
+          <select
+            value={selectedQuestionType}
+            onChange={(event) =>
+              onQuestionTypeChange(event.target.value as QuizQuestionType)
+            }
+            className="h-10 w-full appearance-none rounded-full bg-[#EEF5EC] px-5 pr-10 text-sm font-semibold text-[#007A4A] outline-none sm:w-[230px]"
+          >
+            {questionTypes.map((questionType) => (
+              <option key={questionType.value} value={questionType.value}>
+                {questionType.label}
+              </option>
+            ))}
+          </select>
+
+          <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-[#007A4A]" />
+        </div>
       </div>
     </div>
   );
