@@ -104,7 +104,7 @@ function renderSectionElement(
   fontFamily: string,
 ) {
   return renderVisualElement(
-    element as CvBuilderLayoutElement,
+    element,
     sectionWidth,
     sectionHeight,
     primaryColor,
@@ -115,7 +115,7 @@ function renderSectionElement(
 }
 
 function renderVisualElement(
-  element: CvBuilderLayoutElement,
+  element: CvBuilderLayoutElement | CvTemplateSectionDesignerElement,
   canvasWidth: number,
   canvasHeight: number,
   primaryColor: string,

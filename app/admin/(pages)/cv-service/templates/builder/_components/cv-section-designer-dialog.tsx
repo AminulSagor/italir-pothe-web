@@ -30,6 +30,7 @@ import {
 import type {
   CvBuilderElementType,
   CvBuilderThemeColorRole,
+  CvTemplateDynamicItemFieldSchema,
   CvTemplateFieldSchema,
   CvTemplateFieldType,
   CvTemplateSectionDesignerElement,
@@ -417,7 +418,7 @@ const toDynamicItemFieldSchemas = (fields: CvTemplateFieldSchema[]) =>
   }));
 
 const dynamicItemFieldsToSectionFields = (
-  itemFields: ReturnType<typeof toDynamicItemFieldSchemas>,
+  itemFields: CvTemplateDynamicItemFieldSchema[],
 ): CvTemplateFieldSchema[] =>
   itemFields.map((field) => ({
     key: field.key,
