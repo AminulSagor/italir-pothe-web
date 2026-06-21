@@ -216,6 +216,18 @@ export interface FinalExamDeleteResponse {
   id: string;
 }
 
+export interface FinalExamLinkableCourse {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  status?: string | null;
+  levelTitle?: string | null;
+  categoryTitle?: string | null;
+  finalExamId?: string | null;
+  hasFinalExam?: boolean;
+  archivedAt?: string | null;
+}
+
 export interface LinkFinalExamCoursePayload {
   courseId: string;
 }

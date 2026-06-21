@@ -24,11 +24,18 @@ const navbarSearchConfigs: NavbarSearchConfig[] = [
     placeholder: "Search survival situations...",
     exact: true,
   },
+  {
+    pathname: "/admin/course-directory/course-details",
+    queryKey: "search",
+    placeholder: "Search student directory...",
+  },
 ];
 
 const getActiveSearchConfig = (pathname: string) => {
   return navbarSearchConfigs.find((config) => {
-    if (config.exact) return pathname === config.pathname;
+    if (config.exact) {
+      return pathname === config.pathname;
+    }
 
     return (
       pathname === config.pathname || pathname.startsWith(`${config.pathname}/`)
@@ -37,17 +44,13 @@ const getActiveSearchConfig = (pathname: string) => {
 };
 
 const getCurrentQueryValue = (queryKey?: string) => {
-  if (!queryKey || typeof window === "undefined") return "";
+  if (!queryKey || typeof window === "undefined") {
+    return "";
+  }
 
-  const params = new URLSearchParams(window.location.search);
+  const parameters = new URLSearchParams(window.location.search);
 
-  return params.get(queryKey) || "";
-};
-
-const getCurrentSearchParamsString = () => {
-  if (typeof window === "undefined") return "";
-
-  return window.location.search.replace(/^\?/, "");
+  return parameters.get(queryKey) || "";
 };
 
 const NavbarSearch = () => {
@@ -61,12 +64,20 @@ const NavbarSearch = () => {
 
   const queryKey = activeConfig?.queryKey;
 
-  const [searchParamsString, setSearchParamsString] = useState("");
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
-    setSearchParamsString(getCurrentSearchParamsString());
-    setSearchValue(getCurrentQueryValue(queryKey));
+    const synchronizeSearchValue = () => {
+      setSearchValue(getCurrentQueryValue(queryKey));
+    };
+
+    synchronizeSearchValue();
+
+    window.addEventListener("popstate", synchronizeSearchValue);
+
+    return () => {
+      window.removeEventListener("popstate", synchronizeSearchValue);
+    };
   }, [pathname, queryKey]);
 
   useEffect(() => {
@@ -76,27 +87,31 @@ const NavbarSearch = () => {
       const trimmedValue = searchValue.trim();
       const currentQueryValue = getCurrentQueryValue(queryKey);
 
-      if (trimmedValue === currentQueryValue) return;
-
-      const params = new URLSearchParams(searchParamsString);
-
-      if (trimmedValue) {
-        params.set(queryKey, trimmedValue);
-      } else {
-        params.delete(queryKey);
+      if (trimmedValue === currentQueryValue) {
+        return;
       }
 
-      const queryString = params.toString();
+      const parameters = new URLSearchParams(window.location.search);
 
-      setSearchParamsString(queryString);
+      if (trimmedValue) {
+        parameters.set(queryKey, trimmedValue);
+      } else {
+        parameters.delete(queryKey);
+      }
+
+      parameters.delete("page");
+
+      const queryString = parameters.toString();
 
       router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
         scroll: false,
       });
     }, 500);
 
-    return () => window.clearTimeout(timeoutId);
-  }, [pathname, queryKey, router, searchParamsString, searchValue]);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [pathname, queryKey, router, searchValue]);
 
   if (!activeConfig) return null;
 

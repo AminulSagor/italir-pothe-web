@@ -1,6 +1,8 @@
 import type {
   FinalExam,
   FinalExamDeleteResponse,
+  FinalExamLinkableCourse,
+  FinalExamListItem,
   FinalExamListParams,
   FinalExamListResponse,
   FinalExamPayload,
@@ -47,6 +49,41 @@ const FINAL_EXAM_ENDPOINTS = {
 
   genericQuestionDetails: (questionId: string) =>
     `/admin/final-exams/questions/${questionId}`,
+};
+
+interface NestedCollectionResponse<T> {
+  items?: T[];
+}
+
+interface CollectionResponse<T> {
+  items?: T[];
+  data?: T[] | NestedCollectionResponse<T>;
+}
+
+type ApiCollectionResponse<T> = T[] | CollectionResponse<T>;
+
+const getCollectionItems = <T>(response: ApiCollectionResponse<T>): T[] => {
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.items)) {
+    return response.items;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (
+    response.data &&
+    !Array.isArray(response.data) &&
+    Array.isArray(response.data.items)
+  ) {
+    return response.data.items;
+  }
+
+  return [];
 };
 
 const buildQueryString = (params: Record<string, unknown>) => {
@@ -335,6 +372,7 @@ export const linkFinalExamWithCourse = async (
   payload: LinkFinalExamCoursePayload,
 ): Promise<FinalExam> => {
   const safeFinalExamId = assertValidUuid(finalExamId, "Final exam ID");
+
   const safeCourseId = assertValidUuid(payload.courseId, "Course ID");
 
   return serviceClient.patch<FinalExam>(
@@ -353,4 +391,42 @@ export const delinkFinalExamFromCourse = async (
   return serviceClient.delete<FinalExam>(
     FINAL_EXAM_ENDPOINTS.linkCourse(safeFinalExamId),
   );
+};
+
+export const getAvailableFinalExamCourses = async (): Promise<
+  FinalExamLinkableCourse[]
+> => {
+  const [coursesResponse, linkedExamsResponse] = await Promise.all([
+    serviceClient.get<ApiCollectionResponse<FinalExamLinkableCourse>>(
+      "/admin/courses?page=1&limit=100",
+    ),
+    serviceClient.get<ApiCollectionResponse<FinalExamListItem>>(
+      "/admin/final-exams?page=1&limit=100&linkedOnly=true",
+    ),
+  ]);
+
+  const courses = getCollectionItems(coursesResponse);
+  const linkedExams = getCollectionItems(linkedExamsResponse);
+
+  const linkedCourseIds = new Set(
+    linkedExams
+      .map((exam) => exam.courseId)
+      .filter((courseId): courseId is string => Boolean(courseId)),
+  );
+
+  return courses
+    .filter((course) => {
+      const isArchived =
+        course.status === "archived" || Boolean(course.archivedAt);
+
+      const isAlreadyLinked =
+        linkedCourseIds.has(course.id) ||
+        Boolean(course.finalExamId) ||
+        course.hasFinalExam === true;
+
+      return !isArchived && !isAlreadyLinked;
+    })
+    .sort((firstCourse, secondCourse) =>
+      firstCourse.title.localeCompare(secondCourse.title),
+    );
 };

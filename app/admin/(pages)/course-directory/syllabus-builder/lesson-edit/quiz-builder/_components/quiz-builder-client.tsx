@@ -807,13 +807,20 @@ export default function QuizBuilderClient() {
     try {
       setIsUploadingMedia(true);
 
-      const fileId =
-        form.questionType === "identify_image"
-          ? await uploadQuizImage(file)
-          : await uploadQuizAudio(file);
+      const shouldUploadImage =
+        form.questionType === "identify_image" ||
+        form.questionType === "writing_word_translation";
+
+      const fileId = shouldUploadImage
+        ? await uploadQuizImage(file)
+        : await uploadQuizAudio(file);
 
       updateForm("mediaFileId", fileId);
-      toast.success("Media uploaded.");
+      toast.success(
+        shouldUploadImage
+          ? "Image uploaded successfully."
+          : "Audio uploaded successfully.",
+      );
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {

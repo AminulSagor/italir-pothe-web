@@ -1,54 +1,65 @@
 import { Radio, RotateCcw, UserRound, WalletCards } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
+import type { CourseEnrollmentSummary } from "@/types/course-directory/course-commerce.type";
 import type { Course } from "@/types/course-directory/course.type";
 
 interface CourseDetailsStatsProps {
   course: Course;
+  summary: CourseEnrollmentSummary | null;
 }
 
-const getPriceNumber = (course: Course) => {
-  if (course.price === null || course.price === undefined) return 0;
-
-  const numericPrice = Number(course.price);
-
-  return Number.isNaN(numericPrice) ? 0 : numericPrice;
+const formatCurrency = (amount: number, currency: string) => {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${currency} ${amount.toFixed(2)}`;
+  }
 };
 
-const CourseDetailsStats = ({ course }: CourseDetailsStatsProps) => {
-  const totalStudents = course.totalStudentEnrollments || 0;
-  const revenue = getPriceNumber(course) * totalStudents;
+const CourseDetailsStats = ({ course, summary }: CourseDetailsStatsProps) => {
+  const totalStudents =
+    summary?.totalStudents ?? course.totalStudentEnrollments ?? 0;
+
+  const activeNow = summary?.activeNow || 0;
+  const revenue = summary?.revenueYtd || 0;
+  const refunded = summary?.refunded || 0;
+  const currency = summary?.currency || "EUR";
 
   const stats = [
     {
       id: "total-students",
       title: "Total Students",
       value: totalStudents.toLocaleString(),
-      badge: "Current enrollments",
+      badge: summary?.totalStudentsBadge || "Current enrollments",
       icon: UserRound,
       variant: "primary",
     },
     {
       id: "active-now",
       title: "Active Now",
-      value: "0",
-      badge: "No live data",
+      value: activeNow.toLocaleString(),
+      badge: summary?.activeNowBadge || "Live engagement",
       icon: Radio,
       variant: "default",
     },
     {
       id: "revenue",
       title: "Revenue (YTD)",
-      value: `€${revenue.toFixed(2)}`,
-      badge: "Calculated",
+      value: formatCurrency(revenue, currency),
+      badge: summary?.revenueBadge || "Paid revenue",
       icon: WalletCards,
       variant: "default",
     },
     {
       id: "refunded",
       title: "Refunded",
-      value: "0",
-      badge: "No refunds",
+      value: refunded.toLocaleString(),
+      badge: summary?.refundedBadge || "Refund records",
       icon: RotateCcw,
       variant: "danger",
     },
