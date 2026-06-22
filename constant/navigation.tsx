@@ -120,11 +120,7 @@ export const adminNavigation: NavigationGroup[] = [
   {
     title: "Utilities",
     items: [
-      {
-        title: "CAF Service",
-        href: "/admin/caf-service",
-        icon: Briefcase,
-      },
+   
       {
         title: "Influencer Hub",
         href: "/admin/influencer-hub",
