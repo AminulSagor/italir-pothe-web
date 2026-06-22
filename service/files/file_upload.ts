@@ -19,8 +19,10 @@ export type FilePurpose =
   | "caf_hero_video"
   | "caf_checklist_pdf"
   | "profile_avatar"
-  | "webinar_thumbnail" 
-  | "cv_template_thumbnail";
+  | "webinar_thumbnail"
+  | "cv_template_thumbnail"
+  | "notification_image";
+
 export type FileVisibility = "private" | "public";
 export type MediaType = "image" | "audio" | "video" | "pdf";
 
@@ -72,6 +74,11 @@ export interface SignedReadUrlResponse {
   publicUrl: string;
   signedReadUrl: string;
   expiresInSeconds: number;
+}
+
+export interface UploadedNotificationImage {
+  fileId: string;
+  publicUrl: string;
 }
 
 export const createSignedUploadUrl = (payload: SignedUploadUrlPayload) =>
@@ -137,3 +144,37 @@ export const uploadWebinarThumbnail = async (file: File) =>
 
 export const uploadCvTemplateThumbnail = async (file: File) =>
   uploadImageFile(file, "cv_template_thumbnail");
+
+export const uploadNotificationImage = async (
+  file: File,
+): Promise<UploadedNotificationImage> => {
+  const filePurpose: FilePurpose = "notification_image";
+  const visibility: FileVisibility = "public";
+  const mimeType = file.type || "image/png";
+
+  const signedUpload = await createSignedUploadUrl({
+    originalName: file.name,
+    mimeType,
+    sizeBytes: file.size,
+    filePurpose,
+    visibility,
+  });
+
+  await uploadToSignedUrl(signedUpload.signedUploadUrl, file, mimeType);
+
+  const confirmedUpload = await confirmUpload({
+    storageKey: signedUpload.storageKey,
+    originalName: file.name,
+    mimeType,
+    sizeBytes: file.size,
+    filePurpose,
+    visibility,
+    mediaType: "image",
+    title: file.name,
+  });
+
+  return {
+    fileId: confirmedUpload.file.id,
+    publicUrl: confirmedUpload.publicUrl || signedUpload.publicUrl,
+  };
+};
