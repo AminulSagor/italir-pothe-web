@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +14,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Italir Pothe",
-  description: "Italir Pothe",
+  title: {
+    default: "Italir Pothe",
+    template: "%s | Italir Pothe",
+  },
+
+  description: "Italir Pothe administration platform.",
 };
 
 export default function RootLayout({
@@ -24,7 +29,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body className="min-h-screen bg-[#F3F7F2] text-[#202420] antialiased">
+        {children}
+      </body>
     </html>
   );
 }

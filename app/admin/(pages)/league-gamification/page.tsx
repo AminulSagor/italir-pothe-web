@@ -1,23 +1,74 @@
-import LeagueCards from "./_components/league-cards";
-import RewardHistoryCard from "./_components/reward-history-card";
-import TopUsersTable from "./_components/top-users-table";
+import type {
+  LeagueKey,
+  LeaderboardSortBy,
+  LeaderboardSortOrder,
+} from "@/types/leaderboard/leaderboard.type";
 
-export default function LeagueGamificationPage() {
-    return (
-        <div className="space-y-7">
-            <div>
-                <h1 className="text-2xl font-bold tracking-tight text-black/90">
-                    League & Gamification Control
-                </h1>
+import LeagueGamificationClient from "./_components/league-gamification-client";
 
-                <p className="mt-2 text-base text-black/60">
-                    Set up and dispatch physical rewards for top performing students.
-                </p>
-            </div>
+interface LeagueGamificationPageProps {
+  searchParams: Promise<{
+    page?: string | string[];
+    search?: string | string[];
+    league?: string | string[];
+    sortBy?: string | string[];
+    sortOrder?: string | string[];
+  }>;
+}
 
-            <LeagueCards />
-            <TopUsersTable />
-            <RewardHistoryCard />
-        </div>
-    );
+const getSingleValue = (value?: string | string[]) => {
+  return Array.isArray(value) ? value[0] || "" : value || "";
+};
+
+const getPositiveInteger = (value?: string | string[], fallback = 1) => {
+  const numberValue = Number(getSingleValue(value));
+
+  return Number.isInteger(numberValue) && numberValue > 0
+    ? numberValue
+    : fallback;
+};
+
+const parseLeague = (value?: string | string[]): LeagueKey | undefined => {
+  const league = getSingleValue(value);
+
+  if (
+    league === "bronze" ||
+    league === "silver" ||
+    league === "gold" ||
+    league === "diamond"
+  ) {
+    return league;
+  }
+
+  return undefined;
+};
+
+const parseSortBy = (value?: string | string[]): LeaderboardSortBy => {
+  const sortBy = getSingleValue(value);
+
+  if (sortBy === "totalXp" || sortBy === "displayName") {
+    return sortBy;
+  }
+
+  return "rank";
+};
+
+const parseSortOrder = (value?: string | string[]): LeaderboardSortOrder => {
+  return getSingleValue(value) === "DESC" ? "DESC" : "ASC";
+};
+
+export default async function LeagueGamificationPage({
+  searchParams,
+}: LeagueGamificationPageProps) {
+  const params = await searchParams;
+
+  return (
+    <LeagueGamificationClient
+      page={getPositiveInteger(params.page)}
+      search={getSingleValue(params.search)}
+      league={parseLeague(params.league)}
+      sortBy={parseSortBy(params.sortBy)}
+      sortOrder={parseSortOrder(params.sortOrder)}
+    />
+  );
 }
