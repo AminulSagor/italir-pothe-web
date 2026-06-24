@@ -1,9 +1,13 @@
 import { BadgeEuro, Settings } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import { orderDetailsMock } from "@/mock/package-store/order-details.mock";
+import type { StoreAdminOrder } from "@/types/package-store/package-store.type";
 
-export default function PaymentSummaryCard() {
+interface PaymentSummaryCardProps {
+  order: StoreAdminOrder;
+}
+
+export default function PaymentSummaryCard({ order }: PaymentSummaryCardProps) {
   return (
     <Card padding="lg" rounded="3xl" shadow="sm">
       <div className="mb-10 flex items-center gap-3">
@@ -19,17 +23,18 @@ export default function PaymentSummaryCard() {
       <div className="space-y-6">
         <SummaryRow
           label="Subtotal"
-          value={orderDetailsMock.payment.subtotal}
+          value={`€${order.pricing.packagePriceEur}`}
         />
+
         <SummaryRow
-          label="VAT / Tax (22%)"
-          value={orderDetailsMock.payment.tax}
+          label={`Discount (${order.pricing.discountPercentage}%)`}
+          value={`-€${order.pricing.discountAmountEur}`}
         />
 
         <div className="border-t border-[#E7EEE8] pt-6">
           <SummaryRow
             label="Total Amount Paid"
-            value={orderDetailsMock.payment.total}
+            value={order.pricing.formattedPaymentAmount}
             large
           />
         </div>
@@ -38,8 +43,8 @@ export default function PaymentSummaryCard() {
       <div className="mt-10 flex items-center justify-between rounded-3xl bg-[#EEF3EC] px-6 py-5">
         <div>
           <p className="text-xs font-bold text-[#202420]">Payment Method</p>
-          <p className="text-sm text-[#4F5B52]">
-            {orderDetailsMock.payment.method}
+          <p className="text-sm capitalize text-[#4F5B52]">
+            {order.payment.provider.replace(/_/g, " ")}
           </p>
         </div>
 

@@ -1,17 +1,22 @@
 import Link from "next/link";
 
-import { PackageStoreTab } from "@/mock/package-store/package-store.types";
+export type PackageStoreTab =
+  | "ai-bundles"
+  | "streak-freezes"
+  | "cv-credits"
+  | "order-history";
 
 interface Props {
   activeTab?: string;
 }
 
-const tabs: {
+const tabs: Array<{
   label: string;
   value: PackageStoreTab;
-}[] = [
+}> = [
   { label: "AI Bundles", value: "ai-bundles" },
   { label: "Streak Freezes", value: "streak-freezes" },
+  { label: "CV Credits", value: "cv-credits" },
   { label: "Order History", value: "order-history" },
 ];
 
@@ -19,7 +24,7 @@ export default function PackageStoreTabs({ activeTab }: Props) {
   const currentTab = activeTab || "ai-bundles";
 
   return (
-    <div className="inline-flex rounded-full bg-[#EEF3EC] p-1">
+    <div className="inline-flex max-w-full overflow-x-auto rounded-full bg-[#EEF3EC] p-1">
       {tabs.map((tab) => {
         const isActive = currentTab === tab.value;
 
@@ -27,7 +32,7 @@ export default function PackageStoreTabs({ activeTab }: Props) {
           <Link
             key={tab.value}
             href={`/admin/package-store?tab=${tab.value}`}
-            className={`rounded-full px-7 py-3 text-sm font-semibold transition ${
+            className={`whitespace-nowrap rounded-full px-7 py-3 text-sm font-semibold transition ${
               isActive ? "bg-[#006B3F] text-white shadow-sm" : "text-[#4F5B52]"
             }`}
           >
