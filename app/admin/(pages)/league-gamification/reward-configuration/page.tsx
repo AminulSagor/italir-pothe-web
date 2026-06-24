@@ -1,36 +1,27 @@
-import PrizeDetailsCard from "./_components/prize-details-card";
-import RewardHeader from "./_components/reward-header";
-import SelectedUserCard from "./_components/selected-user-card";
-import SystemActionsCard from "./_components/system-actions-card";
+import { notFound } from "next/navigation";
+
+import { isValidUuid } from "@/utils/uuid";
+import RewardConfigurationClient from "./_components/reward-configuration-client";
 
 interface RewardConfigurationPageProps {
-    searchParams: Promise<{
-        type?: string;
-    }>;
+  searchParams: Promise<{
+    userId?: string | string[];
+  }>;
 }
 
+const getSingleValue = (value?: string | string[]) => {
+  return Array.isArray(value) ? value[0] || "" : value || "";
+};
+
 export default async function RewardConfigurationPage({
-    searchParams,
+  searchParams,
 }: RewardConfigurationPageProps) {
-    const { type } = await searchParams;
+  const params = await searchParams;
+  const userId = getSingleValue(params.userId);
 
-    const rewardType =
-        type === "ai-package" || type === "streak-freeze"
-            ? type
-            : "physical-prize";
+  if (!isValidUuid(userId)) {
+    notFound();
+  }
 
-    return (
-        <div className="mx-auto w-full max-w-[1120px] space-y-7">
-            <RewardHeader />
-
-            <div className="grid gap-7 xl:grid-cols-[1fr_340px]">
-                <div className="space-y-7">
-                    <SelectedUserCard />
-                    <PrizeDetailsCard rewardType={rewardType} />
-                </div>
-
-                <SystemActionsCard rewardType={rewardType} />
-            </div>
-        </div>
-    );
+  return <RewardConfigurationClient userId={userId} />;
 }
