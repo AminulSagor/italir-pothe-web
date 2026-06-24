@@ -1,9 +1,73 @@
-import { Box, MessageSquareText, Mic } from "lucide-react";
+import {
+  Box,
+  CalendarDays,
+  FileText,
+  MessageSquareText,
+  Mic,
+  Snowflake,
+} from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import { orderDetailsMock } from "@/mock/package-store/order-details.mock";
+import type { StoreAdminOrder } from "@/types/package-store/package-store.type";
 
-export default function PackageDetailsCard() {
+interface PackageDetailsCardProps {
+  order: StoreAdminOrder;
+}
+
+export default function PackageDetailsCard({ order }: PackageDetailsCardProps) {
+  const entitlements = order.package.entitlements;
+  const features = [];
+
+  if (entitlements.voiceMinutes > 0) {
+    features.push({
+      id: "voice",
+      icon: <Mic className="size-5" />,
+      value: `${entitlements.voiceMinutes} Voice Minutes`,
+      bg: "bg-[#FFF0D6]",
+      color: "text-[#FF7A00]",
+    });
+  }
+
+  if (entitlements.textTokens > 0) {
+    features.push({
+      id: "tokens",
+      icon: <MessageSquareText className="size-5" />,
+      value: `${entitlements.textTokens} Text Tokens`,
+      bg: "bg-[#F0DDF0]",
+      color: "text-[#8B5CF6]",
+    });
+  }
+
+  if (entitlements.cvCredits > 0) {
+    features.push({
+      id: "credits",
+      icon: <FileText className="size-5" />,
+      value: `${entitlements.cvCredits} CV Credits`,
+      bg: "bg-[#DDF3E8]",
+      color: "text-[#006B3F]",
+    });
+  }
+
+  if (entitlements.streakFreezes > 0) {
+    features.push({
+      id: "freezes",
+      icon: <Snowflake className="size-5" />,
+      value: `${entitlements.streakFreezes} Streak Freezes`,
+      bg: "bg-[#DFF3FF]",
+      color: "text-[#3B82F6]",
+    });
+  }
+
+  if (entitlements.protectionDurationDays) {
+    features.push({
+      id: "protection",
+      icon: <CalendarDays className="size-5" />,
+      value: `${entitlements.protectionDurationDays} Days Protection`,
+      bg: "bg-[#DFF3FF]",
+      color: "text-[#3B82F6]",
+    });
+  }
+
   return (
     <Card padding="lg" rounded="3xl" shadow="sm">
       <div className="mb-8 flex items-start justify-between gap-4">
@@ -18,34 +82,24 @@ export default function PackageDetailsCard() {
         </div>
 
         <p className="text-lg font-bold text-[#006B3F]">
-          {orderDetailsMock.package.price}
+          {order.pricing.formattedPaymentAmount}
         </p>
       </div>
 
       <div className="rounded-3xl bg-[#EEF3EC] p-8">
         <h3 className="text-2xl font-bold text-[#006B3F]">
-          {orderDetailsMock.package.name}
+          {order.package.name}
         </h3>
 
         <p className="mt-2 max-w-xl text-sm leading-6 text-[#4F5B52]">
-          {orderDetailsMock.package.description}
+          {order.package.description || "No package description provided."}
         </p>
       </div>
 
       <div className="mt-8 grid gap-5 md:grid-cols-2">
-        <FeatureCard
-          icon={<Mic className="size-5" />}
-          value={orderDetailsMock.package.voiceMinutes}
-          bg="bg-[#FFF0D6]"
-          color="text-[#FF7A00]"
-        />
-
-        <FeatureCard
-          icon={<MessageSquareText className="size-5" />}
-          value={orderDetailsMock.package.textTokens}
-          bg="bg-[#F0DDF0]"
-          color="text-[#8B5CF6]"
-        />
+        {features.map((feature) => (
+          <FeatureCard key={feature.id} {...feature} />
+        ))}
       </div>
     </Card>
   );

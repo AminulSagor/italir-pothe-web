@@ -29,13 +29,23 @@ const navbarSearchConfigs: NavbarSearchConfig[] = [
     queryKey: "search",
     placeholder: "Search student directory...",
   },
+  {
+    pathname: "/admin/cv-service/packages",
+    queryKey: "search",
+    placeholder: "Search CV credit packages...",
+    exact: true,
+  },
+  {
+    pathname: "/admin/package-store",
+    queryKey: "search",
+    placeholder: "Search packages or orders...",
+    exact: true,
+  },
 ];
 
 const getActiveSearchConfig = (pathname: string) => {
   return navbarSearchConfigs.find((config) => {
-    if (config.exact) {
-      return pathname === config.pathname;
-    }
+    if (config.exact) return pathname === config.pathname;
 
     return (
       pathname === config.pathname || pathname.startsWith(`${config.pathname}/`)
@@ -44,13 +54,11 @@ const getActiveSearchConfig = (pathname: string) => {
 };
 
 const getCurrentQueryValue = (queryKey?: string) => {
-  if (!queryKey || typeof window === "undefined") {
-    return "";
-  }
+  if (!queryKey || typeof window === "undefined") return "";
 
-  const parameters = new URLSearchParams(window.location.search);
+  const params = new URLSearchParams(window.location.search);
 
-  return parameters.get(queryKey) || "";
+  return params.get(queryKey) || "";
 };
 
 const NavbarSearch = () => {
@@ -63,20 +71,18 @@ const NavbarSearch = () => {
   );
 
   const queryKey = activeConfig?.queryKey;
-
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
-    const synchronizeSearchValue = () => {
+    const syncSearchValue = () => {
       setSearchValue(getCurrentQueryValue(queryKey));
     };
 
-    synchronizeSearchValue();
-
-    window.addEventListener("popstate", synchronizeSearchValue);
+    syncSearchValue();
+    window.addEventListener("popstate", syncSearchValue);
 
     return () => {
-      window.removeEventListener("popstate", synchronizeSearchValue);
+      window.removeEventListener("popstate", syncSearchValue);
     };
   }, [pathname, queryKey]);
 
@@ -87,30 +93,26 @@ const NavbarSearch = () => {
       const trimmedValue = searchValue.trim();
       const currentQueryValue = getCurrentQueryValue(queryKey);
 
-      if (trimmedValue === currentQueryValue) {
-        return;
-      }
+      if (trimmedValue === currentQueryValue) return;
 
-      const parameters = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(window.location.search);
 
       if (trimmedValue) {
-        parameters.set(queryKey, trimmedValue);
+        params.set(queryKey, trimmedValue);
       } else {
-        parameters.delete(queryKey);
+        params.delete(queryKey);
       }
 
-      parameters.delete("page");
+      params.delete("page");
 
-      const queryString = parameters.toString();
+      const queryString = params.toString();
 
       router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
         scroll: false,
       });
     }, 500);
 
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
+    return () => window.clearTimeout(timeoutId);
   }, [pathname, queryKey, router, searchValue]);
 
   if (!activeConfig) return null;

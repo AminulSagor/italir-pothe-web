@@ -1,11 +1,17 @@
 import { ArrowLeft } from "lucide-react";
 
-export default function CVPackageHeader() {
+interface CvPackageHeaderProps {
+  onBack: () => void;
+}
+
+export default function CVPackageHeader({ onBack }: CvPackageHeaderProps) {
   return (
     <div className="flex items-start gap-3">
       <button
         type="button"
+        onClick={onBack}
         className="mt-1 flex size-8 items-center justify-center rounded-full bg-white text-[#006B3F] shadow-sm"
+        aria-label="Back to CV service"
       >
         <ArrowLeft className="size-5" />
       </button>

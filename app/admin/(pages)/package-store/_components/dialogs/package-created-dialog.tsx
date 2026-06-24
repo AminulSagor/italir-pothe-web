@@ -6,9 +6,14 @@ import Dialog from "@/components/UI/dialogs/dialog";
 interface Props {
   open: boolean;
   onClose: () => void;
+  onCreateAnother: () => void;
 }
 
-export default function PackageCreatedDialog({ open, onClose }: Props) {
+export default function PackageCreatedDialog({
+  open,
+  onClose,
+  onCreateAnother,
+}: Props) {
   return (
     <Dialog open={open} onClose={onClose} size="sm" className="p-8">
       <div className="text-center">
@@ -28,7 +33,11 @@ export default function PackageCreatedDialog({ open, onClose }: Props) {
           Manage Store →
         </Button>
 
-        <button className="mt-5 text-xs font-bold text-[#006B3F]">
+        <button
+          type="button"
+          onClick={onCreateAnother}
+          className="mt-5 text-xs font-bold text-[#006B3F]"
+        >
           CREATE ANOTHER
         </button>
       </div>

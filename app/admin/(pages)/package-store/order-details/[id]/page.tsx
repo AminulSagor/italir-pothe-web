@@ -1,25 +1,24 @@
-import CustomerInfoCard from "./_components/customer-info-card";
-import OrderDetailsHeader from "./_components/order-details-header";
-import OrderSummaryCard from "./_components/order-summary-card";
-import PackageDetailsCard from "./_components/package-details-card";
-import PaymentSummaryCard from "./_components/payment-summary-card";
-import TimelineActivityCard from "./_components/timeline-activity-card";
+import { notFound } from "next/navigation";
 
-export default function OrderDetailsPage() {
-  return (
-    <section className="space-y-6">
-      <OrderDetailsHeader />
-      <OrderSummaryCard />
+import { isValidUuid } from "@/utils/uuid";
 
-      <div className="grid gap-6 xl:grid-cols-[320px_1fr]">
-        <CustomerInfoCard />
-        <PackageDetailsCard />
-      </div>
+import OrderDetailsClient from "./_components/order-details-client";
 
-      <div className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
-        <PaymentSummaryCard />
-        <TimelineActivityCard />
-      </div>
-    </section>
-  );
+interface OrderDetailsPageProps {
+  params: Promise<{
+    id?: string;
+  }>;
+}
+
+export default async function OrderDetailsPage({
+  params,
+}: OrderDetailsPageProps) {
+  const resolvedParams = await params;
+  const orderId = resolvedParams.id;
+
+  if (!isValidUuid(orderId)) {
+    notFound();
+  }
+
+  return <OrderDetailsClient orderId={orderId} />;
 }
