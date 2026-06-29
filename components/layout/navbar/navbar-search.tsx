@@ -14,38 +14,90 @@ interface NavbarSearchConfig {
 const navbarSearchConfigs: NavbarSearchConfig[] = [
   {
     pathname: "/admin/skill-builder-manager",
+
     queryKey: "search",
+
     placeholder: "Search career tracks...",
+
     exact: true,
   },
   {
     pathname: "/admin/survival-italian",
+
     queryKey: "search",
+
     placeholder: "Search survival situations...",
+
     exact: true,
   },
   {
     pathname: "/admin/course-directory/course-details",
+
     queryKey: "search",
+
     placeholder: "Search student directory...",
   },
   {
     pathname: "/admin/cv-service/packages",
+
     queryKey: "search",
+
     placeholder: "Search CV credit packages...",
+
     exact: true,
   },
   {
     pathname: "/admin/package-store",
+
     queryKey: "search",
+
     placeholder: "Search packages or orders...",
+
+    exact: true,
+  },
+  {
+    pathname: "/admin/user-directory",
+
+    queryKey: "search",
+
+    placeholder: "Search users by name, email, or phone...",
+
+    exact: true,
+  },
+  {
+    pathname: "/admin/revenue-and-analytics",
+
+    queryKey: "search",
+
+    placeholder: "Search revenue transactions...",
+
+    exact: true,
+  },
+  {
+    pathname: "/admin/revenue-and-analytics/course-performance",
+
+    queryKey: "search",
+
+    placeholder: "Search course performance...",
+
+    exact: true,
+  },
+  {
+    pathname: "/admin/revenue-and-analytics/package-performance",
+
+    queryKey: "search",
+
+    placeholder: "Search package performance...",
+
     exact: true,
   },
 ];
 
 const getActiveSearchConfig = (pathname: string) => {
   return navbarSearchConfigs.find((config) => {
-    if (config.exact) return pathname === config.pathname;
+    if (config.exact) {
+      return pathname === config.pathname;
+    }
 
     return (
       pathname === config.pathname || pathname.startsWith(`${config.pathname}/`)
@@ -54,7 +106,9 @@ const getActiveSearchConfig = (pathname: string) => {
 };
 
 const getCurrentQueryValue = (queryKey?: string) => {
-  if (!queryKey || typeof window === "undefined") return "";
+  if (!queryKey || typeof window === "undefined") {
+    return "";
+  }
 
   const params = new URLSearchParams(window.location.search);
 
@@ -71,6 +125,7 @@ const NavbarSearch = () => {
   );
 
   const queryKey = activeConfig?.queryKey;
+
   const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
@@ -79,6 +134,7 @@ const NavbarSearch = () => {
     };
 
     syncSearchValue();
+
     window.addEventListener("popstate", syncSearchValue);
 
     return () => {
@@ -91,9 +147,12 @@ const NavbarSearch = () => {
 
     const timeoutId = window.setTimeout(() => {
       const trimmedValue = searchValue.trim();
+
       const currentQueryValue = getCurrentQueryValue(queryKey);
 
-      if (trimmedValue === currentQueryValue) return;
+      if (trimmedValue === currentQueryValue) {
+        return;
+      }
 
       const params = new URLSearchParams(window.location.search);
 

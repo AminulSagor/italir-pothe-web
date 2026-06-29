@@ -1,18 +1,31 @@
-import Card from "@/components/UI/cards/card";
-import { EvaluationStat } from "@/mock/evaluation-center/evaluation-center.types";
+import type { LucideIcon } from "lucide-react";
 
-interface Props {
-  stat: EvaluationStat;
+import Card from "@/components/UI/cards/card";
+
+export interface EvaluationStatViewModel {
+  id: string;
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: LucideIcon;
+  iconBg: string;
+  iconColor: string;
 }
 
-export default function EvaluationStatCard({ stat }: Props) {
+interface EvaluationStatCardProps {
+  stat: EvaluationStatViewModel;
+}
+
+export default function EvaluationStatCard({ stat }: EvaluationStatCardProps) {
+  const Icon = stat.icon;
+
   return (
     <Card padding="lg" rounded="3xl" shadow="sm">
       <div className="flex items-start gap-4">
         <div
-          className={`flex size-10 items-center justify-center rounded-full text-sm text-[#006B3F] ${stat.iconBg}`}
+          className={`flex size-10 items-center justify-center rounded-full ${stat.iconBg} ${stat.iconColor}`}
         >
-          {stat.icon}
+          <Icon className="size-4" />
         </div>
 
         <div>
