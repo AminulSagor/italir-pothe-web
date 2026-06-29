@@ -1,11 +1,21 @@
-import Card from "@/components/UI/cards/card";
-import { RevenueStat } from "@/mock/revenue-and-analytics/revenue-analytics.types";
+import type { LucideIcon } from "lucide-react";
 
-interface Props {
-  stat: RevenueStat;
+import Card from "@/components/UI/cards/card";
+
+export interface RevenueStatViewModel {
+  id: string;
+  title: string;
+  value: string;
+  growth: string;
+  icon: LucideIcon;
+  highlighted?: boolean;
 }
 
-const RevenueStatCard = ({ stat }: Props) => {
+interface RevenueStatCardProps {
+  stat: RevenueStatViewModel;
+}
+
+export default function RevenueStatCard({ stat }: RevenueStatCardProps) {
   const Icon = stat.icon;
 
   return (
@@ -14,7 +24,9 @@ const RevenueStatCard = ({ stat }: Props) => {
       padding="lg"
       shadow="sm"
       className={`relative overflow-hidden ${
-        stat.highlighted ? "!bg-[#006B3F] text-white" : "bg-white text-[#202420]"
+        stat.highlighted
+          ? "!bg-[#006B3F] text-white"
+          : "bg-white text-[#202420]"
       }`}
     >
       <div className="mb-8 flex items-start justify-between">
@@ -43,9 +55,11 @@ const RevenueStatCard = ({ stat }: Props) => {
 
       <div className="space-y-2">
         <p
-          className={`text-sm ${
-            stat.highlighted ? "text-white/70" : "text-[#6F7673]"
-          }`}
+          className={
+            stat.highlighted
+              ? "text-sm text-white/70"
+              : "text-sm text-[#6F7673]"
+          }
         >
           {stat.title}
         </p>
@@ -54,6 +68,4 @@ const RevenueStatCard = ({ stat }: Props) => {
       </div>
     </Card>
   );
-};
-
-export default RevenueStatCard;
+}
