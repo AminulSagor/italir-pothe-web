@@ -14,8 +14,13 @@ interface Props {
     search?: string | string[];
     page?: string | string[];
     status?: string | string[];
+
     packageType?: string | string[];
+
     paymentProvider?: string | string[];
+
+    provider?: string | string[];
+
     dateFrom?: string | string[];
     dateTo?: string | string[];
     sortBy?: string | string[];
@@ -34,20 +39,26 @@ const getPageNumber = (value?: string | string[]) => {
 
 export default async function PackageStorePage({ searchParams }: Props) {
   const params = await searchParams;
+
   const rawSortBy = getSingleValue(params.sortBy);
+
   const rawSortOrder = getSingleValue(params.sortOrder);
 
   const sortBy: StoreOrderSortBy =
     rawSortBy === "totalAmountEur" || rawSortBy === "orderNumber"
       ? rawSortBy
       : "createdAt";
+
   const sortOrder: StoreSortOrder = rawSortOrder === "ASC" ? "ASC" : "DESC";
 
   return (
     <section className="space-y-7">
       <PackageStoreHeader />
+
       <PackageStoreStats />
+
       <PackageStoreTabs activeTab={getSingleValue(params.tab)} />
+
       <PackageStoreContent
         activeTab={getSingleValue(params.tab)}
         search={getSingleValue(params.search)}
@@ -55,6 +66,7 @@ export default async function PackageStorePage({ searchParams }: Props) {
         status={getSingleValue(params.status)}
         packageType={getSingleValue(params.packageType)}
         paymentProvider={getSingleValue(params.paymentProvider)}
+        provider={getSingleValue(params.provider)}
         dateFrom={getSingleValue(params.dateFrom)}
         dateTo={getSingleValue(params.dateTo)}
         sortBy={sortBy}

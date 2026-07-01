@@ -1,5 +1,58 @@
 export type CommerceSortOrder = "ASC" | "DESC";
 
+export type CoursePaymentProvider = "google_play" | "app_store";
+
+export type CourseProviderProductType = "non_consumable";
+
+export interface CourseProviderProduct {
+  id: string;
+
+  provider: CoursePaymentProvider;
+
+  productId: string;
+
+  productType: CourseProviderProductType;
+
+  basePlanId: string | null;
+  offerId: string | null;
+  isActive: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseProviderProductListResponse {
+  items: CourseProviderProduct[];
+}
+
+export interface CreateCourseProviderProductPayload {
+  provider: CoursePaymentProvider;
+
+  productId: string;
+
+  productType?: CourseProviderProductType;
+
+  basePlanId?: string | null;
+  offerId?: string | null;
+  isActive?: boolean;
+}
+
+export interface UpdateCourseProviderProductPayload {
+  productId?: string;
+
+  productType?: CourseProviderProductType;
+
+  basePlanId?: string | null;
+  offerId?: string | null;
+  isActive?: boolean;
+}
+
+export interface CourseProviderProductMutationResponse {
+  message: string;
+
+  providerProduct: CourseProviderProduct;
+}
+
 export type CourseEnrollmentSortBy = "enrolledAt" | "amountPaid";
 
 export interface CourseEnrollmentQuery {
@@ -7,8 +60,11 @@ export interface CourseEnrollmentQuery {
   limit?: number;
   search?: string;
   status?: string;
-  paymentProvider?: string;
+
+  paymentProvider?: CoursePaymentProvider | string;
+
   sortBy?: CourseEnrollmentSortBy;
+
   sortOrder?: CommerceSortOrder;
 }
 

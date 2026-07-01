@@ -1,22 +1,25 @@
-import ActivityAnalyticsCard from "./_components/activity-analytics-card";
-import EnrolledCoursesCard from "./_components/enrolled-courses-card";
-import ExamResultsCard from "./_components/exam-results-card";
-import UserDetailsHeader from "./_components/user-details-header";
-import UserProfileCard from "./_components/user-profile-card";
+import { notFound } from "next/navigation";
 
-export default function UserDetailsPage() {
-    return (
-        <div className="mx-auto w-full max-w-[1120px] space-y-8">
-            <UserDetailsHeader />
+import { isValidUuid } from "@/utils/uuid";
 
-            <UserProfileCard />
+import UserDetailsClient from "./_components/user-details-client";
 
-            <div className="grid gap-7 xl:grid-cols-2">
-                <ExamResultsCard />
-                <EnrolledCoursesCard />
-            </div>
+interface UserDetailsPageProps {
+  params: Promise<{
+    id?: string;
+  }>;
+}
 
-            <ActivityAnalyticsCard />
-        </div>
-    );
+export default async function UserDetailsPage({
+  params,
+}: UserDetailsPageProps) {
+  const resolvedParams = await params;
+
+  const userId = resolvedParams.id;
+
+  if (!isValidUuid(userId)) {
+    notFound();
+  }
+
+  return <UserDetailsClient userId={userId} />;
 }

@@ -1,80 +1,123 @@
 import Button from "@/components/UI/buttons/button";
-import { EvaluationStudent } from "@/mock/evaluation-center/evaluation-center.types";
-import Link from "next/link";
+import type { EvaluationQueueItem } from "@/types/evaluation-center/evaluation-center.type";
 
-interface Props {
-  student: EvaluationStudent;
+interface EvaluationTableRowProps {
+  item: EvaluationQueueItem;
+  targetWaitHours: number;
+
+  onOpen: (item: EvaluationQueueItem) => void;
 }
 
-const statusDotClasses = {
-  "Retake Requested": "bg-[#FF7A00]",
-  Evaluated: "bg-[#008A2E]",
-  "Awaiting Review": "bg-[#C8D0C9]",
+const statusDotClasses: Record<EvaluationQueueItem["status"], string> = {
+  in_progress: "bg-[#C8D0C9]",
+  submitted: "bg-[#C8D0C9]",
+  under_review: "bg-[#C8D0C9]",
+  evaluated: "bg-[#008A2E]",
+  certificate_issued: "bg-[#008A2E]",
+  retake_requested: "bg-[#FF7A00]",
+  cancelled: "bg-[#D92D20]",
 };
 
-export default function EvaluationTableRow({ student }: Props) {
+const formatSubmissionDate = (value: string | null) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+};
+
+export default function EvaluationTableRow({
+  item,
+  targetWaitHours,
+  onOpen,
+}: EvaluationTableRowProps) {
+  const exceededTarget =
+    item.timeInQueueSeconds > Math.max(0, targetWaitHours) * 3600;
+
   return (
     <tr className="border-b border-[#EEF2EE] last:border-b-0">
       <td className="px-4 py-6">
         <div className="flex items-center gap-4">
-          <div
-            className={`flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-[#006B3F] ${student.avatarBg}`}
-          >
-            {student.avatar}
-          </div>
+          {item.student.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={item.student.avatarUrl}
+              alt={item.student.fullName}
+              className="size-12 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#E7F5EF] text-sm font-bold text-[#006B3F]">
+              {item.student.initials}
+            </div>
+          )}
 
-          <div>
-            <p className="text-sm font-medium text-[#202420]">{student.name}</p>
-            <p className="text-xs text-[#5F675F]">{student.email}</p>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-[#202420]">
+              {item.student.fullName}
+            </p>
+
+            <p className="truncate text-xs text-[#5F675F]">
+              {item.student.email || item.referenceCode}
+            </p>
+
+            <p className="mt-1 truncate text-[11px] text-[#8A948D]">
+              {item.course.title} • {item.exam.title}
+            </p>
           </div>
         </div>
       </td>
 
       <td className="px-4 py-6">
         <span className="rounded-full bg-[#DDE5DD] px-3 py-1 text-xs font-medium text-[#4F5B52]">
-          {student.level}
+          {item.level || "—"}
         </span>
       </td>
 
       <td className="px-4 py-6 text-sm text-[#4F5B52]">
-        {student.submissionDate}
+        {formatSubmissionDate(item.submissionDate)}
       </td>
 
       <td
         className={`px-4 py-6 text-sm font-medium ${
-          student.timeInQueue.includes("42")
-            ? "text-[#D92D20]"
-            : "text-[#202420]"
+          exceededTarget ? "text-[#D92D20]" : "text-[#202420]"
         }`}
       >
-        {student.timeInQueue}
+        {item.timeInQueueLabel}
       </td>
 
       <td className="px-4 py-6">
         <div className="flex items-center gap-2">
           <span
-            className={`size-2 rounded-full ${statusDotClasses[student.status]}`}
+            className={`size-2 rounded-full ${statusDotClasses[item.status]}`}
           />
+
           <span className="text-xs font-medium text-[#202420]">
-            {student.status}
+            {item.statusLabel}
           </span>
         </div>
       </td>
 
       <td className="px-4 py-6">
-        <Link href="/admin/evaluation-center/evaluate-student">
-          <Button
-            size="sm"
-            disabled={student.actionDisabled}
-            className={
-              student.actionDisabled
-                ? "bg-[#EEF0ED] text-[#9BA49D] hover:bg-[#EEF0ED]"
-                : ""
-            }
-          >
-            {student.actionLabel}
-          </Button>
-        </Link>
+        <Button
+          size="sm"
+          disabled={!item.action.enabled}
+          onClick={() => onOpen(item)}
+          className={
+            !item.action.enabled
+              ? "bg-[#EEF0ED] text-[#9BA49D] hover:bg-[#EEF0ED]"
+              : ""
+          }
+        >
+          {item.action.label}
+        </Button>
       </td>
     </tr>
   );

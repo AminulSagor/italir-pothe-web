@@ -1,15 +1,36 @@
 import { Gauge, ScanLine } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import { CertificationBottomStat } from "@/mock/evaluation-center/certification-center/certification-center.types";
+import type { CertificationCenterResponse } from "@/types/evaluation-center/evaluation-center.type";
 
 interface CertificationBottomStatsProps {
-  stats: CertificationBottomStat[];
+  metric: CertificationCenterResponse["evaluationMetric"];
 }
 
 export default function CertificationBottomStats({
-  stats,
+  metric,
 }: CertificationBottomStatsProps) {
+  const stats = [
+    {
+      id: "evaluation-time",
+
+      label: "Evaluation Time",
+
+      value: `${metric.evaluationDurationMinutes} minutes`,
+
+      iconType: "time" as const,
+    },
+    {
+      id: "score-reliability",
+
+      label: "Score Reliability",
+
+      value: `${metric.scoreReliabilityPercent}%`,
+
+      iconType: "reliability" as const,
+    },
+  ];
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {stats.map((stat) => (
@@ -29,6 +50,7 @@ export default function CertificationBottomStats({
 
             <div>
               <p className="text-sm text-[#66736A]">{stat.label}</p>
+
               <h3 className="text-base font-bold text-[#202420]">
                 {stat.value}
               </h3>

@@ -116,7 +116,7 @@ export default function OrderHistoryTable({
         : undefined;
 
     const normalizedPaymentProvider: StorePaymentProvider | undefined =
-      paymentProvider === "google_play" || paymentProvider === "stripe"
+      paymentProvider === "google_play" || paymentProvider === "app_store"
         ? paymentProvider
         : undefined;
 
@@ -345,8 +345,14 @@ export default function OrderHistoryTable({
                         </div>
                       </td>
 
-                      <td className="px-4 py-7 text-sm text-[#4F5B52]">
-                        {order.package.name}
+                      <td className="px-4 py-7">
+                        <p className="text-sm text-[#4F5B52]">
+                          {order.package.name}
+                        </p>
+
+                        <p className="mt-1 text-xs capitalize text-[#8A948C]">
+                          {order.storeProduct.provider.replace(/_/g, " ")}
+                        </p>
                       </td>
                       <td className="px-4 py-7 text-sm text-[#4F5B52]">
                         {formatDate(order.createdAt)}

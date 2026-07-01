@@ -1,11 +1,24 @@
 import { UserRound } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import { EvaluationStudentSummary } from "@/mock/evaluation-center/evaluate-student/evaluate-student.types";
+import type { FinalExamAttemptStatus } from "@/types/evaluation-center/evaluation-center.type";
 
 interface StudentSummaryCardProps {
-  student: EvaluationStudentSummary;
+  student: {
+    name: string;
+    level: string;
+    totalExamTime: string;
+    totalExamLimit: string;
+    responseCount: number;
+    status: FinalExamAttemptStatus;
+  };
 }
+
+const formatStatus = (status: FinalExamAttemptStatus) => {
+  return status
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+};
 
 export default function StudentSummaryCard({
   student,
@@ -22,6 +35,7 @@ export default function StudentSummaryCard({
             <h2 className="text-2xl font-bold text-[#202420]">
               {student.name}
             </h2>
+
             <span className="rounded-full bg-[#DDF3E8] px-3 py-1 text-xs font-semibold text-[#006B3F]">
               {student.level}
             </span>
@@ -32,21 +46,24 @@ export default function StudentSummaryCard({
           <p className="text-xs font-bold uppercase tracking-wide text-[#9CA5A0]">
             Total Exam Time
           </p>
+
           <p className="text-xl font-bold text-[#202420]">
             {student.totalExamTime}
+
             <span className="text-sm font-medium text-[#9CA5A0]">
               {" "}
-              /{student.totalExamLimit}
+              / {student.totalExamLimit}
             </span>
           </p>
         </div>
 
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-[#9CA5A0]">
-            App Activity
+            Responses
           </p>
+
           <p className="text-xl font-bold text-[#202420]">
-            {student.appActivity}
+            {student.responseCount}
           </p>
         </div>
 
@@ -54,9 +71,11 @@ export default function StudentSummaryCard({
           <p className="text-xs font-bold uppercase tracking-wide text-[#9CA5A0]">
             Status
           </p>
+
           <p className="flex items-center gap-2 text-sm font-bold text-[#006B3F]">
             <span className="size-2 rounded-full bg-[#0EA83A]" />
-            {student.status}
+
+            {formatStatus(student.status)}
           </p>
         </div>
       </div>

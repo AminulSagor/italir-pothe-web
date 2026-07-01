@@ -105,7 +105,7 @@ export default function OrderFilterDialog({
           options={[
             { label: "All Providers", value: "" },
             { label: "Google Play", value: "google_play" },
-            { label: "Stripe", value: "stripe" },
+            { label: "App Store", value: "app_store" },
           ]}
         />
 
