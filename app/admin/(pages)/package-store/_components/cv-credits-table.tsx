@@ -4,6 +4,7 @@ interface CvCreditsTableProps {
   search: string;
   page: number;
   status: string;
+  provider: string;
 }
 
 export default function CvCreditsTable(props: CvCreditsTableProps) {

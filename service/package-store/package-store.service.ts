@@ -2,6 +2,7 @@ import { serviceClient } from "@/service/base/service_client";
 import type {
   AdminStoreOrderQuery,
   CreateStorePackagePayload,
+  CreateStoreProviderProductPayload,
   CvEconomyConfiguration,
   PackageStoreDashboard,
   PackageStoreMessageResponse,
@@ -12,8 +13,12 @@ import type {
   StorePackage,
   StorePackageListResponse,
   StorePackageQuery,
+  StoreProviderProduct,
+  StoreProviderProductListResponse,
+  StoreProviderProductMutationResponse,
   UpdateCvEconomyConfigurationPayload,
   UpdateStorePackagePayload,
+  UpdateStoreProviderProductPayload,
 } from "@/types/package-store/package-store.type";
 import { assertValidUuid } from "@/utils/uuid";
 
@@ -25,7 +30,9 @@ const buildQueryString = (
   const params = new URLSearchParams();
 
   Object.entries(values).forEach(([key, value]) => {
-    if (value === undefined || value === "") return;
+    if (value === undefined || value === "") {
+      return;
+    }
 
     params.set(key, String(value));
   });
@@ -68,8 +75,12 @@ export const createStorePackage = async (
 export const getStorePackages = async (query: StorePackageQuery = {}) => {
   const queryString = buildQueryString({
     packageType: query.packageType,
+
     status: query.status,
+    provider: query.provider,
+
     search: query.search?.trim(),
+
     page: query.page,
     limit: query.limit,
   });
@@ -124,16 +135,76 @@ export const reorderStorePackages = async (
   );
 };
 
+export const createStoreProviderProduct = async (
+  packageId: string,
+  payload: CreateStoreProviderProductPayload,
+) => {
+  const safePackageId = assertValidUuid(packageId, "Package ID");
+
+  return serviceClient.post<StoreProviderProduct>(
+    `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/provider-products`,
+    payload,
+  );
+};
+
+export const getStoreProviderProducts = async (packageId: string) => {
+  const safePackageId = assertValidUuid(packageId, "Package ID");
+
+  return serviceClient.get<StoreProviderProductListResponse>(
+    `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/provider-products`,
+  );
+};
+
+export const updateStoreProviderProduct = async (
+  packageId: string,
+  providerProductId: string,
+  payload: UpdateStoreProviderProductPayload,
+) => {
+  const safePackageId = assertValidUuid(packageId, "Package ID");
+
+  const safeProviderProductId = assertValidUuid(
+    providerProductId,
+    "Provider product ID",
+  );
+
+  return serviceClient.patch<StoreProviderProduct>(
+    `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/provider-products/${safeProviderProductId}`,
+    payload,
+  );
+};
+
+export const deactivateStoreProviderProduct = async (
+  packageId: string,
+  providerProductId: string,
+) => {
+  const safePackageId = assertValidUuid(packageId, "Package ID");
+
+  const safeProviderProductId = assertValidUuid(
+    providerProductId,
+    "Provider product ID",
+  );
+
+  return serviceClient.delete<StoreProviderProductMutationResponse>(
+    `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/provider-products/${safeProviderProductId}`,
+  );
+};
+
 export const getAdminStoreOrders = async (query: AdminStoreOrderQuery = {}) => {
   const queryString = buildQueryString({
     page: query.page,
     limit: query.limit,
+
     search: query.search?.trim(),
+
     packageType: query.packageType,
+
     status: query.status,
+
     paymentProvider: query.paymentProvider,
+
     dateFrom: query.dateFrom,
     dateTo: query.dateTo,
+
     sortBy: query.sortBy,
     sortOrder: query.sortOrder,
   });
@@ -148,11 +219,16 @@ export const exportAdminStoreOrdersCsv = async (
 ) => {
   const queryString = buildQueryString({
     search: query.search?.trim(),
+
     packageType: query.packageType,
+
     status: query.status,
+
     paymentProvider: query.paymentProvider,
+
     dateFrom: query.dateFrom,
     dateTo: query.dateTo,
+
     sortBy: query.sortBy,
     sortOrder: query.sortOrder,
   });

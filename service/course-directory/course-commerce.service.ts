@@ -8,8 +8,61 @@ import type {
   CourseEnrollmentQuery,
   CourseEnrollmentSortBy,
   CourseEnrollmentSummary,
+  CourseProviderProduct,
+  CourseProviderProductListResponse,
+  CourseProviderProductMutationResponse,
+  CreateCourseProviderProductPayload,
+  UpdateCourseProviderProductPayload,
 } from "@/types/course-directory/course-commerce.type";
 import { assertValidUuid } from "@/utils/uuid";
+
+export const createCourseProviderProduct = async (
+  courseId: string,
+  payload: CreateCourseProviderProductPayload,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+
+  return serviceClient.post<CourseProviderProduct>(
+    `/admin/courses/${safeCourseId}/provider-products`,
+    payload,
+  );
+};
+
+export const getCourseProviderProducts = async (courseId: string) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+
+  return serviceClient.get<CourseProviderProductListResponse>(
+    `/admin/courses/${safeCourseId}/provider-products`,
+  );
+};
+
+export const updateCourseProviderProduct = async (
+  courseId: string,
+  mappingId: string,
+  payload: UpdateCourseProviderProductPayload,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+
+  const safeMappingId = assertValidUuid(mappingId, "Course product mapping ID");
+
+  return serviceClient.patch<CourseProviderProduct>(
+    `/admin/courses/${safeCourseId}/provider-products/${safeMappingId}`,
+    payload,
+  );
+};
+
+export const deactivateCourseProviderProduct = async (
+  courseId: string,
+  mappingId: string,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+
+  const safeMappingId = assertValidUuid(mappingId, "Course product mapping ID");
+
+  return serviceClient.delete<CourseProviderProductMutationResponse>(
+    `/admin/courses/${safeCourseId}/provider-products/${safeMappingId}`,
+  );
+};
 
 type UnknownRecord = Record<string, unknown>;
 

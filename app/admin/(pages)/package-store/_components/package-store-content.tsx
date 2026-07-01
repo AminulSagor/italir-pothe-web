@@ -15,6 +15,7 @@ interface PackageStoreContentProps {
   status: string;
   packageType: string;
   paymentProvider: string;
+  provider: string;
   dateFrom: string;
   dateTo: string;
   sortBy: StoreOrderSortBy;
@@ -28,17 +29,32 @@ export default function PackageStoreContent({
   status,
   packageType,
   paymentProvider,
+  provider,
   dateFrom,
   dateTo,
   sortBy,
   sortOrder,
 }: PackageStoreContentProps) {
   if (activeTab === "streak-freezes") {
-    return <StreakFreezesTable search={search} page={page} status={status} />;
+    return (
+      <StreakFreezesTable
+        search={search}
+        page={page}
+        status={status}
+        provider={provider}
+      />
+    );
   }
 
   if (activeTab === "cv-credits") {
-    return <CvCreditsTable search={search} page={page} status={status} />;
+    return (
+      <CvCreditsTable
+        search={search}
+        page={page}
+        status={status}
+        provider={provider}
+      />
+    );
   }
 
   if (activeTab === "order-history") {
@@ -57,5 +73,12 @@ export default function PackageStoreContent({
     );
   }
 
-  return <AiBundlesTable search={search} page={page} status={status} />;
+  return (
+    <AiBundlesTable
+      search={search}
+      page={page}
+      status={status}
+      provider={provider}
+    />
+  );
 }

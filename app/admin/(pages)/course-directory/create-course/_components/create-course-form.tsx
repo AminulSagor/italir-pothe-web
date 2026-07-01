@@ -32,6 +32,7 @@ import FinalExaminationCard from "./final-examination-card";
 import PricingAccessCard from "./pricing-access-card";
 import SyllabusBuilderCard from "./syllabus-builder-card";
 import RestoreCourseDialog from "./restore-course-dialog";
+import CourseStoreProductsCard from "./course-store-products-card";
 
 const COURSE_DIRECTORY_PATH = "/admin/course-directory";
 
@@ -165,7 +166,9 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
   };
 
   const saveCourse = async (payloadStatus: CourseStatus) => {
-    if (!validateForm()) return null;
+    if (!validateForm()) {
+      return null;
+    }
 
     const payload = buildPayload(payloadStatus);
 
@@ -423,7 +426,7 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
             onDescriptionChange={setDescription}
           />
 
-          <SyllabusBuilderCard courseId={activeCourseId} />
+          <SyllabusBuilderCard courseId={activeCourseId || undefined} />
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Button
@@ -465,6 +468,11 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
             onIsFreeChange={setIsFree}
             onPriceChange={setPrice}
             onCouponCodeChange={setCouponCode}
+          />
+
+          <CourseStoreProductsCard
+            courseId={activeCourseId || undefined}
+            courseTitle={title}
           />
 
           <CourseStatusCard

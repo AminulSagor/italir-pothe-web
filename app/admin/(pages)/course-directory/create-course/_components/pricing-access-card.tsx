@@ -130,7 +130,7 @@ const PricingAccessCard = ({
         <div className="space-y-4">
           <div>
             <label className="mb-2 block text-xs font-bold text-[#202420]">
-              Price (EUR)
+              REFERENCE PRICE (EUR)
             </label>
 
             <input
@@ -140,6 +140,11 @@ const PricingAccessCard = ({
               onBlur={handlePriceBlur}
               className="w-full rounded-full bg-[#EEF3EC] px-5 py-3 text-sm text-[#202420] outline-none disabled:cursor-not-allowed disabled:opacity-60"
             />
+            <p className="mt-2 text-xs leading-5 text-[#8A948D]">
+              This is the internal reference price. Android and iOS users will
+              see the localized price configured in Google Play Console or App
+              Store Connect.
+            </p>
           </div>
 
           <div>

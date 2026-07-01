@@ -6,6 +6,7 @@ import {
   Pencil,
   PlusCircle,
   RotateCcw,
+  Store,
   Trash2,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -29,6 +30,7 @@ import type {
   StorePackage,
   StorePackageStatus,
   StorePackageType,
+  StorePaymentProvider,
   UpdateStorePackagePayload,
 } from "@/types/package-store/package-store.type";
 
@@ -36,6 +38,7 @@ import CreatePackageDialog from "./dialogs/create-package-dialog";
 import PackageCreatedDialog from "./dialogs/package-created-dialog";
 import PackageRemovedDialog from "./dialogs/package-removed-dialog";
 import StorePagination from "./store-pagination";
+import StoreProductsDialog from "./dialogs/store-products-dialog";
 
 interface StorePackagesTableProps {
   packageType: StorePackageType;
@@ -44,6 +47,7 @@ interface StorePackagesTableProps {
   search: string;
   page: number;
   status: string;
+  provider: string;
 }
 
 const getErrorMessage = (error: unknown) =>
@@ -97,6 +101,7 @@ export default function StorePackagesTable({
   search,
   page,
   status,
+  provider,
 }: StorePackagesTableProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -122,11 +127,18 @@ export default function StorePackagesTable({
   } | null>(null);
   const [isRunningAction, setIsRunningAction] = useState(false);
   const [draggedPackageId, setDraggedPackageId] = useState<string | null>(null);
+  const [storeProductsPackage, setStoreProductsPackage] =
+    useState<StorePackage | null>(null);
 
   const unsaved = useUnsavedChangesWarning(dialogDirty);
 
   const normalizedStatus: StorePackageStatus | undefined =
     status === "published" || status === "archived" ? status : undefined;
+
+  const normalizedProvider: StorePaymentProvider | undefined =
+    provider === "google_play" || provider === "app_store"
+      ? provider
+      : undefined;
 
   const loadPackages = useCallback(async () => {
     try {
@@ -134,6 +146,7 @@ export default function StorePackagesTable({
         packageType,
         search,
         status: normalizedStatus,
+        provider: normalizedProvider,
         page,
         limit: 10,
       });
@@ -146,7 +159,7 @@ export default function StorePackagesTable({
     } finally {
       setIsLoading(false);
     }
-  }, [normalizedStatus, packageType, page, search]);
+  }, [normalizedProvider, normalizedStatus, packageType, page, search]);
 
   useEffect(() => {
     let mounted = true;
@@ -157,6 +170,7 @@ export default function StorePackagesTable({
           packageType,
           search,
           status: normalizedStatus,
+          provider: normalizedProvider,
           page,
           limit: 10,
         });
@@ -182,7 +196,7 @@ export default function StorePackagesTable({
     return () => {
       mounted = false;
     };
-  }, [normalizedStatus, packageType, page, search]);
+  }, [normalizedProvider, normalizedStatus, packageType, page, search]);
 
   const updateQuery = (values: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams(window.location.search);
@@ -351,6 +365,22 @@ export default function StorePackagesTable({
 
           <div className="flex flex-wrap gap-3">
             <select
+              value={provider}
+              onChange={(event) =>
+                updateQuery({
+                  provider: event.target.value,
+                  page: 1,
+                })
+              }
+              className="h-10 rounded-full border border-[#C9D4CC] bg-white px-4 text-sm text-[#4F5B52] outline-none"
+            >
+              <option value="">All Providers</option>
+
+              <option value="google_play">Google Play</option>
+
+              <option value="app_store">App Store</option>
+            </select>
+            <select
               value={status}
               onChange={(event) =>
                 updateQuery({
@@ -513,6 +543,16 @@ export default function StorePackagesTable({
                         <div className="flex gap-3">
                           <button
                             type="button"
+                            onClick={() => setStoreProductsPackage(item)}
+                            className="flex size-9 items-center justify-center rounded-full bg-[#FFF0D6] text-[#B66800]"
+                            aria-label={`Manage store products for ${item.name}`}
+                            title="Store Products"
+                          >
+                            <Store className="size-4" />
+                          </button>
+
+                          <button
+                            type="button"
                             onClick={() => handleEdit(item.id)}
                             className="flex size-9 items-center justify-center rounded-full bg-[#DDEEEE] text-[#006B3F]"
                             aria-label={`Edit ${item.name}`}
@@ -600,6 +640,13 @@ export default function StorePackagesTable({
         isSubmitting={isRunningAction}
         onClose={() => setPendingAction(null)}
         onConfirm={handleConfirmAction}
+      />
+
+      <StoreProductsDialog
+        open={Boolean(storeProductsPackage)}
+        storePackage={storeProductsPackage}
+        onClose={() => setStoreProductsPackage(null)}
+        onChanged={loadPackages}
       />
 
       <UnsavedChangesWarningDialog
