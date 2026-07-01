@@ -4,6 +4,7 @@ interface AiBundlesTableProps {
   search: string;
   page: number;
   status: string;
+  provider: string;
 }
 
 export default function AiBundlesTable(props: AiBundlesTableProps) {

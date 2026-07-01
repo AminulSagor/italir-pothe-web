@@ -4,6 +4,7 @@ interface StreakFreezesTableProps {
   search: string;
   page: number;
   status: string;
+  provider: string;
 }
 
 export default function StreakFreezesTable(props: StreakFreezesTableProps) {
