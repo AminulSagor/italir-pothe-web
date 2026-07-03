@@ -1,10 +1,15 @@
-import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import { Plus } from "lucide-react";
 
-import Button from '@/components/UI/buttons/button';
-import BackButton from '@/components/UI/buttons/back-button';
+import BackButton from "@/components/UI/buttons/back-button";
+import Button from "@/components/UI/buttons/button";
 
-export default function CVTemplateHeader() {
+interface CVTemplateHeaderProps {
+  onUpload: () => void;
+}
+
+export default function CVTemplateHeader({
+  onUpload,
+}: CVTemplateHeaderProps) {
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
       <div className="flex items-start gap-3">
@@ -14,19 +19,23 @@ export default function CVTemplateHeader() {
           <h1 className="text-3xl font-bold text-[#006B3F]">
             CV Template Manager
           </h1>
-          <p className="mt-1 text-sm text-black/60">
-            Create reusable CV templates with controlled layout, fonts, page size,
-            colors, and required user input sections.
+
+          <p className="mt-1 max-w-[620px] text-sm leading-6 text-black/60">
+            Upload CV template images and manage the templates available
+            in the application.
           </p>
         </div>
       </div>
 
-      <Link href="/admin/cv-service/templates/builder">
-        <Button rounded="full" size="lg" className="min-w-[220px] shadow-lg">
-          <Plus className="size-5" />
-          Schedule New Template
-        </Button>
-      </Link>
+      <Button
+        rounded="full"
+        size="lg"
+        className="min-w-[220px] gap-2 shadow-lg"
+        onClick={onUpload}
+      >
+        <Plus className="size-5" />
+        Upload CV Template
+      </Button>
     </div>
   );
 }
