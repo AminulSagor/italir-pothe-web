@@ -1,11 +1,5 @@
-import CVTemplateGrid from "./_components/cv-template-grid";
-import CVTemplateHeader from "./_components/cv-template-header";
+import CVTemplateManagerClient from "./_components/cv-template-manager-client";
 
 export default function CVTemplateManagerPage() {
-  return (
-    <div className="space-y-10">
-      <CVTemplateHeader />
-      <CVTemplateGrid />
-    </div>
-  );
+  return <CVTemplateManagerClient />;
 }

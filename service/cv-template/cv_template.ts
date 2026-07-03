@@ -1,66 +1,38 @@
-import { serviceClient } from '@/service/base/service_client';
+import { serviceClient } from "@/service/base/service_client";
 import type {
-  CvTemplateDefaultLayoutMutationResponse,
-  CvTemplateDefaultLayoutPayload,
-  CvTemplateDefaultLayoutResponse,
-  CvTemplateDetailsResponse,
+  CreateCvTemplatePayload,
   CvTemplateListResponse,
   CvTemplateMutationResponse,
-  CvTemplatePayload,
-  CvTemplateStatus,
-  CvTemplateStyleType,
   DeleteCvTemplateResponse,
-} from '@/types/cv-template/cv_template_type';
+} from "@/types/cv-template/cv_template_type";
 
-const buildPaginationQuery = (page: number, limit: number) =>
-  `page=${page}&limit=${limit}`;
+const buildTemplateQuery = (page: number, limit: number, search: string) => {
+  const query = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
 
-export const getCvTemplates = (page = 1, limit = 20) =>
+  const normalizedSearch = search.trim();
+
+  if (normalizedSearch) {
+    query.set("search", normalizedSearch);
+  }
+
+  return query.toString();
+};
+
+export const getCvTemplates = (page = 1, limit = 9, search = "") =>
   serviceClient.get<CvTemplateListResponse>(
-    `/admin/cv-templates?${buildPaginationQuery(page, limit)}`,
+    `/admin/cv-templates?${buildTemplateQuery(page, limit, search)}`,
   );
 
-export const getCvTemplateById = (templateId: string) =>
-  serviceClient.get<CvTemplateDetailsResponse>(
-    `/admin/cv-templates/${templateId}`,
-  );
-
-export const createCvTemplate = (payload: CvTemplatePayload) =>
-  serviceClient.post<CvTemplateMutationResponse>('/admin/cv-templates', payload);
-
-export const updateCvTemplate = (
-  templateId: string,
-  payload: CvTemplatePayload,
-) =>
-  serviceClient.patch<CvTemplateMutationResponse>(
-    `/admin/cv-templates/${templateId}`,
+export const createCvTemplate = (payload: CreateCvTemplatePayload) =>
+  serviceClient.post<CvTemplateMutationResponse>(
+    "/admin/cv-templates",
     payload,
-  );
-
-export const updateCvTemplateStatus = (
-  templateId: string,
-  status: CvTemplateStatus,
-) =>
-  serviceClient.patch<CvTemplateMutationResponse>(
-    `/admin/cv-templates/${templateId}/status`,
-    { status },
   );
 
 export const deleteCvTemplate = (templateId: string) =>
   serviceClient.delete<DeleteCvTemplateResponse>(
     `/admin/cv-templates/${templateId}`,
-  );
-
-export const getCvTemplateDefaultLayout = (styleType: CvTemplateStyleType) =>
-  serviceClient.get<CvTemplateDefaultLayoutResponse>(
-    `/admin/cv-templates/default-layouts/${styleType}`,
-  );
-
-export const saveCvTemplateDefaultLayout = (
-  styleType: CvTemplateStyleType,
-  payload: CvTemplateDefaultLayoutPayload,
-) =>
-  serviceClient.put<CvTemplateDefaultLayoutMutationResponse>(
-    `/admin/cv-templates/default-layouts/${styleType}`,
-    payload,
   );
