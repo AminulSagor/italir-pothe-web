@@ -215,6 +215,14 @@ export default function StoreProductsDialog({
       return false;
     }
 
+    if (draft.productType !== expectedProductType) {
+      toast.error(
+        `This package must use ${formatValue(expectedProductType)} store products.`,
+      );
+
+      return false;
+    }
+
     if (!draft.productId.trim()) {
       toast.error("Product ID is required.");
 
@@ -534,7 +542,37 @@ export default function StoreProductsDialog({
                   />
                 </label>
               </div>
+              <div className="mt-6 rounded-[1.25rem] border border-[#FFE2A8] bg-[#FFF8E8] px-5 py-4">
+                <p className="text-xs font-bold uppercase text-[#8A5A00]">
+                  Billing Mapping Warnings
+                </p>
 
+                <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#6F4A00]">
+                  <li>
+                    Google Play product ID must exactly match Play Console.
+                  </li>
+                  <li>
+                    App Store product ID must exactly match App Store Connect.
+                  </li>
+                  <li>
+                    AI bundle, CV credit and finite streak freezer packages must
+                    be consumable.
+                  </li>
+                  <li>
+                    Unlimited monthly streak protection must be subscription.
+                  </li>
+                  <li>
+                    Do not reuse old product IDs for a different package
+                    meaning.
+                  </li>
+                </ul>
+
+                <p className="mt-3 text-xs leading-5 text-[#6F4A00]">
+                  Google Play and App Store control the real localized customer
+                  price. The backend package price is for internal display,
+                  quote, reporting and fallback logic.
+                </p>
+              </div>
               <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <Button
                   variant="outline"

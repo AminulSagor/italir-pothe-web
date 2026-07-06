@@ -19,7 +19,7 @@ export default function OrderDetailsHeader({
   onDownloadInvoice,
   onRefund,
 }: OrderDetailsHeaderProps) {
-  const canRefund = order.status === "completed";
+  const canRefund = order.status === "completed" && !order.payment.refundedAt;
 
   return (
     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -28,6 +28,7 @@ export default function OrderDetailsHeader({
 
         <div>
           <h1 className="text-2xl font-bold text-[#006B3F]">Order Details</h1>
+
           <p className="text-sm text-[#4F5B52]">
             Finance Manager / Transaction {order.orderNumber}
           </p>
@@ -55,8 +56,12 @@ export default function OrderDetailsHeader({
             disabled={isRefunding}
             onClick={onRefund}
           >
-            <RotateCcw className="size-4" />
-            Refund Order
+            {isRefunding ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <RotateCcw className="size-4" />
+            )}
+            Refund / Revoke Access
           </Button>
         )}
       </div>

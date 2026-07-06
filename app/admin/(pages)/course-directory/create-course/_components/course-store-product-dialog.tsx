@@ -324,6 +324,27 @@ export default function CourseStoreProductDialog({
           </div>
         </div>
 
+        <div className="rounded-[1.25rem] border border-[#FFE2A8] bg-[#FFF8E8] px-5 py-4">
+          <p className="text-xs font-bold uppercase text-[#8A5A00]">
+            Billing Mapping Warnings
+          </p>
+
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#6F4A00]">
+            <li>Google Play product ID must exactly match Play Console.</li>
+            <li>App Store product ID must exactly match App Store Connect.</li>
+            <li>Lifetime course products must be non-consumable.</li>
+            <li>
+              Do not reuse old product IDs for a different course meaning.
+            </li>
+          </ul>
+
+          <p className="mt-3 text-xs leading-5 text-[#6F4A00]">
+            Google Play and App Store control the real localized customer price.
+            The backend course price is for internal display, quote, reporting
+            and fallback logic.
+          </p>
+        </div>
+
         <div className="flex flex-col-reverse gap-3 bg-[#F7FAF7] px-7 py-6 sm:flex-row sm:justify-end">
           <Button
             variant="outline"
