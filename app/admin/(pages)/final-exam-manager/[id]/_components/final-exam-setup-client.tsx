@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import {
+  getAvailableFinalExamCourses,
   getFinalExamById,
+  getFinalExamSetupProgress,
   publishFinalExam,
   updateFinalExam,
   upsertSpeakingTask,
@@ -14,6 +16,7 @@ import {
 } from "@/service/final-exam/final-exam.service";
 import type {
   FinalExam,
+  FinalExamLinkableCourse,
   FinalExamQuestion,
   FinalExamSection,
 } from "@/types/final-exam/final-exam.type";
@@ -132,6 +135,84 @@ export default function FinalExamSetupClient({
   const [isPublishing, setIsPublishing] = useState(false);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [courseOptions, setCourseOptions] = useState<FinalExamLinkableCourse[]>(
+    [],
+  );
+
+  const mergeCurrentCourseOption = (
+    exam: FinalExam,
+    courses: FinalExamLinkableCourse[],
+  ) => {
+    if (!exam.courseId) {
+      return courses;
+    }
+
+    const currentTitle =
+      exam.courseTitle || exam.linkedCourseTitle || "Linked Course";
+
+    const exists = courses.some((course) => course.id === exam.courseId);
+
+    if (exists) {
+      return courses;
+    }
+
+    return [
+      {
+        id: exam.courseId,
+        title: currentTitle,
+        status: "published",
+      },
+      ...courses,
+    ];
+  };
+
+  const displayProgress = useMemo(() => {
+    if (!exam || !form) {
+      return 0;
+    }
+
+    const coreReady = exam.setupProgress.checklist.coreQuizReady;
+
+    const listeningReady = exam.setupProgress.checklist.listeningLabReady;
+
+    const globalRulesReady =
+      Boolean(form.title.trim()) &&
+      form.totalDurationMinutes > 0 &&
+      form.overallPassingPercent > 0 &&
+      form.unlockCompletionPercent > 0;
+
+    const writingReady =
+      Boolean(form.writingTitle.trim()) &&
+      Boolean(form.writingInstruction.trim()) &&
+      form.writingMinWords > 0 &&
+      form.writingMaxWords >= form.writingMinWords;
+
+    const speakingReady =
+      Boolean(form.speakingTitle.trim()) &&
+      Boolean(form.speakingInstruction.trim()) &&
+      form.speakingMaxDurationSeconds > 0;
+
+    const checks = [
+      Boolean(form.courseId),
+      globalRulesReady,
+      coreReady,
+      listeningReady,
+      writingReady,
+      speakingReady,
+    ];
+
+    return Math.round((checks.filter(Boolean).length / checks.length) * 100);
+  }, [exam, form]);
+
+  const handleCourseChange = (courseId: string) => {
+    const selectedCourse = courseOptions.find(
+      (course) => course.id === courseId,
+    );
+
+    updateForm("courseId", courseId);
+
+    updateForm("courseTitle", selectedCourse?.title || "");
+  };
 
   const hasUnsavedChanges = useMemo(() => {
     if (!form) return false;
@@ -160,13 +241,17 @@ export default function FinalExamSetupClient({
       try {
         setIsLoading(true);
 
-        const response = await getFinalExamById(finalExamId);
+        const [response, availableCourses] = await Promise.all([
+          getFinalExamById(finalExamId),
+          getAvailableFinalExamCourses(),
+        ]);
 
         if (!isMounted) return;
 
         const nextForm = createFormFromExam(response);
 
         setExam(response);
+        setCourseOptions(mergeCurrentCourseOption(response, availableCourses));
         setForm(nextForm);
         setSavedSnapshot(createSnapshot(nextForm));
       } catch (error) {
@@ -279,15 +364,27 @@ export default function FinalExamSetupClient({
       }
 
       const publishedExam = await publishFinalExam(finalExamId);
-      const nextForm = createFormFromExam(publishedExam);
 
-      setExam(publishedExam);
+      const refreshedProgress = await getFinalExamSetupProgress(finalExamId);
+
+      const publishedExamWithProgress: FinalExam = {
+        ...publishedExam,
+        setupProgress: refreshedProgress,
+      };
+
+      const nextForm = createFormFromExam(publishedExamWithProgress);
+
+      setExam(publishedExamWithProgress);
       setForm(nextForm);
       setSavedSnapshot(createSnapshot(nextForm));
 
-      toast.success("Final exam published successfully.", { id: toastId });
+      toast.success("Final exam published successfully.", {
+        id: toastId,
+      });
     } catch (error) {
-      toast.error(getErrorMessage(error), { id: toastId });
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
     } finally {
       setIsPublishing(false);
     }
@@ -382,12 +479,15 @@ export default function FinalExamSetupClient({
           onBack={handleBack}
         />
 
-        <ExamProgressCard progress={exam.setupProgress.percentage} />
+        <ExamProgressCard progress={displayProgress} />
 
         <ExamBasicFields
           examName={form.title}
+          linkedCourseId={form.courseId}
           linkedCourse={form.courseTitle}
+          courseOptions={courseOptions}
           onExamNameChange={(value) => updateForm("title", value)}
+          onCourseChange={handleCourseChange}
         />
 
         <GlobalExamRules

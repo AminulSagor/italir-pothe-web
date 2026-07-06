@@ -231,6 +231,30 @@ const getErrorMessage = (error: unknown) => {
   return "Something went wrong. Please try again.";
 };
 
+const normalizeCorrectBoolean = (value: unknown, fallback = true) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (normalizedValue === "true") {
+      return true;
+    }
+
+    if (normalizedValue === "false") {
+      return false;
+    }
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  return fallback;
+};
+
 const createSnapshot = (form: QuestionForm) =>
   JSON.stringify({
     ...form,
@@ -353,10 +377,7 @@ const createFormFromQuestion = (question: QuizQuestion): QuestionForm => {
     ),
     mediaFileId: question.mediaFileId || "",
     generatedAudioText: question.generatedAudioText || "",
-    correctBoolean:
-      typeof question.correctBoolean === "boolean"
-        ? question.correctBoolean
-        : true,
+    correctBoolean: normalizeCorrectBoolean(question.correctBoolean, true),
     points: question.points || 1,
     sortOrder: question.sortOrder || 1,
     status: question.status || "draft",

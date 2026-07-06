@@ -194,6 +194,17 @@ export interface FinalExamQuestionPayload {
   acceptedAnswers?: QuizQuestionAcceptedAnswer[];
 }
 
+export interface FinalExamListeningQuestionPayload {
+  questionTitle: string;
+  questionPrompt: string;
+  audioFileId?: string | null;
+  generatedAudioText?: string | null;
+  audioSourceType?: string | null;
+  points?: number;
+  sortOrder?: number;
+  options: QuizQuestionOption[];
+}
+
 export interface FinalExamWritingTaskPayload {
   title: string;
   titleBn: string;

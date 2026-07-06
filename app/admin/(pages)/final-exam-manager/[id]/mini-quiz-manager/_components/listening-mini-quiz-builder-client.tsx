@@ -17,7 +17,7 @@ import { createSignedReadUrl } from "@/service/files/file_upload";
 import { uploadQuizAudio } from "@/service/course-directory/quiz.service";
 import type {
   FinalExamQuestion,
-  FinalExamQuestionPayload,
+  FinalExamListeningQuestionPayload,
   FinalExamQuestionStatus,
 } from "@/types/final-exam/final-exam.type";
 import type { QuizQuestionOption } from "@/types/course-directory/quiz.type";
@@ -119,21 +119,21 @@ const cleanOptions = (options: QuizQuestionOption[]) =>
 
 const createPayloadFromForm = (
   form: ListeningQuestionForm,
-): FinalExamQuestionPayload => ({
-  questionType: "listening_mcq",
-  title: form.title.trim() || `Listening Question ${form.sortOrder}`,
-  promptText: form.promptText.trim() || null,
-  helperText:
-    form.helperText.trim() ||
-    "Listen to the audio and choose the correct answer.",
-  translationText: null,
-  mediaFileId: form.mediaFileId || null,
+): FinalExamListeningQuestionPayload => ({
+  questionTitle: form.title.trim() || `Listening Question ${form.sortOrder}`,
+
+  questionPrompt: form.promptText.trim(),
+
+  audioFileId: form.mediaFileId || null,
+
   generatedAudioText: form.generatedAudioText.trim() || null,
+
   audioSourceType: form.audioSourceType,
-  correctBoolean: null,
+
   points: Number(form.points) || 1,
+
   sortOrder: Number(form.sortOrder) || 1,
-  status: form.status,
+
   options: cleanOptions(form.options),
 });
 
