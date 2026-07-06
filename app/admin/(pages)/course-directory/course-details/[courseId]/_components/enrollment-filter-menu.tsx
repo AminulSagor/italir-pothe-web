@@ -15,7 +15,6 @@ interface EnrollmentFilterMenuProps {
   sortBy: CourseEnrollmentSortBy;
   sortOrder: CommerceSortOrder;
   statusOptions: string[];
-  paymentProviderOptions: string[];
   onApply: (values: {
     status: string;
     paymentProvider: string;
@@ -30,13 +29,14 @@ const formatOptionLabel = (value: string) => {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
+const fixedPaymentProviderOptions = ["google_play", "app_store"];
+
 const EnrollmentFilterMenu = ({
   status,
   paymentProvider,
   sortBy,
   sortOrder,
   statusOptions,
-  paymentProviderOptions,
   onApply,
 }: EnrollmentFilterMenuProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -166,7 +166,7 @@ const EnrollmentFilterMenu = ({
               >
                 <option value="">All Providers</option>
 
-                {paymentProviderOptions.map((option) => (
+                {fixedPaymentProviderOptions.map((option) => (
                   <option key={option} value={option}>
                     {formatOptionLabel(option)}
                   </option>

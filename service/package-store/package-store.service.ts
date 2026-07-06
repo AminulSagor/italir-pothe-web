@@ -6,6 +6,7 @@ import type {
   CvEconomyConfiguration,
   PackageStoreDashboard,
   PackageStoreMessageResponse,
+  ProviderRefundOperation,
   RefundStoreOrderPayload,
   ReorderStorePackagesPayload,
   StoreAdminOrder,
@@ -252,6 +253,19 @@ export const getAdminStoreOrderInvoice = async (orderId: string) => {
   return serviceClient.get<string>(
     `${PACKAGE_STORE_BASE_PATH}/orders/${safeOrderId}/invoice`,
   );
+};
+
+export const refundAdminStoreOrder = async (
+  orderId: string,
+  payload: RefundStoreOrderPayload = {},
+) => {
+  const safeOrderId = assertValidUuid(orderId, "Order ID");
+
+  return serviceClient.post<{
+    message: string;
+    refundOperation?: ProviderRefundOperation;
+    order?: StoreAdminOrder;
+  }>(`${PACKAGE_STORE_BASE_PATH}/orders/${safeOrderId}/refund`, payload);
 };
 
 export const demoRefundAdminStoreOrder = async (

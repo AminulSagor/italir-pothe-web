@@ -7,11 +7,18 @@ interface OrderSummaryCardProps {
   order: StoreAdminOrder;
 }
 
-const formatDate = (value: string) => {
+const formatDate = (value: string | null) => {
+  if (!value) return "—";
+
   const date = new Date(value);
 
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 };
+
+const formatLabel = (value: string) =>
+  value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
 export default function OrderSummaryCard({ order }: OrderSummaryCardProps) {
   return (
@@ -29,28 +36,46 @@ export default function OrderSummaryCard({ order }: OrderSummaryCardProps) {
               </h2>
 
               <span className="rounded-full bg-[#DDF3E8] px-4 py-1 text-xs font-semibold capitalize text-[#007A35]">
-                {order.status}
+                {formatLabel(order.status)}
               </span>
             </div>
 
             <p className="text-sm text-[#4F5B52]">
-              Transaction date: {formatDate(order.createdAt)}
+              Created: {formatDate(order.createdAt)}
+            </p>
+
+            <p className="text-sm text-[#4F5B52]">
+              Completed: {formatDate(order.payment.paidAt)}
+            </p>
+
+            <p className="text-sm text-[#4F5B52]">
+              Refunded: {formatDate(order.payment.refundedAt)}
             </p>
           </div>
         </div>
 
         <div>
           <p className="text-xs font-semibold text-[#8A948C]">METHOD</p>
+
           <p className="mt-1 flex items-center gap-2 text-lg font-semibold capitalize text-[#202420]">
             <CreditCard className="size-4" />
-            {order.payment.provider.replace(/_/g, " ")}
+            {formatLabel(order.payment.provider)}
+          </p>
+
+          <p className="mt-1 text-xs text-[#8A948C]">
+            Environment: {formatLabel(order.verification.environment)}
           </p>
         </div>
 
         <div>
           <p className="text-xs font-semibold text-[#8A948C]">TOTAL AMOUNT</p>
+
           <p className="mt-1 text-2xl font-bold text-[#006B3F]">
             {order.pricing.formattedPaymentAmount}
+          </p>
+
+          <p className="mt-1 text-xs text-[#8A948C]">
+            EUR total: €{order.pricing.totalAmountEur}
           </p>
         </div>
       </div>
