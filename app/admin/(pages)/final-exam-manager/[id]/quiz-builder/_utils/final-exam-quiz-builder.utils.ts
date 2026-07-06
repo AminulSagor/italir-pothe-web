@@ -116,6 +116,30 @@ export const createSnapshot = (form: QuestionForm) =>
     localId: undefined,
   });
 
+const normalizeCorrectBoolean = (value: unknown, fallback = true) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (normalizedValue === "true") {
+      return true;
+    }
+
+    if (normalizedValue === "false") {
+      return false;
+    }
+  }
+
+  if (typeof value === "number") {
+    return value === 1;
+  }
+
+  return fallback;
+};
+
 const createDefaultOptions = (): QuizQuestionOption[] => [
   { optionText: "", isCorrect: true, sortOrder: 1 },
   { optionText: "", isCorrect: false, sortOrder: 2 },
@@ -271,7 +295,7 @@ export const createFormFromQuestion = (
       question.imageFileId ||
       "",
     generatedAudioText: question.generatedAudioText || "",
-    correctBoolean: Boolean(question.correctBoolean),
+    correctBoolean: normalizeCorrectBoolean(question.correctBoolean, true),
     points: question.points || 1,
     sortOrder: question.sortOrder || 1,
     status: question.status || "draft",

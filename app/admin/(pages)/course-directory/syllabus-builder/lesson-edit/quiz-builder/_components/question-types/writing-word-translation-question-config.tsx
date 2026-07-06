@@ -112,7 +112,9 @@ export default function WritingWordTranslationQuestionConfig({
 
   const removeAlternateAnswer = (answerIndex: number) => {
     const targetAnswer = alternateAnswers[answerIndex];
-    const nextAnswers = acceptedAnswers.filter((answer) => answer !== targetAnswer);
+    const nextAnswers = acceptedAnswers.filter(
+      (answer) => answer !== targetAnswer,
+    );
 
     onAcceptedAnswersChange(normalizeAnswers(nextAnswers));
   };

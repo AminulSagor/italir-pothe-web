@@ -2,6 +2,7 @@ import type {
   FinalExam,
   FinalExamDeleteResponse,
   FinalExamLinkableCourse,
+  FinalExamListeningQuestionPayload,
   FinalExamListItem,
   FinalExamListParams,
   FinalExamListResponse,
@@ -134,7 +135,7 @@ export const hardDeleteFinalExam = async (
 
 export const createListeningQuestion = async (
   finalExamId: string,
-  payload: FinalExamQuestionPayload,
+  payload: FinalExamListeningQuestionPayload,
 ): Promise<FinalExamQuestion> => {
   return serviceClient.post<FinalExamQuestion>(
     FINAL_EXAM_ENDPOINTS.listeningQuestions(finalExamId),
@@ -145,7 +146,7 @@ export const createListeningQuestion = async (
 export const updateListeningQuestion = async (
   finalExamId: string,
   questionId: string,
-  payload: FinalExamQuestionPayload,
+  payload: FinalExamListeningQuestionPayload,
 ): Promise<FinalExamQuestion> => {
   return serviceClient.patch<FinalExamQuestion>(
     FINAL_EXAM_ENDPOINTS.listeningQuestionDetails(finalExamId, questionId),

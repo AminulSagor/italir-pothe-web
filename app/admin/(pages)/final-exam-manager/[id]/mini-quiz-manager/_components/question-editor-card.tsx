@@ -1,4 +1,4 @@
-import { Circle, FileAudio, Play, Trash2 } from "lucide-react";
+import { Circle, FileAudio, Trash2 } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
@@ -138,21 +138,6 @@ const QuestionEditorCard = ({
             />
           )}
         </div>
-
-        {mediaFileId && (
-          <div className="flex items-center gap-4 rounded-full bg-[#FBFCFA] px-4 py-4">
-            <button
-              type="button"
-              className="flex size-10 items-center justify-center rounded-full bg-[#006B3F]"
-            >
-              <Play className="size-4 fill-white text-white" />
-            </button>
-
-            <div className="h-1 flex-1 rounded-full bg-[#E0E7DE]" />
-
-            <span className="text-xs text-[#98A29E]">Ready</span>
-          </div>
-        )}
 
         <div>
           <p className="mb-3 text-xs font-semibold uppercase text-[#4F5B55]">
