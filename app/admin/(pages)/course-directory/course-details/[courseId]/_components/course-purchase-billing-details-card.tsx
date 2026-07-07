@@ -8,14 +8,44 @@ import {
 } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
-import type {
-  CourseEnrollment,
-  CourseEnrollmentDetails,
-} from "@/types/course-directory/course-commerce.type";
 
 interface CoursePurchaseBillingDetailsCardProps {
-  enrollment: CourseEnrollment | CourseEnrollmentDetails;
+  enrollment: unknown;
 }
+
+type UnknownRecord = Record<string, unknown>;
+
+const isRecord = (value: unknown): value is UnknownRecord => {
+  return typeof value === "object" && value !== null;
+};
+
+const getRecord = (source: unknown, key: string): UnknownRecord | null => {
+  if (!isRecord(source)) return null;
+
+  const value = source[key];
+
+  return isRecord(value) ? value : null;
+};
+
+const getString = (source: unknown, key: string) => {
+  if (!isRecord(source)) return "";
+
+  const value = source[key];
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+};
+
+const getBooleanText = (value: unknown) => {
+  if (typeof value !== "boolean") {
+    return "—";
+  }
+
+  return value ? "Yes" : "No";
+};
 
 const formatLabel = (value?: string | null) => {
   if (!value) return "—";
@@ -33,18 +63,8 @@ const formatDateTime = (value?: string | null) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 };
 
-const getTokenHash = (
-  enrollment: CourseEnrollment | CourseEnrollmentDetails,
-) => {
-  return (
-    enrollment.verification?.purchaseTokenHash ||
-    enrollment.verification?.tokenHash ||
-    "—"
-  );
-};
-
 const getVerificationStyle = (status?: string | null) => {
-  if (status === "verified") {
+  if (status === "verified" || status === "completed") {
     return {
       icon: CheckCircle2,
       className: "bg-[#DDF3E8] text-[#006B3F]",
@@ -67,17 +87,68 @@ const getVerificationStyle = (status?: string | null) => {
 export default function CoursePurchaseBillingDetailsCard({
   enrollment,
 }: CoursePurchaseBillingDetailsCardProps) {
-  const verificationStatus = enrollment.verification?.status || "pending";
+  const root = isRecord(enrollment) ? enrollment : {};
+
+  const order = getRecord(root, "order");
+
+  const providerSnapshot =
+    getRecord(order, "providerSnapshot") || getRecord(root, "storeProduct");
+
+  const providerTransaction =
+    getRecord(order, "providerTransaction") || getRecord(root, "verification");
+
+  const refundOperation =
+    getRecord(order, "refundOperation") || getRecord(root, "refundOperation");
+
+  const payment = getRecord(root, "payment");
+
+  const subscription = getRecord(root, "subscription");
+
+  const provider =
+    getString(providerSnapshot, "provider") ||
+    getString(providerTransaction, "provider") ||
+    getString(payment, "provider") ||
+    getString(order, "paymentProvider");
+
+  const productId =
+    getString(providerSnapshot, "productId") ||
+    getString(providerSnapshot, "providerProductId") ||
+    getString(providerTransaction, "productId");
+
+  const productType = getString(providerSnapshot, "productType");
+
+  const basePlanId = getString(providerSnapshot, "basePlanId");
+
+  const offerId = getString(providerSnapshot, "offerId");
+
+  const verificationStatus =
+    getString(providerTransaction, "verificationStatus") ||
+    getString(providerTransaction, "status") ||
+    "pending";
 
   const verificationStyle = getVerificationStyle(verificationStatus);
 
   const VerificationIcon = verificationStyle.icon;
 
-  const storeProduct = enrollment.storeProduct;
+  const providerTransactionId = getString(
+    providerTransaction,
+    "providerTransactionId",
+  );
 
-  const payment = enrollment.payment;
+  const tokenHash =
+    getString(providerTransaction, "tokenHash") ||
+    getString(providerTransaction, "purchaseTokenHash");
 
-  const subscription = enrollment.subscription;
+  const environment = getString(providerTransaction, "environment");
+
+  const verifiedAt = getString(providerTransaction, "verifiedAt");
+
+  const paidAt = getString(order, "paidAt") || getString(payment, "paidAt");
+
+  const refundedAt =
+    getString(order, "refundedAt") ||
+    getString(payment, "refundedAt") ||
+    getString(root, "refundedAt");
 
   return (
     <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-7">
@@ -92,8 +163,8 @@ export default function CoursePurchaseBillingDetailsCard({
           </h3>
 
           <p className="text-xs leading-5 text-[#7A847B]">
-            Read-only purchase verification and store product information. Full
-            purchase tokens and raw signed payloads are never shown here.
+            Read-only course purchase verification details. Full purchase
+            tokens, raw signed payloads and secrets are never shown here.
           </p>
         </div>
       </div>
@@ -106,27 +177,18 @@ export default function CoursePurchaseBillingDetailsCard({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <DetailBox
-            label="Provider"
-            value={formatLabel(storeProduct?.provider || payment?.provider)}
-          />
+          <DetailBox label="Provider" value={formatLabel(provider)} />
 
-          <DetailBox
-            label="Product Type"
-            value={formatLabel(storeProduct?.productType)}
-          />
+          <DetailBox label="Product Type" value={formatLabel(productType)} />
 
-          <DetailBox
-            label="Product ID"
-            value={storeProduct?.productId || "—"}
-          />
+          <DetailBox label="Product ID" value={productId || "—"} />
 
           <DetailBox
             label="Base Plan / Purchase Option ID"
-            value={storeProduct?.basePlanId || "—"}
+            value={basePlanId || "—"}
           />
 
-          <DetailBox label="Offer ID" value={storeProduct?.offerId || "—"} />
+          <DetailBox label="Offer ID" value={offerId || "—"} />
 
           <DetailBox
             label="Expected Course Product Type"
@@ -147,44 +209,31 @@ export default function CoursePurchaseBillingDetailsCard({
             className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${verificationStyle.className}`}
           >
             <VerificationIcon className="size-3.5" />
-
             {formatLabel(verificationStatus)}
           </span>
 
           <span className="rounded-full bg-[#EEF3EC] px-3 py-1 text-xs font-bold text-[#4F5B52]">
-            Environment: {formatLabel(enrollment.verification?.environment)}
+            Environment: {formatLabel(environment)}
           </span>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
           <DetailBox
             label="Provider Transaction ID"
-            value={enrollment.verification?.providerTransactionId || "—"}
+            value={providerTransactionId || "—"}
           />
 
-          <DetailBox
-            label="Purchase Token Hash"
-            value={getTokenHash(enrollment)}
-          />
+          <DetailBox label="Purchase Token Hash" value={tokenHash || "—"} />
+
+          <DetailBox label="Verified At" value={formatDateTime(verifiedAt)} />
+
+          <DetailBox label="Completed At" value={formatDateTime(paidAt)} />
+
+          <DetailBox label="Refunded At" value={formatDateTime(refundedAt)} />
 
           <DetailBox
-            label="Provider Reference"
-            value={payment?.providerReference || "—"}
-          />
-
-          <DetailBox
-            label="Verified At"
-            value={formatDateTime(enrollment.verification?.verifiedAt)}
-          />
-
-          <DetailBox
-            label="Completed At"
-            value={formatDateTime(payment?.paidAt)}
-          />
-
-          <DetailBox
-            label="Refunded At"
-            value={formatDateTime(payment?.refundedAt)}
+            label="Order Status"
+            value={formatLabel(getString(order, "status"))}
           />
         </div>
       </section>
@@ -198,20 +247,47 @@ export default function CoursePurchaseBillingDetailsCard({
 
         <div className="grid gap-4 md:grid-cols-2">
           <DetailBox
-            label="Refund Status"
-            value={payment?.refundedAt ? "Refunded / Revoked" : "Not refunded"}
+            label="Refund Operation Status"
+            value={formatLabel(getString(refundOperation, "status"))}
           />
 
           <DetailBox
-            label="Refund Reason"
-            value={payment?.refundReason || "—"}
+            label="Refund Source"
+            value={formatLabel(getString(refundOperation, "source"))}
           />
 
-          <DetailBox label="Failure Code" value={payment?.failureCode || "—"} />
+          <DetailBox
+            label="Revoke Access"
+            value={getBooleanText(
+              isRecord(refundOperation) ? refundOperation.revoke : undefined,
+            )}
+          />
+
+          <DetailBox
+            label="Provider Completed At"
+            value={formatDateTime(
+              getString(refundOperation, "providerCompletedAt"),
+            )}
+          />
+
+          <DetailBox
+            label="Completed At"
+            value={formatDateTime(getString(refundOperation, "completedAt"))}
+          />
+
+          <DetailBox
+            label="Failure Code"
+            value={getString(refundOperation, "failureCode") || "—"}
+          />
 
           <DetailBox
             label="Failure Message"
-            value={payment?.failureMessage || "—"}
+            value={getString(refundOperation, "failureMessage") || "—"}
+          />
+
+          <DetailBox
+            label="Reason"
+            value={getString(refundOperation, "reason") || "—"}
           />
         </div>
       </section>
@@ -225,61 +301,47 @@ export default function CoursePurchaseBillingDetailsCard({
           <div className="grid gap-4 md:grid-cols-2">
             <DetailBox
               label="Subscription Status"
-              value={formatLabel(subscription.status)}
+              value={formatLabel(getString(subscription, "status"))}
             />
 
             <DetailBox
               label="Entitlement Active"
-              value={
-                subscription.entitlementActive === null ||
-                subscription.entitlementActive === undefined
-                  ? "—"
-                  : subscription.entitlementActive
-                    ? "Yes"
-                    : "No"
-              }
+              value={getBooleanText(subscription.entitlementActive)}
             />
 
             <DetailBox
               label="Auto-renew Enabled"
-              value={
-                subscription.autoRenewEnabled === null ||
-                subscription.autoRenewEnabled === undefined
-                  ? "—"
-                  : subscription.autoRenewEnabled
-                    ? "Yes"
-                    : "No"
-              }
+              value={getBooleanText(subscription.autoRenewEnabled)}
             />
 
             <DetailBox
               label="Started At"
-              value={formatDateTime(subscription.startedAt)}
+              value={formatDateTime(getString(subscription, "startedAt"))}
             />
 
             <DetailBox
               label="Expires At"
-              value={formatDateTime(subscription.expiresAt)}
+              value={formatDateTime(getString(subscription, "expiresAt"))}
             />
 
             <DetailBox
               label="Canceled At"
-              value={formatDateTime(subscription.canceledAt)}
+              value={formatDateTime(getString(subscription, "canceledAt"))}
             />
 
             <DetailBox
               label="Revoked At"
-              value={formatDateTime(subscription.revokedAt)}
+              value={formatDateTime(getString(subscription, "revokedAt"))}
             />
 
             <DetailBox
               label="Last Synced At"
-              value={formatDateTime(subscription.lastSyncedAt)}
+              value={formatDateTime(getString(subscription, "lastSyncedAt"))}
             />
 
             <DetailBox
               label="Environment"
-              value={formatLabel(subscription.environment)}
+              value={formatLabel(getString(subscription, "environment"))}
             />
           </div>
         </section>
