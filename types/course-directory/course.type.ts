@@ -62,6 +62,12 @@ export interface Course {
   totalStudentEnrollments?: number;
 }
 
+export interface CourseDirectorySummary {
+  totalCourses: number;
+  activeStudents: number;
+  averageCompletionRate: number;
+}
+
 export interface CourseListParams {
   page?: number;
   limit?: number;
@@ -98,6 +104,9 @@ export interface CourseDeleteSafety {
     hasDependencies: boolean;
     chapterCount: number;
     lessonCount: number;
+    studentEnrollmentCount?: number;
+    purchaseHistoryCount?: number;
+    revenueHistoryCount?: number;
   };
   recommendation: string;
 }
