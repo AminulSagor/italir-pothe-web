@@ -2,6 +2,7 @@ import { serviceClient } from "@/service/base/service_client";
 import type {
   Course,
   CourseDeleteSafety,
+  CourseDirectorySummary,
   CourseListParams,
   CourseListResponse,
   CreateCoursePayload,
@@ -10,6 +11,7 @@ import type {
 
 const COURSE_ENDPOINTS = {
   courses: "/admin/courses",
+  summary: "/admin/courses/summary",
   details: (courseId: string) => `/admin/courses/${courseId}`,
   publish: (courseId: string) => `/admin/courses/${courseId}/publish`,
   restore: (courseId: string) => `/admin/courses/${courseId}/restore`,
@@ -24,6 +26,7 @@ interface CourseListApiResponse {
     page?: number;
     limit?: number;
     total?: number;
+    totalItems?: number;
     totalPages?: number;
   };
 }
@@ -47,8 +50,9 @@ const normalizeCourseListResponse = (
 ): CourseListResponse => ({
   items: response.items,
   page: response.meta?.page || 1,
-  limit: response.meta?.limit || response.items.length,
-  totalItems: response.meta?.total || response.items.length,
+  limit: response.meta?.limit || response.items.length || 10,
+  totalItems:
+    response.meta?.totalItems || response.meta?.total || response.items.length,
   totalPages: response.meta?.totalPages || 1,
 });
 
@@ -61,6 +65,11 @@ export const getCourses = async (
 
   return normalizeCourseListResponse(response);
 };
+
+export const getCourseDirectorySummary =
+  async (): Promise<CourseDirectorySummary> => {
+    return serviceClient.get<CourseDirectorySummary>(COURSE_ENDPOINTS.summary);
+  };
 
 export const getCourseById = (courseId: string) =>
   serviceClient.get<Course>(COURSE_ENDPOINTS.details(courseId));

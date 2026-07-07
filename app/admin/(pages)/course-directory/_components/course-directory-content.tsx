@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-import { getCourses } from "@/service/course-directory/course.service";
+import {
+  getCourseDirectorySummary,
+  getCourses,
+} from "@/service/course-directory/course.service";
 import type {
+  CourseDirectorySummary,
   CourseListResponse,
   CourseStatus,
 } from "@/types/course-directory/course.type";
@@ -24,6 +28,12 @@ const initialCourseList: CourseListResponse = {
   totalPages: 1,
 };
 
+const initialSummary: CourseDirectorySummary = {
+  totalCourses: 0,
+  activeStudents: 0,
+  averageCompletionRate: 0,
+};
+
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";
@@ -32,10 +42,51 @@ const getErrorMessage = (error: unknown) => {
 const CourseDirectoryContent = () => {
   const [courseList, setCourseList] =
     useState<CourseListResponse>(initialCourseList);
+
+  const [summary, setSummary] =
+    useState<CourseDirectorySummary>(initialSummary);
+
   const [search, setSearch] = useState("");
+
   const [status, setStatus] = useState<CourseStatus | "">("");
+
   const [page, setPage] = useState(1);
+
   const [isLoading, setIsLoading] = useState(false);
+
+  const [isSummaryLoading, setIsSummaryLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSummary = async () => {
+      try {
+        setIsSummaryLoading(true);
+
+        const response = await getCourseDirectorySummary();
+
+        if (isMounted) {
+          setSummary(response);
+        }
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+
+        if (isMounted) {
+          setSummary(initialSummary);
+        }
+      } finally {
+        if (isMounted) {
+          setIsSummaryLoading(false);
+        }
+      }
+    };
+
+    void loadSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -67,7 +118,7 @@ const CourseDirectoryContent = () => {
       }
     };
 
-    loadCourses();
+    void loadCourses();
 
     return () => {
       isMounted = false;
@@ -82,10 +133,7 @@ const CourseDirectoryContent = () => {
     <section className="space-y-7">
       <CourseDirectoryHeader />
 
-      <CourseDirectoryStats
-        courses={courseList.items}
-        totalCourses={courseList.totalItems}
-      />
+      <CourseDirectoryStats summary={summary} isLoading={isSummaryLoading} />
 
       <CourseDirectoryFilters
         search={search}

@@ -10,6 +10,8 @@ import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import {
   getCertificationCenter,
   issueEvaluationCertificate,
+  openAdminCertificatePdf,
+  regenerateAdminCertificatePdf,
   reopenFinalExamEvaluation,
   requestFinalExamRetake,
   revokeAdminCertificate,
@@ -29,7 +31,6 @@ export type CertificationTab = "issue-certificate" | "request-retake";
 
 interface CertificationCenterClientProps {
   attemptId: string;
-
   requestedTab: CertificationTab;
 }
 
@@ -38,6 +39,16 @@ const getErrorMessage = (error: unknown) => {
     ? error.message
     : "Unable to complete the certification action.";
 };
+
+const createRetakeFormFromData = (
+  response: CertificationCenterResponse,
+): RetakeFormState => ({
+  keyStrength: response.result.keyStrength || "",
+  criticalGap: response.result.criticalGap || "",
+  teacherComment: response.result.teacherComment || "",
+  teacherCommentBn: response.result.teacherCommentBn || "",
+  notifyStudent: true,
+});
 
 export default function CertificationCenterClient({
   attemptId,
@@ -84,6 +95,7 @@ export default function CertificationCenterClient({
       const response = await getCertificationCenter(attemptId);
 
       setData(response);
+      setRetakeForm(createRetakeFormFromData(response));
     } catch (error) {
       const message = getErrorMessage(error);
 
@@ -95,49 +107,8 @@ export default function CertificationCenterClient({
   }, [attemptId]);
 
   useEffect(() => {
-    let mounted = true;
-
-    const fetchCenter = async () => {
-      try {
-        const response = await getCertificationCenter(attemptId);
-
-        if (!mounted) return;
-
-        setData(response);
-
-        setRetakeForm({
-          keyStrength: response.result.keyStrength || "",
-
-          criticalGap: response.result.criticalGap || "",
-
-          teacherComment: response.result.teacherComment || "",
-
-          teacherCommentBn: response.result.teacherCommentBn || "",
-
-          notifyStudent: true,
-        });
-
-        setLoadError("");
-      } catch (error) {
-        if (!mounted) return;
-
-        const message = getErrorMessage(error);
-
-        setLoadError(message);
-        toast.error(message);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void fetchCenter();
-
-    return () => {
-      mounted = false;
-    };
-  }, [attemptId]);
+    void loadCenter();
+  }, [loadCenter]);
 
   const activeTab = useMemo<CertificationTab>(() => {
     if (!data) {
@@ -200,7 +171,6 @@ export default function CertificationCenterClient({
     const params = new URLSearchParams(window.location.search);
 
     params.set("attemptId", attemptId);
-
     params.set("tab", tab);
 
     router.replace(`${pathname}?${params.toString()}`, {
@@ -259,13 +229,9 @@ export default function CertificationCenterClient({
 
       const response = await requestFinalExamRetake(attemptId, {
         keyStrength: retakeForm.keyStrength.trim() || undefined,
-
         criticalGap: retakeForm.criticalGap.trim(),
-
         teacherComment: retakeForm.teacherComment.trim(),
-
         teacherCommentBn: retakeForm.teacherCommentBn.trim() || undefined,
-
         notifyStudent: retakeForm.notifyStudent,
       });
 
@@ -347,6 +313,66 @@ export default function CertificationCenterClient({
     }
   };
 
+  const handleOpenPdf = async () => {
+    if (!data?.certificate?.id) {
+      toast.error("Certificate ID is missing.");
+
+      return;
+    }
+
+    const toastId = toast.loading("Opening certificate PDF...");
+
+    try {
+      await openAdminCertificatePdf(data.certificate.id);
+
+      toast.success("Certificate PDF opened.", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
+    }
+  };
+
+  const handleRegeneratePdf = async () => {
+    if (!data?.certificate?.id) {
+      toast.error("Certificate ID is missing.");
+
+      return;
+    }
+
+    const toastId = toast.loading("Regenerating certificate PDF...");
+
+    try {
+      setIsSubmitting(true);
+
+      await regenerateAdminCertificatePdf(data.certificate.id);
+
+      await loadCenter();
+
+      toast.success("Certificate PDF regenerated.", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVerify = () => {
+    if (data?.certificate?.verificationUrl) {
+      window.open(
+        data.certificate.verificationUrl,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }
+  };
+
   if (isLoading && !data) {
     return (
       <div className="flex min-h-[520px] items-center justify-center">
@@ -419,24 +445,9 @@ export default function CertificationCenterClient({
           onRequestRetake={() => setRetakeOpen(true)}
           onReEvaluate={() => setReopenOpen(true)}
           onRevokeCertificate={() => setRevokeOpen(true)}
-          onOpenPdf={() => {
-            if (data.certificate?.pdfUrl) {
-              window.open(
-                data.certificate.pdfUrl,
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }
-          }}
-          onVerify={() => {
-            if (data.certificate?.verificationUrl) {
-              window.open(
-                data.certificate.verificationUrl,
-                "_blank",
-                "noopener,noreferrer",
-              );
-            }
-          }}
+          onOpenPdf={handleOpenPdf}
+          onRegeneratePdf={handleRegeneratePdf}
+          onVerify={handleVerify}
         />
 
         <CertificationBottomStats metric={data.evaluationMetric} />

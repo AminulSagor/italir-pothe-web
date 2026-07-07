@@ -29,6 +29,7 @@ interface CertificationResultCardProps {
   onReEvaluate: () => void;
   onRevokeCertificate: () => void;
   onOpenPdf: () => void;
+  onRegeneratePdf: () => void;
   onVerify: () => void;
 }
 
@@ -57,6 +58,7 @@ export default function CertificationResultCard({
   onReEvaluate,
   onRevokeCertificate,
   onOpenPdf,
+  onRegeneratePdf,
   onVerify,
 }: CertificationResultCardProps) {
   const isPassedTab = activeTab === "issue-certificate";
@@ -153,7 +155,7 @@ export default function CertificationResultCard({
               <Button
                 size="lg"
                 fullWidth
-                disabled={!data.certificate?.pdfUrl}
+                disabled={!data.certificate?.id}
                 onClick={onOpenPdf}
                 className="gap-3 bg-[#59F94D] !text-[#006B3F] hover:!bg-[#4EF044]"
               >
@@ -172,6 +174,19 @@ export default function CertificationResultCard({
                 <ExternalLink className="size-5" />
                 Verify Certificate
               </Button>
+
+              {data.certificate && !data.certificate.pdfFileId && (
+                <Button
+                  size="lg"
+                  fullWidth
+                  variant="outline"
+                  onClick={onRegeneratePdf}
+                  className="gap-3 sm:col-span-2"
+                >
+                  <RefreshCw className="size-5" />
+                  Regenerate Missing PDF
+                </Button>
+              )}
 
               {!certificateRevoked && (
                 <Button

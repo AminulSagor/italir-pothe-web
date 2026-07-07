@@ -9,15 +9,17 @@ interface CourseDetailsStatsProps {
   summary: CourseEnrollmentSummary | null;
 }
 
-const formatCurrency = (amount: number, currency: string) => {
+const formatCurrency = (amount: string | number, currency: string) => {
+  const numericAmount = Number(amount || 0);
+
   try {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
       maximumFractionDigits: 2,
-    }).format(amount);
+    }).format(Number.isFinite(numericAmount) ? numericAmount : 0);
   } catch {
-    return `${currency} ${amount.toFixed(2)}`;
+    return `${currency} ${Number.isFinite(numericAmount) ? numericAmount.toFixed(2) : "0.00"}`;
   }
 };
 
@@ -26,16 +28,21 @@ const CourseDetailsStats = ({ course, summary }: CourseDetailsStatsProps) => {
     summary?.totalStudents ?? course.totalStudentEnrollments ?? 0;
 
   const activeNow = summary?.activeNow || 0;
-  const revenue = summary?.revenueYtd || 0;
-  const refunded = summary?.refunded || 0;
-  const currency = summary?.currency || "EUR";
+
+  const revenueAmount = summary?.revenueYtd.amount || "0.00";
+
+  const revenueCurrency = summary?.revenueYtd.currency || "EUR";
+
+  const refundedLast30Days = summary?.refundedLast30Days || 0;
+
+  const activeWindowMinutes = summary?.activeWindowMinutes || 15;
 
   const stats = [
     {
       id: "total-students",
       title: "Total Students",
       value: totalStudents.toLocaleString(),
-      badge: summary?.totalStudentsBadge || "Current enrollments",
+      badge: "Active enrollments",
       icon: UserRound,
       variant: "primary",
     },
@@ -43,23 +50,23 @@ const CourseDetailsStats = ({ course, summary }: CourseDetailsStatsProps) => {
       id: "active-now",
       title: "Active Now",
       value: activeNow.toLocaleString(),
-      badge: summary?.activeNowBadge || "Live engagement",
+      badge: `Last ${activeWindowMinutes} minutes`,
       icon: Radio,
       variant: "default",
     },
     {
       id: "revenue",
       title: "Revenue (YTD)",
-      value: formatCurrency(revenue, currency),
-      badge: summary?.revenueBadge || "Paid revenue",
+      value: formatCurrency(revenueAmount, revenueCurrency),
+      badge: "Paid revenue this year",
       icon: WalletCards,
       variant: "default",
     },
     {
       id: "refunded",
       title: "Refunded",
-      value: refunded.toLocaleString(),
-      badge: summary?.refundedBadge || "Refund records",
+      value: refundedLast30Days.toLocaleString(),
+      badge: "Last 30 days",
       icon: RotateCcw,
       variant: "danger",
     },

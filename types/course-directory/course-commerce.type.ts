@@ -16,17 +16,12 @@ export type CourseProviderProductType = "non_consumable";
 
 export interface CourseProviderProduct {
   id: string;
-
   provider: CoursePaymentProvider;
-
   productId: string;
-
   productType: CourseProviderProductType;
-
   basePlanId: string | null;
   offerId: string | null;
   isActive: boolean;
-
   createdAt: string;
   updatedAt: string;
 }
@@ -37,11 +32,8 @@ export interface CourseProviderProductListResponse {
 
 export interface CreateCourseProviderProductPayload {
   provider: CoursePaymentProvider;
-
   productId: string;
-
   productType?: CourseProviderProductType;
-
   basePlanId?: string | null;
   offerId?: string | null;
   isActive?: boolean;
@@ -49,9 +41,7 @@ export interface CreateCourseProviderProductPayload {
 
 export interface UpdateCourseProviderProductPayload {
   productId?: string;
-
   productType?: CourseProviderProductType;
-
   basePlanId?: string | null;
   offerId?: string | null;
   isActive?: boolean;
@@ -59,11 +49,23 @@ export interface UpdateCourseProviderProductPayload {
 
 export interface CourseProviderProductMutationResponse {
   message: string;
-
   providerProduct: CourseProviderProduct;
 }
 
 export type CourseEnrollmentSortBy = "enrolledAt" | "amountPaid";
+
+export interface CourseEnrollmentBilling {
+  provider: string | null;
+  productId: string | null;
+  productType: string | null;
+  basePlanId: string | null;
+  offerId: string | null;
+  environment: string | null;
+  verificationStatus: string | null;
+  providerTransactionId: string | null;
+  tokenHash: string | null;
+  verifiedAt: string | null;
+}
 
 export interface CoursePurchaseStoreProductSnapshot {
   provider: CoursePaymentProvider | string | null;
@@ -80,16 +82,11 @@ export interface CoursePurchaseStoreProductSnapshot {
 
 export interface CoursePurchaseVerificationSnapshot {
   environment: CoursePurchaseEnvironment | string | null;
-  status: CoursePurchaseVerificationStatus | string | null;
+  status?: CoursePurchaseVerificationStatus | string | null;
+  verificationStatus?: CoursePurchaseVerificationStatus | string | null;
   providerTransactionId: string | null;
-
-  /**
-   * Backend should only return a hash/masked value.
-   * Never show full purchase token in admin UI.
-   */
   purchaseTokenHash?: string | null;
   tokenHash?: string | null;
-
   verifiedAt: string | null;
 }
 
@@ -101,6 +98,18 @@ export interface CoursePurchasePaymentSnapshot {
   paidAt?: string | null;
   refundedAt?: string | null;
   refundReason?: string | null;
+}
+
+export interface CoursePurchaseRefundOperation {
+  id?: string;
+  status: string | null;
+  source: string | null;
+  revoke?: boolean | null;
+  reason: string | null;
+  failureCode: string | null;
+  failureMessage: string | null;
+  providerCompletedAt: string | null;
+  completedAt: string | null;
 }
 
 export interface CoursePurchaseSubscriptionSnapshot {
@@ -120,11 +129,8 @@ export interface CourseEnrollmentQuery {
   limit?: number;
   search?: string;
   status?: string;
-
   paymentProvider?: CoursePaymentProvider | string;
-
   sortBy?: CourseEnrollmentSortBy;
-
   sortOrder?: CommerceSortOrder;
 }
 
@@ -132,13 +138,12 @@ export interface CourseEnrollmentSummary {
   courseId: string;
   totalStudents: number;
   activeNow: number;
-  revenueYtd: number;
-  refunded: number;
-  currency: string;
-  totalStudentsBadge?: string | null;
-  activeNowBadge?: string | null;
-  revenueBadge?: string | null;
-  refundedBadge?: string | null;
+  revenueYtd: {
+    currency: string;
+    amount: string;
+  };
+  refundedLast30Days: number;
+  activeWindowMinutes: number;
 }
 
 export interface CourseEnrollmentStudent {
@@ -148,6 +153,23 @@ export interface CourseEnrollmentStudent {
   email: string | null;
   phone: string | null;
   avatarUrl: string | null;
+}
+
+export interface CourseEnrollmentOrder {
+  id: string;
+  orderNumber: string | null;
+  amountPaid: number;
+  currency: string;
+  amountPaidEur: string | null;
+  paymentProvider: string | null;
+  status: string | null;
+  paidAt: string | null;
+  refundedAt: string | null;
+  billing: CourseEnrollmentBilling | null;
+
+  providerSnapshot?: CoursePurchaseStoreProductSnapshot | null;
+  providerTransaction?: CoursePurchaseVerificationSnapshot | null;
+  refundOperation?: CoursePurchaseRefundOperation | null;
 }
 
 export interface CourseEnrollment {
@@ -160,10 +182,14 @@ export interface CourseEnrollment {
   currency: string;
   status: string;
   paymentProvider: string;
+  billing: CourseEnrollmentBilling | null;
+  order: CourseEnrollmentOrder | null;
+
   storeProduct?: CoursePurchaseStoreProductSnapshot | null;
   verification?: CoursePurchaseVerificationSnapshot | null;
   payment?: CoursePurchasePaymentSnapshot | null;
   subscription?: CoursePurchaseSubscriptionSnapshot | null;
+
   enrolledAt: string | null;
   refundedAt: string | null;
 }
@@ -172,10 +198,6 @@ export interface CourseEnrollmentDetails extends CourseEnrollment {
   courseTitle: string | null;
   paymentReference: string | null;
   paymentStatus: string | null;
-  storeProduct?: CoursePurchaseStoreProductSnapshot | null;
-  verification?: CoursePurchaseVerificationSnapshot | null;
-  payment?: CoursePurchasePaymentSnapshot | null;
-  subscription?: CoursePurchaseSubscriptionSnapshot | null;
 }
 
 export interface CourseEnrollmentListResponse {

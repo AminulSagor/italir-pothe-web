@@ -2,9 +2,11 @@ import { serviceClient } from "@/service/base/service_client";
 import type {
   CommerceSortOrder,
   CourseEnrollment,
+  CourseEnrollmentBilling,
   CourseEnrollmentDetails,
   CourseEnrollmentFilterOptions,
   CourseEnrollmentListResponse,
+  CourseEnrollmentOrder,
   CourseEnrollmentQuery,
   CourseEnrollmentSortBy,
   CourseEnrollmentSummary,
@@ -42,7 +44,6 @@ export const updateCourseProviderProduct = async (
   payload: UpdateCourseProviderProductPayload,
 ) => {
   const safeCourseId = assertValidUuid(courseId, "Course ID");
-
   const safeMappingId = assertValidUuid(mappingId, "Course product mapping ID");
 
   return serviceClient.patch<CourseProviderProduct>(
@@ -56,7 +57,6 @@ export const deactivateCourseProviderProduct = async (
   mappingId: string,
 ) => {
   const safeCourseId = assertValidUuid(courseId, "Course ID");
-
   const safeMappingId = assertValidUuid(mappingId, "Course product mapping ID");
 
   return serviceClient.delete<CourseProviderProductMutationResponse>(
@@ -82,19 +82,24 @@ const readValue = (record: UnknownRecord | null, keys: string[]): unknown => {
   return undefined;
 };
 
+const readRecord = (
+  record: UnknownRecord | null,
+  keys: string[],
+): UnknownRecord | null => {
+  const value = readValue(record, keys);
+
+  return isRecord(value) ? value : null;
+};
+
 const readString = (
   record: UnknownRecord | null,
   keys: string[],
 ): string | undefined => {
   const value = readValue(record, keys);
 
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (typeof value === "number") {
-    return String(value);
-  }
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return String(value);
+  if (typeof value === "boolean") return String(value);
 
   return undefined;
 };
@@ -119,15 +124,6 @@ const readNumber = (
   }
 
   return fallback;
-};
-
-const readRecord = (
-  record: UnknownRecord | null,
-  keys: string[],
-): UnknownRecord | null => {
-  const value = readValue(record, keys);
-
-  return isRecord(value) ? value : null;
 };
 
 const unwrapRecord = (response: unknown): UnknownRecord | null => {
@@ -163,18 +159,147 @@ const getStudentName = (
   return combinedName || "Unknown Student";
 };
 
+const normalizeBilling = (
+  order: UnknownRecord | null,
+  enrollment: UnknownRecord,
+): CourseEnrollmentBilling | null => {
+  const billing = readRecord(order, ["billing"]);
+
+  const providerSnapshot =
+    readRecord(order, ["providerSnapshot"]) ||
+    readRecord(enrollment, ["storeProduct", "providerSnapshot"]);
+
+  const providerTransaction =
+    readRecord(order, ["providerTransaction"]) ||
+    readRecord(enrollment, ["verification", "providerTransaction"]);
+
+  const provider =
+    readString(billing, ["provider"]) ||
+    readString(providerSnapshot, ["provider"]) ||
+    readString(order, ["paymentProvider"]) ||
+    readString(enrollment, ["paymentProvider", "provider"]) ||
+    null;
+
+  const productId =
+    readString(billing, ["productId"]) ||
+    readString(providerSnapshot, ["productId", "providerProductId"]) ||
+    null;
+
+  const productType =
+    readString(billing, ["productType"]) ||
+    readString(providerSnapshot, ["productType"]) ||
+    null;
+
+  const environment =
+    readString(billing, ["environment"]) ||
+    readString(providerTransaction, ["environment"]) ||
+    null;
+
+  const verificationStatus =
+    readString(billing, ["verificationStatus"]) ||
+    readString(providerTransaction, ["verificationStatus", "status"]) ||
+    null;
+
+  const providerTransactionId =
+    readString(billing, ["providerTransactionId"]) ||
+    readString(providerTransaction, ["providerTransactionId"]) ||
+    null;
+
+  const tokenHash =
+    readString(billing, ["tokenHash"]) ||
+    readString(providerTransaction, ["tokenHash", "purchaseTokenHash"]) ||
+    null;
+
+  const verifiedAt =
+    readString(billing, ["verifiedAt"]) ||
+    readString(providerTransaction, ["verifiedAt"]) ||
+    null;
+
+  if (
+    !provider &&
+    !productId &&
+    !productType &&
+    !environment &&
+    !verificationStatus &&
+    !providerTransactionId &&
+    !tokenHash &&
+    !verifiedAt
+  ) {
+    return null;
+  }
+
+  return {
+    provider,
+    productId,
+    productType,
+    basePlanId:
+      readString(billing, ["basePlanId"]) ||
+      readString(providerSnapshot, ["basePlanId"]) ||
+      null,
+    offerId:
+      readString(billing, ["offerId"]) ||
+      readString(providerSnapshot, ["offerId"]) ||
+      null,
+    environment,
+    verificationStatus,
+    providerTransactionId,
+    tokenHash,
+    verifiedAt,
+  };
+};
+
+const normalizeOrder = (
+  order: UnknownRecord | null,
+  enrollment: UnknownRecord,
+): CourseEnrollmentOrder | null => {
+  if (!order) return null;
+
+  const billing = normalizeBilling(order, enrollment);
+
+  return {
+    id: readString(order, ["id", "orderId"]) || "",
+    orderNumber: readString(order, ["orderNumber"]) || null,
+    amountPaid: readNumber(order, ["amountPaid", "paymentAmount", "amount"], 0),
+    currency:
+      readString(order, ["currency", "paymentCurrency", "currencyCode"]) ||
+      "EUR",
+    amountPaidEur:
+      readString(order, ["amountPaidEur", "payableAmountEur"]) || null,
+    paymentProvider: readString(order, ["paymentProvider"]) || null,
+    status: readString(order, ["status"]) || null,
+    paidAt: readString(order, ["paidAt"]) || null,
+    refundedAt: readString(order, ["refundedAt"]) || null,
+    billing,
+    providerSnapshot: readRecord(order, ["providerSnapshot"]) as never,
+    providerTransaction: readRecord(order, ["providerTransaction"]) as never,
+    refundOperation: readRecord(order, ["refundOperation"]) as never,
+  };
+};
+
 const normalizeEnrollment = (value: unknown): CourseEnrollment => {
   const enrollment = isRecord(value) ? value : {};
-
   const student = readRecord(enrollment, ["student", "user", "learner"]) || {};
-
   const order =
-    readRecord(enrollment, ["order", "purchase", "coursePurchase"]) || {};
+    readRecord(enrollment, ["order", "purchase", "coursePurchase"]) || null;
+
+  const normalizedOrder = normalizeOrder(order, enrollment);
+  const billing = normalizeBilling(order, enrollment);
 
   const studentId =
     readString(student, ["id", "userId"]) ||
     readString(enrollment, ["userId", "studentId"]) ||
     "";
+
+  const amountPaid = readNumber(
+    enrollment,
+    ["amountPaid", "paidAmount", "amount"],
+    readNumber(order, ["amountPaid", "paymentAmount", "amount"], 0),
+  );
+
+  const currency =
+    readString(enrollment, ["currency", "currencyCode"]) ||
+    readString(order, ["currency", "paymentCurrency", "currencyCode"]) ||
+    "EUR";
 
   return {
     id: readString(enrollment, ["id", "enrollmentId"]) || "",
@@ -213,20 +338,22 @@ const normalizeEnrollment = (value: unknown): CourseEnrollment => {
         readString(enrollment, ["avatarUrl", "profileImageUrl"]) ||
         null,
     },
-    amountPaid: readNumber(
-      enrollment,
-      ["amountPaid", "paidAmount", "amount"],
-      readNumber(order, ["amountPaid", "amount"], 0),
-    ),
-    currency:
-      readString(enrollment, ["currency", "currencyCode"]) ||
-      readString(order, ["currency", "currencyCode"]) ||
-      "EUR",
+    amountPaid,
+    currency,
     status: readString(enrollment, ["status", "enrollmentStatus"]) || "unknown",
     paymentProvider:
+      billing?.provider ||
       readString(enrollment, ["paymentProvider", "provider"]) ||
       readString(order, ["paymentProvider", "provider"]) ||
       "unknown",
+    billing,
+    order: normalizedOrder,
+    storeProduct: (readRecord(enrollment, ["storeProduct"]) ||
+      readRecord(order, ["providerSnapshot"])) as never,
+    verification: (readRecord(enrollment, ["verification"]) ||
+      readRecord(order, ["providerTransaction"])) as never,
+    payment: readRecord(enrollment, ["payment"]) as never,
+    subscription: readRecord(enrollment, ["subscription"]) as never,
     enrolledAt:
       readString(enrollment, ["enrolledAt", "createdAt", "purchasedAt"]) ||
       null,
@@ -243,9 +370,7 @@ const normalizeEnrollmentList = (
   requestedLimit: number,
 ): CourseEnrollmentListResponse => {
   const root = isRecord(response) ? response : null;
-
   const nestedData = root && isRecord(root.data) ? root.data : null;
-
   const container = nestedData || root;
 
   let rawItems: unknown[] = [];
@@ -267,9 +392,7 @@ const normalizeEnrollmentList = (
     root;
 
   const items = rawItems.map(normalizeEnrollment);
-
   const page = readNumber(meta, ["page", "currentPage"], requestedPage);
-
   const limit = readNumber(
     meta,
     ["limit", "pageSize", "perPage"],
@@ -308,6 +431,8 @@ const normalizeSummary = (
 ): CourseEnrollmentSummary => {
   const summary = unwrapRecord(response);
 
+  const revenueYtdRecord = readRecord(summary, ["revenueYtd"]);
+
   return {
     courseId: readString(summary, ["courseId"]) || courseId,
     totalStudents: readNumber(summary, [
@@ -320,17 +445,23 @@ const normalizeSummary = (
       "activeStudents",
       "currentlyActive",
     ]),
-    revenueYtd: readNumber(summary, ["revenueYtd", "totalRevenue", "revenue"]),
-    refunded: readNumber(summary, [
+    revenueYtd: {
+      currency:
+        readString(revenueYtdRecord, ["currency"]) ||
+        readString(summary, ["currency", "currencyCode"]) ||
+        "EUR",
+      amount:
+        readString(revenueYtdRecord, ["amount"]) ||
+        readString(summary, ["revenueYtd", "totalRevenue", "revenue"]) ||
+        "0.00",
+    },
+    refundedLast30Days: readNumber(summary, [
+      "refundedLast30Days",
       "refunded",
       "refundedCount",
       "totalRefunded",
     ]),
-    currency: readString(summary, ["currency", "currencyCode"]) || "EUR",
-    totalStudentsBadge: readString(summary, ["totalStudentsBadge"]) || null,
-    activeNowBadge: readString(summary, ["activeNowBadge"]) || null,
-    revenueBadge: readString(summary, ["revenueBadge"]) || null,
-    refundedBadge: readString(summary, ["refundedBadge"]) || null,
+    activeWindowMinutes: readNumber(summary, ["activeWindowMinutes"], 15),
   };
 };
 
@@ -342,9 +473,16 @@ const normalizeEnrollmentDetails = (
   const order =
     readRecord(detailsRecord, ["order", "purchase", "coursePurchase"]) || {};
 
+  const providerTransaction =
+    readRecord(order, ["providerTransaction"]) ||
+    readRecord(detailsRecord, ["providerTransaction", "verification"]);
+
   return {
     ...enrollment,
-    courseTitle: readString(detailsRecord, ["courseTitle"]) || null,
+    courseTitle:
+      readString(detailsRecord, ["courseTitle"]) ||
+      readString(readRecord(detailsRecord, ["course"]), ["title"]) ||
+      null,
     paymentReference:
       readString(detailsRecord, [
         "paymentReference",
@@ -356,6 +494,7 @@ const normalizeEnrollmentDetails = (
         "transactionId",
         "providerTransactionId",
       ]) ||
+      readString(providerTransaction, ["providerTransactionId"]) ||
       null,
     paymentStatus:
       readString(detailsRecord, ["paymentStatus"]) ||
@@ -367,33 +506,14 @@ const normalizeEnrollmentDetails = (
 const buildEnrollmentQuery = (query: CourseEnrollmentQuery) => {
   const params = new URLSearchParams();
 
-  if (query.page) {
-    params.set("page", String(query.page));
-  }
-
-  if (query.limit) {
-    params.set("limit", String(query.limit));
-  }
-
-  if (query.search?.trim()) {
-    params.set("search", query.search.trim());
-  }
-
-  if (query.status) {
-    params.set("status", query.status);
-  }
-
-  if (query.paymentProvider) {
+  if (query.page) params.set("page", String(query.page));
+  if (query.limit) params.set("limit", String(query.limit));
+  if (query.search?.trim()) params.set("search", query.search.trim());
+  if (query.status) params.set("status", query.status);
+  if (query.paymentProvider)
     params.set("paymentProvider", query.paymentProvider);
-  }
-
-  if (query.sortBy) {
-    params.set("sortBy", query.sortBy);
-  }
-
-  if (query.sortOrder) {
-    params.set("sortOrder", query.sortOrder);
-  }
+  if (query.sortBy) params.set("sortBy", query.sortBy);
+  if (query.sortOrder) params.set("sortOrder", query.sortOrder);
 
   return params.toString();
 };
@@ -415,9 +535,9 @@ export const getCourseEnrollments = async (
   query: CourseEnrollmentQuery = {},
 ): Promise<CourseEnrollmentListResponse> => {
   const safeCourseId = assertValidUuid(courseId, "Course ID");
-
   const requestedPage = query.page || 1;
   const requestedLimit = query.limit || 10;
+
   const queryString = buildEnrollmentQuery({
     ...query,
     page: requestedPage,

@@ -67,10 +67,68 @@ const formatBillingLabel = (value?: string | null) => {
     .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
-const getEnrollmentTokenHash = (enrollment: CourseEnrollment) => {
+const getBilling = (enrollment: CourseEnrollment) => {
+  return enrollment.billing || enrollment.order?.billing || null;
+};
+
+const getProvider = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
   return (
-    enrollment.verification?.purchaseTokenHash ||
+    billing?.provider ||
+    enrollment.storeProduct?.provider ||
+    enrollment.payment?.provider ||
+    enrollment.paymentProvider ||
+    "—"
+  );
+};
+
+const getProductId = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
+  return billing?.productId || enrollment.storeProduct?.productId || "—";
+};
+
+const getProductType = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
+  return billing?.productType || enrollment.storeProduct?.productType || null;
+};
+
+const getEnvironment = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
+  return billing?.environment || enrollment.verification?.environment || null;
+};
+
+const getVerificationStatus = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
+  return (
+    billing?.verificationStatus ||
+    enrollment.verification?.verificationStatus ||
+    enrollment.verification?.status ||
+    null
+  );
+};
+
+const getTransactionId = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
+  return (
+    billing?.providerTransactionId ||
+    enrollment.verification?.providerTransactionId ||
+    "—"
+  );
+};
+
+const getTokenHash = (enrollment: CourseEnrollment) => {
+  const billing = getBilling(enrollment);
+
+  return (
+    billing?.tokenHash ||
     enrollment.verification?.tokenHash ||
+    enrollment.verification?.purchaseTokenHash ||
     "—"
   );
 };
@@ -147,7 +205,7 @@ const EnrollmentListTable = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1180px]">
+        <table className="w-full min-w-[1240px]">
           <thead className="bg-[#F7FAF6]">
             <tr className="text-left">
               <th className="px-10 py-6 text-xs font-bold uppercase text-[#3F463F]">
@@ -241,39 +299,34 @@ const EnrollmentListTable = ({
                     <td className="px-6 py-6 align-top">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-[#202420]">
-                          {formatBillingLabel(
-                            enrollment.storeProduct?.provider ||
-                              enrollment.payment?.provider ||
-                              enrollment.paymentProvider,
-                          )}
+                          {formatBillingLabel(getProvider(enrollment))}
                         </p>
 
-                        <p className="max-w-[210px] break-all text-xs text-[#4F5B52]">
-                          Product: {enrollment.storeProduct?.productId || "—"}
+                        <p className="max-w-[230px] break-all text-xs text-[#4F5B52]">
+                          Product: {getProductId(enrollment)}
                         </p>
 
                         <p className="text-xs text-[#8A948C]">
-                          Type:{" "}
-                          {formatBillingLabel(
-                            enrollment.storeProduct?.productType,
-                          )}
+                          Type: {formatBillingLabel(getProductType(enrollment))}
                         </p>
 
                         <p className="text-xs text-[#8A948C]">
-                          Env:{" "}
+                          Env: {formatBillingLabel(getEnvironment(enrollment))}
+                        </p>
+
+                        <p className="text-xs text-[#8A948C]">
+                          Verification:{" "}
                           {formatBillingLabel(
-                            enrollment.verification?.environment,
+                            getVerificationStatus(enrollment),
                           )}
                         </p>
 
-                        <p className="max-w-[210px] break-all text-xs text-[#8A948C]">
-                          Txn:{" "}
-                          {enrollment.verification?.providerTransactionId ||
-                            "—"}
+                        <p className="max-w-[230px] break-all text-xs text-[#8A948C]">
+                          Txn: {getTransactionId(enrollment)}
                         </p>
 
-                        <p className="max-w-[210px] break-all text-xs text-[#8A948C]">
-                          Token Hash: {getEnrollmentTokenHash(enrollment)}
+                        <p className="max-w-[230px] break-all text-xs text-[#8A948C]">
+                          Token Hash: {getTokenHash(enrollment)}
                         </p>
                       </div>
                     </td>

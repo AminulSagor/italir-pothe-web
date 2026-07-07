@@ -32,6 +32,30 @@ interface SignedReadUrlResponse {
   publicUrl?: string;
 }
 
+export interface CertificateDownloadUrlResponse {
+  certificateId: string;
+  certificateNumber: string;
+  signedReadUrl: string;
+  expiresInSeconds: number;
+  file: {
+    id: string;
+    originalName?: string;
+    fileName?: string;
+    mimeType?: string;
+    sizeBytes?: number;
+    filePurpose?: string;
+    visibility?: string;
+    uploadStatus?: string;
+    publicUrl?: string | null;
+  };
+}
+
+export interface RegenerateCertificatePdfResponse {
+  message: string;
+  certificate: AdminCertificate;
+  pdfDownload: CertificateDownloadUrlResponse;
+}
+
 const buildQueryString = (values: Record<string, QueryValue>) => {
   const params = new URLSearchParams();
 
@@ -51,21 +75,13 @@ const buildQueryString = (values: Record<string, QueryValue>) => {
 export const getEvaluationQueue = async (query: EvaluationQueueQuery = {}) => {
   const queryString = buildQueryString({
     status: query.status,
-
     search: query.search?.trim(),
-
     level: query.level?.trim(),
-
     courseId: query.courseId,
-
     examTemplateId: query.examTemplateId,
-
     sortBy: query.sortBy,
-
     sortOrder: query.sortOrder,
-
     page: query.page,
-
     limit: query.limit,
   });
 
@@ -143,15 +159,10 @@ export const getAdminCertificates = async (
 ) => {
   const queryString = buildQueryString({
     status: query.status,
-
     userId: query.userId,
-
     courseId: query.courseId,
-
     search: query.search?.trim(),
-
     page: query.page,
-
     limit: query.limit,
   });
 
@@ -174,6 +185,34 @@ export const getAdminCertificateByAttemptId = async (examAttemptId: string) => {
   return serviceClient.get<AdminCertificate>(
     `${ADMIN_CERTIFICATES_ENDPOINT}/attempt/${safeAttemptId}`,
   );
+};
+
+export const getAdminCertificateDownloadUrl = async (certificateId: string) => {
+  const safeCertificateId = assertValidUuid(certificateId, "Certificate ID");
+
+  return serviceClient.get<CertificateDownloadUrlResponse>(
+    `${ADMIN_CERTIFICATES_ENDPOINT}/${safeCertificateId}/download-url`,
+  );
+};
+
+export const regenerateAdminCertificatePdf = async (certificateId: string) => {
+  const safeCertificateId = assertValidUuid(certificateId, "Certificate ID");
+
+  return serviceClient.post<RegenerateCertificatePdfResponse>(
+    `${ADMIN_CERTIFICATES_ENDPOINT}/${safeCertificateId}/regenerate-pdf`,
+  );
+};
+
+export const openAdminCertificatePdf = async (certificateId: string) => {
+  const response = await getAdminCertificateDownloadUrl(certificateId);
+
+  if (!response.signedReadUrl) {
+    throw new Error("Certificate download URL is not available.");
+  }
+
+  window.open(response.signedReadUrl, "_blank", "noopener,noreferrer");
+
+  return response;
 };
 
 export const verifyAdminCertificate = async (identifier: string) => {
