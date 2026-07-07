@@ -5,12 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 import {
-  demoRefundCoursePurchase,
   getAllCourseEnrollments,
   getCourseEnrollmentById,
   getCourseEnrollmentFilterOptions,
   getCourseEnrollments,
   getCourseEnrollmentSummary,
+  refundCoursePurchase,
 } from "@/service/course-directory/course-commerce.service";
 import { getCourseById } from "@/service/course-directory/course.service";
 import type {
@@ -257,20 +257,34 @@ const CourseDetailsContent = ({
     setSelectedEnrollment(null);
   };
 
-  const handleDemoRefund = async () => {
+  const handleRefund = async () => {
     if (!selectedEnrollment?.orderId) {
       toast.error("No purchase order is connected to this enrollment.");
+
       return;
     }
 
-    const toastId = toast.loading("Processing demo refund...");
+    const toastId = toast.loading("Processing refund / revocation...");
 
     try {
       setIsRefunding(true);
 
-      await demoRefundCoursePurchase(selectedEnrollment.orderId);
+      const response = await refundCoursePurchase(selectedEnrollment.orderId);
 
-      toast.success("Demo refund completed successfully.", {
+      const message =
+        typeof response === "object" &&
+        response !== null &&
+        "message" in response
+          ? String(
+              (
+                response as {
+                  message?: string;
+                }
+              ).message || "Refund / revocation request processed.",
+            )
+          : "Refund / revocation request processed.";
+
+      toast.success(message, {
         id: toastId,
       });
 
@@ -386,7 +400,6 @@ const CourseDetailsContent = ({
         sortBy={sortBy}
         sortOrder={sortOrder}
         statusOptions={filterOptions.statuses}
-        paymentProviderOptions={filterOptions.paymentProviders}
         isExportingAll={isExportingAll}
         onFilterChange={handleFilterChange}
         onPageChange={handlePageChange}
@@ -401,7 +414,7 @@ const CourseDetailsContent = ({
         isLoading={isDetailsLoading}
         isRefunding={isRefunding}
         onClose={handleCloseDetails}
-        onDemoRefund={handleDemoRefund}
+        onRefund={handleRefund}
       />
     </section>
   );

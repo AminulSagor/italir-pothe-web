@@ -5,6 +5,7 @@ import { Loader2, RotateCcw, X } from "lucide-react";
 import Button from "@/components/UI/buttons/button";
 import Dialog from "@/components/UI/dialogs/dialog";
 import type { CourseEnrollmentDetails } from "@/types/course-directory/course-commerce.type";
+import CoursePurchaseBillingDetailsCard from "./course-purchase-billing-details-card";
 
 interface EnrollmentDetailsDialogProps {
   open: boolean;
@@ -12,7 +13,7 @@ interface EnrollmentDetailsDialogProps {
   isLoading: boolean;
   isRefunding: boolean;
   onClose: () => void;
-  onDemoRefund: () => void;
+  onRefund: () => void;
 }
 
 const formatLabel = (value: string) => {
@@ -50,7 +51,7 @@ const EnrollmentDetailsDialog = ({
   isLoading,
   isRefunding,
   onClose,
-  onDemoRefund,
+  onRefund,
 }: EnrollmentDetailsDialogProps) => {
   const canRefund =
     Boolean(enrollment?.orderId) && enrollment?.status !== "refunded";
@@ -131,15 +132,29 @@ const EnrollmentDetailsDialog = ({
             />
           </div>
 
+          <div className="border-t border-black/10 px-7 py-4">
+            <p className="rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
+              This action requests or records provider refund/revocation and
+              revokes the course entitlement when applicable. The frontend does
+              not verify purchases, grant course access, or revoke access
+              locally.
+            </p>
+          </div>
+
           <div className="flex items-center justify-end gap-3 border-t border-black/10 px-7 py-5">
+            {enrollment && (
+              <div className="px-7 pb-6">
+                <CoursePurchaseBillingDetailsCard enrollment={enrollment} />
+              </div>
+            )}
             <Button variant="outline" disabled={isRefunding} onClick={onClose}>
               Close
             </Button>
 
             {canRefund && (
               <Button
-                disabled={isRefunding}
-                onClick={onDemoRefund}
+                disabled={isRefunding || !enrollment?.orderId}
+                onClick={onRefund}
                 className="gap-2 !bg-[#D34A3A] hover:!bg-[#B83B2E]"
               >
                 {isRefunding ? (
@@ -148,9 +163,16 @@ const EnrollmentDetailsDialog = ({
                   <RotateCcw className="size-4" />
                 )}
 
-                {isRefunding ? "Refunding..." : "Demo Refund"}
+                {isRefunding ? "Processing..." : "Refund / Revoke Access"}
               </Button>
             )}
+            <div className="border-t border-black/10 px-7 py-4">
+              <p className="rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
+                This action requests or records provider refund/revocation and
+                revokes the course entitlement when applicable. The frontend
+                does not verify purchases or grant/revoke access locally.
+              </p>
+            </div>
           </div>
         </>
       )}

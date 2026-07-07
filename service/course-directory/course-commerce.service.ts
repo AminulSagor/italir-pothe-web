@@ -453,6 +453,23 @@ export const demoRefundCoursePurchase = async (
   );
 };
 
+export const refundCoursePurchase = async (
+  orderId: string,
+  reason?: string,
+): Promise<{
+  message?: string;
+  refundOperation?: unknown;
+}> => {
+  const safeOrderId = assertValidUuid(orderId, "Order ID");
+
+  return serviceClient.post<{
+    message?: string;
+    refundOperation?: unknown;
+  }>(`/admin/course-purchases/${safeOrderId}/refund`, {
+    reason: reason?.trim() || undefined,
+  });
+};
+
 export const getAllCourseEnrollments = async (
   courseId: string,
   query: Omit<CourseEnrollmentQuery, "page" | "limit">,

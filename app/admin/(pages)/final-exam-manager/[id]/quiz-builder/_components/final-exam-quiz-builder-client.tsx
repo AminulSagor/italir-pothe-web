@@ -61,6 +61,7 @@ import {
   QuestionForm,
   sequenceQuestionTypes,
 } from "../_utils/final-exam-quiz-builder.utils";
+import WritingWordTranslationQuestionConfig from "@/app/admin/(pages)/course-directory/syllabus-builder/lesson-edit/quiz-builder/_components/question-types/writing-word-translation-question-config";
 
 interface FinalExamQuizBuilderClientProps {
   finalExamId: string;
@@ -546,9 +547,7 @@ export default function FinalExamQuizBuilderClient({
           onTranslationTextChange={(value) =>
             updateForm("translationText", value)
           }
-          onSequenceItemsChange={(items: QuizQuestionSequenceItem[]) =>
-            updateForm("sequenceItems", items)
-          }
+          onSequenceItemsChange={(items) => updateForm("sequenceItems", items)}
           onPointsChange={(value) => updateForm("points", value)}
           onSortOrderChange={(value) => updateForm("sortOrder", value)}
           onStatusChange={(value) => updateForm("status", value)}
@@ -564,8 +563,29 @@ export default function FinalExamQuizBuilderClient({
           options={form.options}
           onTitleChange={(value) => updateForm("title", value)}
           onPromptTextChange={(value) => updateForm("promptText", value)}
-          onOptionsChange={(options: QuizQuestionOption[]) =>
-            updateForm("options", options)
+          onOptionsChange={(options) => updateForm("options", options)}
+        />
+      );
+    }
+
+    if (form.questionType === "true_false") {
+      return (
+        <TrueFalseQuestionConfig
+          promptText={form.promptText}
+          translationText={form.translationText}
+          points={form.points}
+          sortOrder={form.sortOrder}
+          status={form.status}
+          correctBoolean={form.correctBoolean}
+          onPromptTextChange={(value) => updateForm("promptText", value)}
+          onTranslationTextChange={(value) =>
+            updateForm("translationText", value)
+          }
+          onPointsChange={(value) => updateForm("points", value)}
+          onSortOrderChange={(value) => updateForm("sortOrder", value)}
+          onStatusChange={(value) => updateForm("status", value)}
+          onCorrectBooleanChange={(value) =>
+            updateForm("correctBoolean", value)
           }
         />
       );
@@ -577,41 +597,14 @@ export default function FinalExamQuizBuilderClient({
           sentence={form.promptText}
           options={form.options}
           onSentenceChange={(value) => updateForm("promptText", value)}
-          onOptionsChange={(options: QuizQuestionOption[]) =>
-            updateForm("options", options)
-          }
+          onOptionsChange={(options) => updateForm("options", options)}
         />
       );
     }
 
-    return (
-      <>
-        {![
-          "match_the_pair",
-          "writing_word_translation",
-          "identify_image",
-        ].includes(form.questionType) && (
-          <InstructionalContentCard
-            title={form.title}
-            promptText={form.promptText}
-            helperText={form.helperText}
-            translationText={form.translationText}
-            points={form.points}
-            sortOrder={form.sortOrder}
-            status={form.status}
-            onTitleChange={(value) => updateForm("title", value)}
-            onPromptTextChange={(value) => updateForm("promptText", value)}
-            onHelperTextChange={(value) => updateForm("helperText", value)}
-            onTranslationTextChange={(value) =>
-              updateForm("translationText", value)
-            }
-            onPointsChange={(value) => updateForm("points", value)}
-            onSortOrderChange={(value) => updateForm("sortOrder", value)}
-            onStatusChange={(value) => updateForm("status", value)}
-          />
-        )}
-
-        {audioQuestionTypes.includes(form.questionType) && (
+    if (form.questionType === "listen_and_assemble") {
+      return (
+        <>
           <AudioMediaCard
             mediaFileId={form.mediaFileId}
             mediaUrl={mediaUrl}
@@ -623,83 +616,63 @@ export default function FinalExamQuizBuilderClient({
             onFileSelect={handleMediaUpload}
             onRemoveMedia={() => updateForm("mediaFileId", "")}
           />
-        )}
 
-        {optionQuestionTypes.includes(form.questionType) &&
-          form.questionType !== "identify_image" && (
-            <AnswerOptionsCard
-              options={form.options}
-              onOptionsChange={(options: QuizQuestionOption[]) =>
-                updateForm("options", options)
-              }
-            />
-          )}
-
-        {form.questionType === "listen_and_assemble" && (
           <ListenAssembleQuestionConfig
             promptText={form.promptText}
             sequenceItems={form.sequenceItems}
             onPromptTextChange={(value) => updateForm("promptText", value)}
-            onSequenceItemsChange={(items: QuizQuestionSequenceItem[]) =>
+            onSequenceItemsChange={(items) =>
               updateForm("sequenceItems", items)
             }
           />
-        )}
+        </>
+      );
+    }
 
-        {form.questionType === "true_false" && (
-          <TrueFalseQuestionConfig
-            promptText={form.promptText}
-            translationText={form.translationText}
-            points={form.points}
-            sortOrder={form.sortOrder}
-            status={form.status}
-            correctBoolean={form.correctBoolean}
-            onPromptTextChange={(value) => updateForm("promptText", value)}
-            onTranslationTextChange={(value) =>
-              updateForm("translationText", value)
-            }
-            onPointsChange={(value) => updateForm("points", value)}
-            onSortOrderChange={(value) => updateForm("sortOrder", value)}
-            onStatusChange={(value) => updateForm("status", value)}
-            onCorrectBooleanChange={(value) =>
-              updateForm("correctBoolean", value)
-            }
-          />
-        )}
+    if (form.questionType === "match_the_pair") {
+      return (
+        <MatchPairQuestionConfig
+          pairs={form.pairs}
+          onPairsChange={(pairs) => updateForm("pairs", pairs)}
+        />
+      );
+    }
 
-        {form.questionType === "match_the_pair" && (
-          <MatchPairQuestionConfig
-            pairs={form.pairs}
-            onPairsChange={(pairs: QuizQuestionPair[]) =>
-              updateForm("pairs", pairs)
-            }
-          />
-        )}
+    if (form.questionType === "writing_word_translation") {
+      return (
+        <WritingWordTranslationQuestionConfig
+          mediaFileId={form.mediaFileId}
+          mediaUrl={mediaUrl}
+          translationText={form.translationText}
+          acceptedAnswers={form.acceptedAnswers}
+          isUploading={isUploadingMedia}
+          onFileSelect={handleMediaUpload}
+          onRemoveMedia={() => updateForm("mediaFileId", "")}
+          onTranslationTextChange={(value) =>
+            updateForm("translationText", value)
+          }
+          onAcceptedAnswersChange={(answers) =>
+            updateForm("acceptedAnswers", answers)
+          }
+        />
+      );
+    }
 
-        {form.questionType === "writing_word_translation" && (
-          <IdentifyImageQuestionConfig
-            acceptedAnswers={form.acceptedAnswers}
-            onAcceptedAnswersChange={(
-              acceptedAnswers: QuizQuestionAcceptedAnswer[],
-            ) => updateForm("acceptedAnswers", acceptedAnswers)}
-          />
-        )}
+    if (form.questionType === "identify_image") {
+      return (
+        <IdentifyImageMcqQuestionConfig
+          mediaFileId={form.mediaFileId}
+          mediaUrl={mediaUrl}
+          options={form.options}
+          isUploading={isUploadingMedia}
+          onFileSelect={handleMediaUpload}
+          onRemoveMedia={() => updateForm("mediaFileId", "")}
+          onOptionsChange={(options) => updateForm("options", options)}
+        />
+      );
+    }
 
-        {form.questionType === "identify_image" && (
-          <IdentifyImageMcqQuestionConfig
-            mediaFileId={form.mediaFileId}
-            mediaUrl={mediaUrl}
-            options={form.options}
-            isUploading={isUploadingMedia}
-            onFileSelect={handleMediaUpload}
-            onRemoveMedia={() => updateForm("mediaFileId", "")}
-            onOptionsChange={(options: QuizQuestionOption[]) =>
-              updateForm("options", options)
-            }
-          />
-        )}
-      </>
-    );
+    return null;
   };
 
   return (

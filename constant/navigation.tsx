@@ -5,6 +5,7 @@ import {
   Briefcase,
   ChartNoAxesColumn,
   ClipboardCheck,
+  CreditCard,
   GraduationCap,
   LayoutDashboard,
   Network,
@@ -86,6 +87,18 @@ export const adminNavigation: NavigationGroup[] = [
         icon: Package,
       },
       {
+        title: "Billing",
+        href: "/admin/billing/reconciliation",
+        icon: CreditCard,
+        children: [
+          {
+            title: "Reconciliation",
+            href: "/admin/billing/reconciliation",
+            icon: CreditCard,
+          },
+        ],
+      },
+      {
         title: "CV Service Dashboard",
         href: "/admin/cv-service",
         icon: Briefcase,
@@ -120,7 +133,6 @@ export const adminNavigation: NavigationGroup[] = [
   {
     title: "Utilities",
     items: [
-   
       {
         title: "Influencer Hub",
         href: "/admin/influencer-hub",

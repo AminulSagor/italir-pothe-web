@@ -1,15 +1,32 @@
-import EarningsGrowthCard from "./_components/earnings-growth-card";
-import PartnerSummaryCard from "./_components/partner-summary-card";
-import PayoutHistoryCard from "./_components/payout-history-card";
-import ReportHeader from "./_components/report-header";
+import InfluencerReportClient from "./_components/influencer-report-client";
 
-export default function InfluencerReportPage() {
-    return (
-        <div className="space-y-6">
-            <ReportHeader />
-            <PartnerSummaryCard />
-            <EarningsGrowthCard />
-            <PayoutHistoryCard />
-        </div>
-    );
+interface InfluencerDetailsPageProps {
+  params: Promise<{
+    id: string;
+  }>;
+
+  searchParams: Promise<{
+    dateFrom?: string | string[];
+    dateTo?: string | string[];
+  }>;
+}
+
+const one = (value?: string | string[]) => {
+  return Array.isArray(value) ? value[0] || "" : value || "";
+};
+
+export default async function InfluencerDetailsPage({
+  params,
+  searchParams,
+}: InfluencerDetailsPageProps) {
+  const { id } = await params;
+  const query = await searchParams;
+
+  return (
+    <InfluencerReportClient
+      partnerId={id}
+      dateFrom={one(query.dateFrom)}
+      dateTo={one(query.dateTo)}
+    />
+  );
 }

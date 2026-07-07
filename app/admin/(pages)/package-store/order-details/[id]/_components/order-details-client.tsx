@@ -6,9 +6,9 @@ import toast from "react-hot-toast";
 import UnsavedChangesWarningDialog from "@/components/UI/dialogs/unsaved-changes-warning-dialog";
 import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import {
-  demoRefundAdminStoreOrder,
   getAdminStoreOrderById,
   getAdminStoreOrderInvoice,
+  refundAdminStoreOrder,
 } from "@/service/package-store/package-store.service";
 import type { StoreAdminOrder } from "@/types/package-store/package-store.type";
 import { downloadTextFile } from "@/utils/package-store-download.util";
@@ -85,15 +85,22 @@ export default function OrderDetailsClient({
 
     try {
       setIsDownloading(true);
+
       const html = await getAdminStoreOrderInvoice(order.id);
+
       downloadTextFile(
         html,
         `invoice-${order.orderNumber}.html`,
         "text/html;charset=utf-8",
       );
-      toast.success("Invoice downloaded.", { id: toastId });
+
+      toast.success("Invoice downloaded.", {
+        id: toastId,
+      });
     } catch (error) {
-      toast.error(getErrorMessage(error), { id: toastId });
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
     } finally {
       setIsDownloading(false);
     }
@@ -102,19 +109,35 @@ export default function OrderDetailsClient({
   const handleRefund = async () => {
     if (!order) return;
 
-    const toastId = toast.loading("Processing demo refund...");
+    const toastId = toast.loading("Processing refund / revocation...");
 
     try {
       setIsRefunding(true);
-      const response = await demoRefundAdminStoreOrder(order.id, {
+
+      const response = await refundAdminStoreOrder(order.id, {
         reason: refundReason.trim() || undefined,
       });
-      setOrder(response);
+
+      if (response.order) {
+        setOrder(response.order);
+      } else {
+        const refreshedOrder = await getAdminStoreOrderById(order.id);
+        setOrder(refreshedOrder);
+      }
+
       setIsRefundOpen(false);
       setRefundReason("");
-      toast.success("Order refunded successfully.", { id: toastId });
+
+      toast.success(
+        response.message || "Refund / revocation request processed.",
+        {
+          id: toastId,
+        },
+      );
     } catch (error) {
-      toast.error(getErrorMessage(error), { id: toastId });
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
     } finally {
       setIsRefunding(false);
     }

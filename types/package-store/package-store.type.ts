@@ -288,6 +288,12 @@ export interface StoreOrderVerification {
 
   providerTransactionId: string | null;
 
+  /**
+   * Backend should return only a hash/masked token, never full purchase token.
+   */
+  purchaseTokenHash?: string | null;
+  tokenHash?: string | null;
+
   verifiedAt: string | null;
 }
 
@@ -354,6 +360,18 @@ export interface StoreAdminOrder {
     unlimitedProtectionGrantedUntil: string | null;
   };
 
+  subscription?: {
+    status: string | null;
+    entitlementActive: boolean | null;
+    autoRenewEnabled: boolean | null;
+    startedAt: string | null;
+    expiresAt: string | null;
+    canceledAt: string | null;
+    revokedAt: string | null;
+    lastSyncedAt: string | null;
+    environment: StoreProviderEnvironment | null;
+  } | null;
+
   timeline: StoreOrderTimelineItem[];
 
   createdAt: string;
@@ -369,6 +387,20 @@ export interface StoreAdminOrderListResponse {
     total: number;
     totalPages: number;
   };
+}
+
+export interface ProviderRefundOperation {
+  id: string;
+  provider: StorePaymentProvider;
+  scope: string;
+  subjectType: string;
+  subjectId: string;
+  providerOrderId: string | null;
+  status: string;
+  reason: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface RefundStoreOrderPayload {

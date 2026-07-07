@@ -231,6 +231,51 @@ const getErrorMessage = (error: unknown) => {
   return "Something went wrong. Please try again.";
 };
 
+const normalizeCorrectBoolean = (
+  question: Partial<QuizQuestion>,
+  fallback = true,
+) => {
+  const rawCorrectBoolean: unknown = question.correctBoolean;
+
+  if (typeof rawCorrectBoolean === "boolean") {
+    return rawCorrectBoolean;
+  }
+
+  if (typeof rawCorrectBoolean === "string") {
+    const normalizedValue = rawCorrectBoolean.trim().toLowerCase();
+
+    if (normalizedValue === "true") {
+      return true;
+    }
+
+    if (normalizedValue === "false") {
+      return false;
+    }
+  }
+
+  if (typeof rawCorrectBoolean === "number") {
+    return rawCorrectBoolean === 1;
+  }
+
+  const correctOption = question.options?.find((option) => option.isCorrect);
+
+  if (correctOption) {
+    const optionText = String(correctOption.optionText ?? "")
+      .trim()
+      .toLowerCase();
+
+    if (optionText === "true") {
+      return true;
+    }
+
+    if (optionText === "false") {
+      return false;
+    }
+  }
+
+  return fallback;
+};
+
 const createSnapshot = (form: QuestionForm) =>
   JSON.stringify({
     ...form,
@@ -353,10 +398,7 @@ const createFormFromQuestion = (question: QuizQuestion): QuestionForm => {
     ),
     mediaFileId: question.mediaFileId || "",
     generatedAudioText: question.generatedAudioText || "",
-    correctBoolean:
-      typeof question.correctBoolean === "boolean"
-        ? question.correctBoolean
-        : true,
+    correctBoolean: normalizeCorrectBoolean(question, true),
     points: question.points || 1,
     sortOrder: question.sortOrder || 1,
     status: question.status || "draft",
@@ -518,9 +560,23 @@ const createPayloadFromForm = (form: QuestionForm): QuizQuestionPayload => {
   }
 
   if (form.questionType === "true_false") {
+    payload.title = FIXED_QUESTION_PRESETS.true_false?.title || "True or False";
+    payload.helperText = null;
     payload.correctBoolean = form.correctBoolean;
-  }
 
+    payload.options = [
+      {
+        optionText: "False",
+        isCorrect: form.correctBoolean === false,
+        sortOrder: 1,
+      },
+      {
+        optionText: "True",
+        isCorrect: form.correctBoolean === true,
+        sortOrder: 2,
+      },
+    ];
+  }
   return payload;
 };
 
@@ -914,9 +970,36 @@ export default function QuizBuilderClient() {
         ? await updateQuizQuestion(form.id, payload)
         : await createQuizQuestion(quiz.id, payload);
 
-      const detailedQuestion = createFormFromQuestion(
-        await getQuizQuestionDetails(savedQuestion.id),
+      const savedQuestionDetails = await getQuizQuestionDetails(
+        savedQuestion.id,
       );
+
+      const detailedQuestion =
+        form.questionType === "true_false"
+          ? createFormFromQuestion({
+              ...savedQuestionDetails,
+              options: [
+                {
+                  id: "false-option",
+                  questionId: savedQuestion.id,
+                  optionText: "False",
+                  isCorrect: form.correctBoolean === false,
+                  sortOrder: 1,
+                  createdAt: "",
+                  updatedAt: "",
+                },
+                {
+                  id: "true-option",
+                  questionId: savedQuestion.id,
+                  optionText: "True",
+                  isCorrect: form.correctBoolean === true,
+                  sortOrder: 2,
+                  createdAt: "",
+                  updatedAt: "",
+                },
+              ],
+            })
+          : createFormFromQuestion(savedQuestionDetails);
 
       setQuestions((currentQuestions) =>
         currentQuestions.map((question) =>

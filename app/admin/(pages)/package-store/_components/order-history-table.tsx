@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, ShieldCheck } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -60,14 +60,27 @@ const statusClasses: Record<string, string> = {
   refunded: "bg-[#FCEBEC] text-[#D92D20]",
 };
 
+const verificationClasses: Record<string, string> = {
+  verified: "bg-[#DDF3E8] text-[#007A35]",
+  pending: "bg-[#FFF3C6] text-[#B77900]",
+  failed: "bg-[#FCEBEC] text-[#B42318]",
+};
+
 const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : "Something went wrong.";
 
-const formatDate = (value: string) => {
+const formatDate = (value: string | null) => {
+  if (!value) return "—";
+
   const date = new Date(value);
 
   return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString();
 };
+
+const formatLabel = (value: string) =>
+  value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 
 const getInitials = (name: string) =>
   name
@@ -76,6 +89,9 @@ const getInitials = (name: string) =>
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase())
     .join("");
+
+const getTokenHash = (order: StoreAdminOrder) =>
+  order.verification.purchaseTokenHash || order.verification.tokenHash || "—";
 
 export default function OrderHistoryTable({
   search,
@@ -90,11 +106,14 @@ export default function OrderHistoryTable({
 }: OrderHistoryTableProps) {
   const router = useRouter();
   const pathname = usePathname();
+
   const [response, setResponse] =
     useState<StoreAdminOrderListResponse>(initialResponse);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
   const [downloadingOrderId, setDownloadingOrderId] = useState<string | null>(
     null,
   );
@@ -149,6 +168,8 @@ export default function OrderHistoryTable({
 
     const fetchOrders = async () => {
       try {
+        setIsLoading(true);
+
         const result = await getAdminStoreOrders(query);
 
         if (mounted) {
@@ -185,6 +206,7 @@ export default function OrderHistoryTable({
     });
 
     const queryString = params.toString();
+
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
       scroll: false,
     });
@@ -195,15 +217,22 @@ export default function OrderHistoryTable({
 
     try {
       setDownloadingOrderId(order.id);
+
       const html = await getAdminStoreOrderInvoice(order.id);
+
       downloadTextFile(
         html,
         `invoice-${order.orderNumber}.html`,
         "text/html;charset=utf-8",
       );
-      toast.success("Invoice downloaded.", { id: toastId });
+
+      toast.success("Invoice downloaded.", {
+        id: toastId,
+      });
     } catch (error) {
-      toast.error(getErrorMessage(error), { id: toastId });
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
     } finally {
       setDownloadingOrderId(null);
     }
@@ -219,6 +248,7 @@ export default function OrderHistoryTable({
       response.items,
       `package-store-orders-page-${response.meta.page}.csv`,
     );
+
     toast.success("Current page exported.");
   };
 
@@ -227,6 +257,7 @@ export default function OrderHistoryTable({
 
     try {
       setIsExporting(true);
+
       const csv = await exportAdminStoreOrdersCsv({
         search: query.search,
         packageType: query.packageType,
@@ -243,9 +274,14 @@ export default function OrderHistoryTable({
         "package-store-orders.csv",
         "text/csv;charset=utf-8",
       );
-      toast.success("Filtered orders exported.", { id: toastId });
+
+      toast.success("Filtered orders exported.", {
+        id: toastId,
+      });
     } catch (error) {
-      toast.error(getErrorMessage(error), { id: toastId });
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
     } finally {
       setIsExporting(false);
     }
@@ -255,7 +291,15 @@ export default function OrderHistoryTable({
     <>
       <Card padding="lg" rounded="3xl" shadow="sm">
         <div className="mb-7 flex items-center justify-between gap-4">
-          <h2 className="text-xl font-bold text-[#006B3F]">Transaction Logs</h2>
+          <div>
+            <h2 className="text-xl font-bold text-[#006B3F]">
+              Transaction Logs
+            </h2>
+
+            <p className="mt-1 text-sm text-[#6F776F]">
+              Read-only billing details from Google Play and App Store.
+            </p>
+          </div>
 
           <div className="flex gap-3">
             <Button
@@ -276,14 +320,16 @@ export default function OrderHistoryTable({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px]">
+          <table className="w-full min-w-[1320px]">
             <thead>
               <tr>
                 {[
                   "ORDER ID",
                   "CUSTOMER",
                   "PACKAGE",
-                  "DATE",
+                  "BILLING PRODUCT",
+                  "TRANSACTION",
+                  "DATES",
                   "AMOUNT",
                   "STATUS",
                   "ACTIONS",
@@ -302,7 +348,7 @@ export default function OrderHistoryTable({
               {isLoading && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-sm text-[#4F5B52]"
                   >
                     Loading orders...
@@ -313,7 +359,7 @@ export default function OrderHistoryTable({
               {!isLoading && response.items.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={9}
                     className="px-4 py-12 text-center text-sm text-[#4F5B52]"
                   >
                     No orders found.
@@ -327,17 +373,25 @@ export default function OrderHistoryTable({
 
                   return (
                     <tr key={order.id} className="border-t border-[#EEF2EE]">
-                      <td className="px-4 py-7 text-sm font-bold text-[#006B3F]">
-                        {order.orderNumber}
+                      <td className="px-4 py-7 align-top">
+                        <p className="text-sm font-bold text-[#006B3F]">
+                          {order.orderNumber}
+                        </p>
+
+                        <p className="mt-1 text-xs text-[#8A948C]">
+                          Internal ID: {order.id.slice(0, 8)}...
+                        </p>
                       </td>
 
-                      <td className="px-4 py-7">
+                      <td className="px-4 py-7 align-top">
                         <div className="flex items-center gap-3">
                           <div className="flex size-8 items-center justify-center rounded-full bg-[#DDF3E8] text-xs font-bold text-[#006B3F]">
-                            {getInitials(customerName)}
+                            {getInitials(customerName) || "?"}
                           </div>
+
                           <div>
                             <p className="text-sm">{customerName}</p>
+
                             <p className="text-xs text-[#8A948C]">
                               {order.user?.email || "—"}
                             </p>
@@ -345,34 +399,107 @@ export default function OrderHistoryTable({
                         </div>
                       </td>
 
-                      <td className="px-4 py-7">
-                        <p className="text-sm text-[#4F5B52]">
+                      <td className="px-4 py-7 align-top">
+                        <p className="max-w-[190px] text-sm font-semibold text-[#202420]">
                           {order.package.name}
                         </p>
 
                         <p className="mt-1 text-xs capitalize text-[#8A948C]">
-                          {order.storeProduct.provider.replace(/_/g, " ")}
+                          {formatLabel(order.package.type)}
                         </p>
                       </td>
-                      <td className="px-4 py-7 text-sm text-[#4F5B52]">
-                        {formatDate(order.createdAt)}
+
+                      <td className="px-4 py-7 align-top">
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-[#202420]">
+                            {formatLabel(order.storeProduct.provider)}
+                          </p>
+
+                          <p className="max-w-[210px] break-all text-xs text-[#4F5B52]">
+                            {order.storeProduct.productId}
+                          </p>
+
+                          <p className="text-xs text-[#8A948C]">
+                            {formatLabel(order.storeProduct.productType)}
+                          </p>
+
+                          {order.storeProduct.basePlanId && (
+                            <p className="break-all text-xs text-[#8A948C]">
+                              Base: {order.storeProduct.basePlanId}
+                            </p>
+                          )}
+
+                          {order.storeProduct.offerId && (
+                            <p className="break-all text-xs text-[#8A948C]">
+                              Offer: {order.storeProduct.offerId}
+                            </p>
+                          )}
+                        </div>
                       </td>
-                      <td className="px-4 py-7 text-sm font-bold">
+
+                      <td className="px-4 py-7 align-top">
+                        <div className="space-y-2">
+                          <span
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold ${
+                              verificationClasses[order.verification.status] ||
+                              "bg-[#EEF3EC] text-[#4F5B52]"
+                            }`}
+                          >
+                            <ShieldCheck className="size-3" />
+                            {formatLabel(order.verification.status)}
+                          </span>
+
+                          <p className="text-xs text-[#4F5B52]">
+                            Env: {formatLabel(order.verification.environment)}
+                          </p>
+
+                          <p className="max-w-[220px] break-all text-xs text-[#8A948C]">
+                            Txn:{" "}
+                            {order.verification.providerTransactionId || "—"}
+                          </p>
+
+                          <p className="max-w-[220px] break-all text-xs text-[#8A948C]">
+                            Token Hash: {getTokenHash(order)}
+                          </p>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-7 align-top">
+                        <p className="text-xs text-[#4F5B52]">
+                          Created: {formatDate(order.createdAt)}
+                        </p>
+
+                        <p className="mt-1 text-xs text-[#4F5B52]">
+                          Completed: {formatDate(order.payment.paidAt)}
+                        </p>
+
+                        <p className="mt-1 text-xs text-[#4F5B52]">
+                          Refunded: {formatDate(order.payment.refundedAt)}
+                        </p>
+                      </td>
+
+                      <td className="px-4 py-7 align-top text-sm font-bold">
                         {order.pricing.formattedPaymentAmount}
                       </td>
 
-                      <td className="px-4 py-7">
+                      <td className="px-4 py-7 align-top">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-semibold ${
                             statusClasses[order.status] ||
                             "bg-[#EEF3EC] text-[#4F5B52]"
                           }`}
                         >
-                          {order.status.replace(/_/g, " ")}
+                          {formatLabel(order.status)}
                         </span>
+
+                        {order.payment.refundedAt && (
+                          <p className="mt-2 text-xs font-semibold text-[#D92D20]">
+                            Refund recorded
+                          </p>
+                        )}
                       </td>
 
-                      <td className="px-4 py-7">
+                      <td className="px-4 py-7 align-top">
                         <div className="flex gap-3">
                           <Link
                             href={`/admin/package-store/order-details/${order.id}`}
@@ -405,7 +532,11 @@ export default function OrderHistoryTable({
           totalPages={response.meta.totalPages}
           total={response.meta.total}
           limit={response.meta.limit}
-          onPageChange={(nextPage) => updateQuery({ page: nextPage })}
+          onPageChange={(nextPage) =>
+            updateQuery({
+              page: nextPage,
+            })
+          }
         />
       </Card>
 
@@ -424,6 +555,7 @@ export default function OrderHistoryTable({
         onClose={() => setIsFilterOpen(false)}
         onApply={(values) => {
           setIsFilterOpen(false);
+
           updateQuery({
             page: 1,
             packageType: values.packageType,

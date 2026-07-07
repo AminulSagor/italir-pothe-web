@@ -25,7 +25,6 @@ interface EnrollmentListTableProps {
   sortBy: CourseEnrollmentSortBy;
   sortOrder: CommerceSortOrder;
   statusOptions: string[];
-  paymentProviderOptions: string[];
   isExportingAll: boolean;
   onFilterChange: (values: {
     status: string;
@@ -60,6 +59,22 @@ const formatCurrency = (enrollment: CourseEnrollment) => {
   }
 };
 
+const formatBillingLabel = (value?: string | null) => {
+  if (!value) return "—";
+
+  return value
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+};
+
+const getEnrollmentTokenHash = (enrollment: CourseEnrollment) => {
+  return (
+    enrollment.verification?.purchaseTokenHash ||
+    enrollment.verification?.tokenHash ||
+    "—"
+  );
+};
+
 const EnrollmentListTable = ({
   enrollmentList,
   isLoading,
@@ -68,7 +83,6 @@ const EnrollmentListTable = ({
   sortBy,
   sortOrder,
   statusOptions,
-  paymentProviderOptions,
   isExportingAll,
   onFilterChange,
   onPageChange,
@@ -120,7 +134,6 @@ const EnrollmentListTable = ({
             sortBy={sortBy}
             sortOrder={sortOrder}
             statusOptions={statusOptions}
-            paymentProviderOptions={paymentProviderOptions}
             onApply={onFilterChange}
           />
 
@@ -134,7 +147,7 @@ const EnrollmentListTable = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[780px]">
+        <table className="w-full min-w-[1180px]">
           <thead className="bg-[#F7FAF6]">
             <tr className="text-left">
               <th className="px-10 py-6 text-xs font-bold uppercase text-[#3F463F]">
@@ -149,6 +162,10 @@ const EnrollmentListTable = ({
                 Amount <br /> Paid
               </th>
 
+              <th className="px-6 py-6 text-xs font-bold uppercase text-[#3F463F]">
+                Billing
+              </th>
+
               <th className="px-6 py-6 text-center text-xs font-bold uppercase text-[#3F463F]">
                 Actions
               </th>
@@ -159,7 +176,7 @@ const EnrollmentListTable = ({
             {isLoading ? (
               <tr className="border-t border-black/5">
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-10 py-12 text-center text-sm text-black/60"
                 >
                   Loading enrollments...
@@ -221,6 +238,46 @@ const EnrollmentListTable = ({
                       {formatCurrency(enrollment)}
                     </td>
 
+                    <td className="px-6 py-6 align-top">
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-[#202420]">
+                          {formatBillingLabel(
+                            enrollment.storeProduct?.provider ||
+                              enrollment.payment?.provider ||
+                              enrollment.paymentProvider,
+                          )}
+                        </p>
+
+                        <p className="max-w-[210px] break-all text-xs text-[#4F5B52]">
+                          Product: {enrollment.storeProduct?.productId || "—"}
+                        </p>
+
+                        <p className="text-xs text-[#8A948C]">
+                          Type:{" "}
+                          {formatBillingLabel(
+                            enrollment.storeProduct?.productType,
+                          )}
+                        </p>
+
+                        <p className="text-xs text-[#8A948C]">
+                          Env:{" "}
+                          {formatBillingLabel(
+                            enrollment.verification?.environment,
+                          )}
+                        </p>
+
+                        <p className="max-w-[210px] break-all text-xs text-[#8A948C]">
+                          Txn:{" "}
+                          {enrollment.verification?.providerTransactionId ||
+                            "—"}
+                        </p>
+
+                        <p className="max-w-[210px] break-all text-xs text-[#8A948C]">
+                          Token Hash: {getEnrollmentTokenHash(enrollment)}
+                        </p>
+                      </div>
+                    </td>
+
                     <td className="px-6 py-6 text-center">
                       <button
                         type="button"
@@ -237,7 +294,7 @@ const EnrollmentListTable = ({
             ) : (
               <tr className="border-t border-black/5">
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-10 py-12 text-center text-sm text-black/60"
                 >
                   No enrollments found.
