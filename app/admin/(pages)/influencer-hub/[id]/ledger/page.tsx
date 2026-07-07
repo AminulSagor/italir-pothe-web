@@ -1,6 +1,6 @@
-import InfluencerReportClient from "./_components/influencer-report-client";
+import InfluencerLedgerClient from "./_components/influencer-ledger-client";
 
-interface InfluencerDetailsPageProps {
+interface InfluencerLedgerPageProps {
   params: Promise<{
     id: string;
   }>;
@@ -8,6 +8,8 @@ interface InfluencerDetailsPageProps {
   searchParams: Promise<{
     dateFrom?: string | string[];
     dateTo?: string | string[];
+    transactionType?: string | string[];
+    status?: string | string[];
   }>;
 }
 
@@ -15,18 +17,20 @@ const one = (value?: string | string[]) => {
   return Array.isArray(value) ? value[0] || "" : value || "";
 };
 
-export default async function InfluencerDetailsPage({
+export default async function InfluencerLedgerPage({
   params,
   searchParams,
-}: InfluencerDetailsPageProps) {
+}: InfluencerLedgerPageProps) {
   const { id } = await params;
   const query = await searchParams;
 
   return (
-    <InfluencerReportClient
+    <InfluencerLedgerClient
       partnerId={id}
       dateFrom={one(query.dateFrom)}
       dateTo={one(query.dateTo)}
+      transactionType={one(query.transactionType)}
+      status={one(query.status)}
     />
   );
 }
