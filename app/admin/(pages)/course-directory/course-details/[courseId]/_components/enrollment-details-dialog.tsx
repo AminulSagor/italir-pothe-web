@@ -5,6 +5,7 @@ import { Loader2, RotateCcw, X } from "lucide-react";
 import Button from "@/components/UI/buttons/button";
 import Dialog from "@/components/UI/dialogs/dialog";
 import type { CourseEnrollmentDetails } from "@/types/course-directory/course-commerce.type";
+
 import CoursePurchaseBillingDetailsCard from "./course-purchase-billing-details-card";
 
 interface EnrollmentDetailsDialogProps {
@@ -16,7 +17,9 @@ interface EnrollmentDetailsDialogProps {
   onRefund: () => void;
 }
 
-const formatLabel = (value: string) => {
+const formatLabel = (value?: string | null) => {
+  if (!value) return "—";
+
   return value
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
@@ -53,11 +56,20 @@ const EnrollmentDetailsDialog = ({
   onClose,
   onRefund,
 }: EnrollmentDetailsDialogProps) => {
+  const normalizedStatus = enrollment?.status?.toLowerCase() || "";
+
   const canRefund =
-    Boolean(enrollment?.orderId) && enrollment?.status !== "refunded";
+    Boolean(enrollment?.orderId) &&
+    normalizedStatus !== "refunded" &&
+    normalizedStatus !== "cancelled";
 
   return (
-    <Dialog open={open} onClose={onClose} size="lg" className="!p-0">
+    <Dialog
+      open={open}
+      onClose={isRefunding ? () => undefined : onClose}
+      size="lg"
+      className="!max-w-[1180px] !p-0"
+    >
       <div className="flex items-start justify-between border-b border-black/10 px-7 py-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-wide text-[#006B3F]">
@@ -74,7 +86,7 @@ const EnrollmentDetailsDialog = ({
           disabled={isRefunding}
           onClick={onClose}
           aria-label="Close enrollment details"
-          className="flex size-9 items-center justify-center rounded-full text-black/55 hover:bg-[#F4F7F4]"
+          className="flex size-9 items-center justify-center rounded-full text-black/55 hover:bg-[#F4F7F4] disabled:opacity-50"
         >
           <X className="size-5" />
         </button>
@@ -85,8 +97,8 @@ const EnrollmentDetailsDialog = ({
           <Loader2 className="size-7 animate-spin text-[#006B3F]" />
         </div>
       ) : (
-        <>
-          <div className="grid gap-4 px-7 py-6 sm:grid-cols-2">
+        <div className="max-h-[78vh] overflow-y-auto px-7 py-6">
+          <div className="grid gap-4 sm:grid-cols-2">
             <DetailItem
               label="Student ID"
               value={
@@ -132,49 +144,43 @@ const EnrollmentDetailsDialog = ({
             />
           </div>
 
-          <div className="border-t border-black/10 px-7 py-4">
-            <p className="rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
-              This action requests or records provider refund/revocation and
-              revokes the course entitlement when applicable. The frontend does
-              not verify purchases, grant course access, or revoke access
-              locally.
-            </p>
+          <div className="my-6 rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
+            This action requests or records provider refund/revocation and
+            revokes the course entitlement when applicable. The frontend does
+            not verify purchases, grant course access, or revoke access locally.
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-black/10 px-7 py-5">
-            {enrollment && (
-              <div className="px-7 pb-6">
-                <CoursePurchaseBillingDetailsCard enrollment={enrollment} />
-              </div>
-            )}
-            <Button variant="outline" disabled={isRefunding} onClick={onClose}>
-              Close
-            </Button>
+          <CoursePurchaseBillingDetailsCard
+            enrollment={enrollment}
+            footerActions={
+              <div className="flex flex-col-reverse justify-end gap-3 border-t border-black/10 pt-5 sm:flex-row">
+                <Button
+                  variant="outline"
+                  disabled={isRefunding}
+                  onClick={onClose}
+                >
+                  Close
+                </Button>
 
-            {canRefund && (
-              <Button
-                disabled={isRefunding || !enrollment?.orderId}
-                onClick={onRefund}
-                className="gap-2 !bg-[#D34A3A] hover:!bg-[#B83B2E]"
-              >
-                {isRefunding ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <RotateCcw className="size-4" />
+                {canRefund && (
+                  <Button
+                    disabled={isRefunding || !enrollment.orderId}
+                    onClick={onRefund}
+                    className="gap-2 !bg-[#D34A3A] hover:!bg-[#B83B2E]"
+                  >
+                    {isRefunding ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <RotateCcw className="size-4" />
+                    )}
+
+                    {isRefunding ? "Processing..." : "Refund / Revoke Access"}
+                  </Button>
                 )}
-
-                {isRefunding ? "Processing..." : "Refund / Revoke Access"}
-              </Button>
-            )}
-            <div className="border-t border-black/10 px-7 py-4">
-              <p className="rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
-                This action requests or records provider refund/revocation and
-                revokes the course entitlement when applicable. The frontend
-                does not verify purchases or grant/revoke access locally.
-              </p>
-            </div>
-          </div>
-        </>
+              </div>
+            }
+          />
+        </div>
       )}
     </Dialog>
   );

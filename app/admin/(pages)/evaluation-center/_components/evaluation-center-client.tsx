@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 
 import { getEvaluationQueue } from "@/service/evaluation-center/evaluation-center.service";
 import type {
+  EvaluationQueueItem,
   EvaluationQueueResponse,
   EvaluationQueueSortBy,
   EvaluationQueueSortOrder,
@@ -75,6 +76,16 @@ const getErrorMessage = (error: unknown) => {
     : "Unable to load the final exam evaluation queue.";
 };
 
+const shouldOpenCertificationCenter = (item: EvaluationQueueItem) => {
+  return (
+    item.action.type === "view_result" ||
+    item.action.type === "review_sent" ||
+    item.status === "evaluated" ||
+    item.status === "certificate_issued" ||
+    item.status === "retake_requested"
+  );
+};
+
 export default function EvaluationCenterClient({
   page,
   search,
@@ -139,6 +150,8 @@ export default function EvaluationCenterClient({
 
     const fetchQueue = async () => {
       try {
+        setIsLoading(true);
+
         const result = await getEvaluationQueue(query);
 
         if (!mounted) return;
@@ -188,6 +201,24 @@ export default function EvaluationCenterClient({
     },
     [pathname, router],
   );
+
+  const openAttempt = (item: EvaluationQueueItem) => {
+    if (shouldOpenCertificationCenter(item)) {
+      router.push(
+        `/admin/evaluation-center/certification-center?attemptId=${encodeURIComponent(
+          item.attemptId,
+        )}`,
+      );
+
+      return;
+    }
+
+    router.push(
+      `/admin/evaluation-center/evaluate-student?attemptId=${encodeURIComponent(
+        item.attemptId,
+      )}`,
+    );
+  };
 
   if (isLoading && response.items.length === 0 && !response.stats.pending) {
     return (
@@ -272,23 +303,7 @@ export default function EvaluationCenterClient({
             page: nextPage,
           })
         }
-        onOpenAttempt={(item) => {
-          if (item.action.type === "view_result") {
-            router.push(
-              `/admin/evaluation-center/certification-center?attemptId=${encodeURIComponent(
-                item.attemptId,
-              )}`,
-            );
-
-            return;
-          }
-
-          router.push(
-            `/admin/evaluation-center/evaluate-student?attemptId=${encodeURIComponent(
-              item.attemptId,
-            )}`,
-          );
-        }}
+        onOpenAttempt={openAttempt}
       />
     </section>
   );
