@@ -4,7 +4,9 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import EndWebinarDialog from "./_components/end-webinar-dialog";
-import SpeakerRequestsPanel from "@/app/admin/(pages)/webinar-directory/handle/_components/speaker-requests-panel";
+import SpeakerRequestsPanel, {
+  type PanelTab,
+} from "@/app/admin/(pages)/webinar-directory/handle/_components/speaker-requests-panel";
 import LiveAudienceChat from "@/app/admin/(pages)/webinar-directory/handle/_components/live-audience-chat";
 import LiveWebinarPlayer from "@/app/admin/(pages)/webinar-directory/handle/_components/live-webinar-player";
 import BackButton from "@/components/UI/buttons/back-button";
@@ -53,6 +55,7 @@ function WebinarHandlePageContent() {
   const [chatMessages, setChatMessages] = useState<WebinarChatMessageItem[]>([]);
   const [isChatLoading, setIsChatLoading] = useState(true);
   const [isChatSending, setIsChatSending] = useState(false);
+  const [activePanelTab, setActivePanelTab] = useState<PanelTab>("participants");
   const [now, setNow] = useState(() => Date.now());
 
   const participantCount = participants.length;
@@ -173,6 +176,11 @@ function WebinarHandlePageContent() {
       loadPanelData();
     };
 
+    const handleSpeakerRequestCreated = () => {
+      setActivePanelTab("requests");
+      loadPanelData();
+    };
+
     const handleChatMessageCreated = (payload: WebinarSocketPayload) => {
       if (payload.chatMessage) {
         upsertChatMessage(payload.chatMessage);
@@ -189,7 +197,7 @@ function WebinarHandlePageContent() {
     };
 
     socket.on("participants_list_updated", handleRefreshLists);
-    socket.on("speaker_request_created", handleRefreshLists);
+    socket.on("speaker_request_created", handleSpeakerRequestCreated);
     socket.on("speaker_requests_list_updated", handleRefreshLists);
     socket.on("speaker_request_approved", handleRefreshLists);
     socket.on("speaker_request_rejected", handleRefreshLists);
@@ -327,10 +335,12 @@ function WebinarHandlePageContent() {
             </div>
 
             <SpeakerRequestsPanel
+              activeTab={activePanelTab}
               speakerRequests={speakerRequests}
               participants={participants}
               isLoading={isPanelLoading}
               isActionLoading={isActionLoading}
+              onTabChange={setActivePanelTab}
               onApprove={handleApprove}
               onReject={handleReject}
             />

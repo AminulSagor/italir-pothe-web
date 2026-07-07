@@ -1,17 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Hand, TrendingUp, UserRoundPlus, X } from "lucide-react";
 
 import type { WebinarUserItem } from "@/types/webinar/webinar_type";
 
-type PanelTab = "requests" | "participants";
+export type PanelTab = "requests" | "participants";
 
 interface SpeakerRequestsPanelProps {
+  activeTab: PanelTab;
   speakerRequests: WebinarUserItem[];
   participants: WebinarUserItem[];
   isLoading: boolean;
   isActionLoading: boolean;
+  onTabChange: (tab: PanelTab) => void;
   onApprove: (userId: string) => void;
   onReject: (userId: string) => void;
 }
@@ -23,16 +25,22 @@ const getDisplayName = (user: WebinarUserItem) =>
 const getRoleText = (user: WebinarUserItem) =>
   user.role ? user.role.replace(/_/g, " ") : "Not available";
 
+const CountChip = ({ count }: { count: number }) => (
+  <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-600">
+    {count}
+  </span>
+);
+
 export default function SpeakerRequestsPanel({
+  activeTab,
   speakerRequests,
   participants,
   isLoading,
   isActionLoading,
+  onTabChange,
   onApprove,
   onReject,
 }: SpeakerRequestsPanelProps) {
-  const [activeTab, setActiveTab] = useState<PanelTab>("requests");
-
   const visibleList = activeTab === "requests" ? speakerRequests : participants;
   const emptyText =
     activeTab === "requests"
@@ -52,37 +60,43 @@ export default function SpeakerRequestsPanel({
           <div className="grid grid-cols-2 gap-1">
             <button
               type="button"
-              onClick={() => setActiveTab("requests")}
-              className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
+              onClick={() => onTabChange("requests")}
+              className={`flex items-center justify-center rounded-full px-4 py-3 text-sm font-semibold transition ${
                 activeTab === "requests"
                   ? "bg-white text-[#007A4D] shadow-sm"
                   : "text-[#4E5A52]"
               }`}
             >
-              Speaker Requests
+              <span className="truncate">Speaker Requests</span>
+              <CountChip count={speakerRequests.length} />
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("participants")}
-              className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
+              onClick={() => onTabChange("participants")}
+              className={`flex items-center justify-center rounded-full px-4 py-3 text-sm font-semibold transition ${
                 activeTab === "participants"
                   ? "bg-white text-[#007A4D] shadow-sm"
                   : "text-[#4E5A52]"
               }`}
             >
-              All Participants
+              <span className="truncate">All Participants</span>
+              <CountChip count={participants.length} />
             </button>
           </div>
         </div>
 
         <div className="mb-7 flex items-start justify-between">
           <div>
-            <h2 className="text-sm font-semibold text-[#007A4D]">
-              {activeTab === "requests" ? "Speaker Requests" : "All Participants"}
-            </h2>
-            <p className="text-xs text-[#4E5A52]">
-              ⊕ {activeTab === "requests" ? speakerRequests.length : participants.length}{" "}
-              {activeTab === "requests" ? "Pending Requests" : "Participants"}
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-sm font-semibold text-[#007A4D]">
+                {activeTab === "requests" ? "Speaker Requests" : "All Participants"}
+              </h2>
+              <span className="inline-flex min-w-7 items-center justify-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-red-600">
+                {activeTab === "requests" ? speakerRequests.length : participants.length}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-[#4E5A52]">
+              ⊕ {activeTab === "requests" ? "Pending Requests" : "Participants"}
             </p>
           </div>
 

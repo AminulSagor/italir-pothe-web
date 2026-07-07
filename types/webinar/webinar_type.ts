@@ -18,6 +18,7 @@ export type AgoraLiveRole = "publisher" | "subscriber";
 export interface WebinarAudienceSettings {
   isForAllUsers: boolean;
   courseIds: string[];
+  courseNames: string[];
 }
 
 export interface WebinarItem {
@@ -32,6 +33,7 @@ export interface WebinarItem {
   liveStartedAt?: string | null;
   liveEndedAt?: string | null;
   audienceSettings: WebinarAudienceSettings;
+  isEligible?: boolean;
   createdByAdminId: string;
   updatedByAdminId: string | null;
   createdAt: string;

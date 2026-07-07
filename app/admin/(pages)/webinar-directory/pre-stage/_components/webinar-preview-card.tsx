@@ -68,6 +68,9 @@ export default function WebinarPreviewCard({
   onCameraChange,
   onSpeakerChange,
 }: WebinarPreviewCardProps) {
+  const shouldShowCameraOverlay =
+    (!isCameraOn && !isScreenSharing) || Boolean(permissionError);
+
   return (
     <div className="relative h-[405px] overflow-hidden rounded-[34px] bg-[#1B2B2D] p-5 shadow-sm">
       <video
@@ -80,7 +83,7 @@ export default function WebinarPreviewCard({
         }`}
       />
 
-      {(!isCameraOn && !isScreenSharing) || permissionError ? (
+      {shouldShowCameraOverlay ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#1B2B2D] px-8 text-center text-white/80">
           <VideoOff className="mb-4 size-10 text-white/60" />
           <p className="text-sm font-semibold">
@@ -98,15 +101,15 @@ export default function WebinarPreviewCard({
         Off-Air Preview
       </div>
 
-      <p className="absolute inset-x-0 top-1/2 text-center text-sm text-white/80">
-        {isLoadingPreview
-          ? "Starting camera feed..."
-          : isScreenSharing
-            ? "Screen Share Preview Active"
-            : isCameraOn
-              ? "Camera Feed Active"
-              : "Camera Feed Paused"}
-      </p>
+      {!shouldShowCameraOverlay ? (
+        <p className="absolute inset-x-0 top-1/2 text-center text-sm text-white/80">
+          {isLoadingPreview
+            ? "Starting camera feed..."
+            : isScreenSharing
+              ? "Screen Share Preview Active"
+              : "Camera Feed Active"}
+        </p>
+      ) : null}
 
       <div className="absolute inset-x-0 bottom-8 flex justify-center gap-4">
         <button
