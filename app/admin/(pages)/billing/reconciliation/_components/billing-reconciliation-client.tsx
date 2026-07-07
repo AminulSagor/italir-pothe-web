@@ -1,22 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
   Clock3,
   DatabaseZap,
+  Eye,
   Loader2,
   RefreshCw,
   RotateCcw,
+  Search,
   ShieldAlert,
+  X,
 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
+import Dialog from "@/components/UI/dialogs/dialog";
 import {
   getGooglePlayReconciliationStatus,
+  getGooglePlayRtdnEventById,
+  getGooglePlayRtdnEvents,
+  getGooglePlayVoidedPurchaseRecordById,
+  getGooglePlayVoidedPurchaseRecords,
   retryFailedGooglePlayRtdnEvents,
   retryFailedGooglePlayVoidedPurchases,
   retryGooglePlayRtdnEvent,
@@ -25,16 +33,38 @@ import {
 } from "@/service/billing/billing.service";
 import type {
   GooglePlayReconciliationStatusResponse,
+  GooglePlayRtdnEvent,
+  GooglePlayRtdnEventListResponse,
   GooglePlayRtdnEventStatus,
+  GooglePlayVoidedPurchaseRecord,
+  GooglePlayVoidedPurchaseRecordListResponse,
   GooglePlayVoidedRecordStatus,
   RetryGooglePlayFailuresPayload,
   RunGooglePlayReconciliationPayload,
 } from "@/types/billing/billing.type";
 
+const emptyVoidedResponse: GooglePlayVoidedPurchaseRecordListResponse = {
+  items: [],
+  meta: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  },
+};
+
+const emptyRtdnResponse: GooglePlayRtdnEventListResponse = {
+  items: [],
+  meta: {
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
+  },
+};
+
 const getErrorMessage = (error: unknown) => {
-  return error instanceof Error
-    ? error.message
-    : "Billing reconciliation action failed.";
+  return error instanceof Error ? error.message : "Billing request failed.";
 };
 
 const formatDateTime = (value?: string | null) => {
@@ -45,11 +75,14 @@ const formatDateTime = (value?: string | null) => {
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
 };
 
-const getCount = <Key extends string>(
-  values: Partial<Record<Key, number>> | undefined,
-  key: Key,
-) => {
-  return values?.[key] || 0;
+const formatLabel = (value?: string | number | null) => {
+  if (value === null || value === undefined || value === "") {
+    return "—";
+  }
+
+  return String(value)
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
 };
 
 const formatJson = (value: unknown) => {
@@ -62,13 +95,62 @@ const formatJson = (value: unknown) => {
   }
 };
 
+const getCount = <Key extends string>(
+  values: Partial<Record<Key, number>> | undefined,
+  key: Key,
+) => {
+  return values?.[key] || 0;
+};
+
+const getStatusClass = (status?: string | null) => {
+  if (status === "processed" || status === "verified") {
+    return "bg-[#DDF3E8] text-[#007A35]";
+  }
+
+  if (
+    status === "failed" ||
+    status === "dead_letter" ||
+    status === "manual_review"
+  ) {
+    return "bg-[#FCEBEC] text-[#B42318]";
+  }
+
+  if (
+    status === "pending" ||
+    status === "processing" ||
+    status === "unmatched"
+  ) {
+    return "bg-[#FFF3C6] text-[#B77900]";
+  }
+
+  return "bg-[#EEF3EC] text-[#4F5B52]";
+};
+
 export default function BillingReconciliationClient() {
   const [status, setStatus] =
     useState<GooglePlayReconciliationStatusResponse | null>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [voidedResponse, setVoidedResponse] =
+    useState<GooglePlayVoidedPurchaseRecordListResponse>(emptyVoidedResponse);
 
+  const [rtdnResponse, setRtdnResponse] =
+    useState<GooglePlayRtdnEventListResponse>(emptyRtdnResponse);
+
+  const [isLoading, setIsLoading] = useState(true);
   const [runningAction, setRunningAction] = useState<string | null>(null);
+
+  const [voidedSearch, setVoidedSearch] = useState("");
+  const [voidedStatus, setVoidedStatus] = useState<
+    GooglePlayVoidedRecordStatus | ""
+  >("");
+  const [voidedPage, setVoidedPage] = useState(1);
+
+  const [rtdnSearch, setRtdnSearch] = useState("");
+  const [rtdnStatus, setRtdnStatus] = useState<GooglePlayRtdnEventStatus | "">(
+    "",
+  );
+  const [rtdnKind, setRtdnKind] = useState("");
+  const [rtdnPage, setRtdnPage] = useState(1);
 
   const [runForm, setRunForm] = useState<RunGooglePlayReconciliationPayload>({
     startTime: "",
@@ -82,30 +164,57 @@ export default function BillingReconciliationClient() {
     limit: 100,
   });
 
-  const [singleRecordId, setSingleRecordId] = useState("");
+  const [selectedVoidedRecord, setSelectedVoidedRecord] =
+    useState<GooglePlayVoidedPurchaseRecord | null>(null);
 
-  const [singleRtdnEventId, setSingleRtdnEventId] = useState("");
+  const [selectedRtdnEvent, setSelectedRtdnEvent] =
+    useState<GooglePlayRtdnEvent | null>(null);
+
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
 
   const loadStatus = useCallback(async () => {
+    const response = await getGooglePlayReconciliationStatus();
+    setStatus(response);
+  }, []);
+
+  const loadVoidedRecords = useCallback(async () => {
+    const response = await getGooglePlayVoidedPurchaseRecords({
+      page: voidedPage,
+      limit: 10,
+      status: voidedStatus,
+      search: voidedSearch,
+    });
+
+    setVoidedResponse(response);
+  }, [voidedPage, voidedSearch, voidedStatus]);
+
+  const loadRtdnEvents = useCallback(async () => {
+    const response = await getGooglePlayRtdnEvents({
+      page: rtdnPage,
+      limit: 10,
+      status: rtdnStatus,
+      kind: rtdnKind,
+      search: rtdnSearch,
+    });
+
+    setRtdnResponse(response);
+  }, [rtdnKind, rtdnPage, rtdnSearch, rtdnStatus]);
+
+  const loadAll = useCallback(async () => {
     try {
       setIsLoading(true);
 
-      const response = await getGooglePlayReconciliationStatus();
-
-      setStatus(response);
+      await Promise.all([loadStatus(), loadVoidedRecords(), loadRtdnEvents()]);
     } catch (error) {
       toast.error(getErrorMessage(error));
-      setStatus(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadRtdnEvents, loadStatus, loadVoidedRecords]);
 
   useEffect(() => {
-    void loadStatus();
-  }, [loadStatus]);
-
-  const lastResult = status?.checkpoint?.lastResult;
+    void loadAll();
+  }, [loadAll]);
 
   const summary = useMemo(() => {
     const voided = status?.voidedPurchases;
@@ -123,8 +232,8 @@ export default function BillingReconciliationClient() {
 
       voidedProcessed: getCount(voided, "processed"),
       voidedUnmatched: getCount(voided, "unmatched"),
-      voidedFailed: getCount(voided, "failed"),
-      voidedDeadLetter: getCount(voided, "dead_letter"),
+      voidedFailed:
+        getCount(voided, "failed") + getCount(voided, "dead_letter"),
 
       rtdnTotal:
         getCount(rtdn, "pending") +
@@ -133,8 +242,7 @@ export default function BillingReconciliationClient() {
         getCount(rtdn, "failed") +
         getCount(rtdn, "dead_letter"),
 
-      rtdnFailed: getCount(rtdn, "failed"),
-      rtdnDeadLetter: getCount(rtdn, "dead_letter"),
+      rtdnFailed: getCount(rtdn, "failed") + getCount(rtdn, "dead_letter"),
     };
   }, [status]);
 
@@ -149,8 +257,7 @@ export default function BillingReconciliationClient() {
       setRunningAction(actionName);
 
       await action();
-
-      await loadStatus();
+      await loadAll();
 
       toast.success(successMessage, {
         id: toastId,
@@ -202,20 +309,6 @@ export default function BillingReconciliationClient() {
     );
   };
 
-  const handleRetrySingleVoided = () => {
-    if (!singleRecordId.trim()) {
-      toast.error("Enter a voided purchase record ID.");
-
-      return;
-    }
-
-    void runAction(
-      "retry-single-voided",
-      () => retryGooglePlayVoidedPurchaseRecord(singleRecordId.trim()),
-      "Single voided purchase record retried",
-    );
-  };
-
   const handleRetryFailedRtdn = () => {
     void runAction(
       "retry-rtdn-failed",
@@ -228,18 +321,48 @@ export default function BillingReconciliationClient() {
     );
   };
 
-  const handleRetrySingleRtdn = () => {
-    if (!singleRtdnEventId.trim()) {
-      toast.error("Enter an RTDN event ID.");
-
-      return;
-    }
-
+  const handleRetryVoidedRow = (recordId: string) => {
     void runAction(
-      "retry-single-rtdn",
-      () => retryGooglePlayRtdnEvent(singleRtdnEventId.trim()),
-      "Single RTDN event retried",
+      `retry-voided-${recordId}`,
+      () => retryGooglePlayVoidedPurchaseRecord(recordId),
+      "Voided purchase record retried",
     );
+  };
+
+  const handleRetryRtdnRow = (eventId: string) => {
+    void runAction(
+      `retry-rtdn-${eventId}`,
+      () => retryGooglePlayRtdnEvent(eventId),
+      "RTDN event retried",
+    );
+  };
+
+  const openVoidedDetails = async (recordId: string) => {
+    try {
+      setIsDetailsLoading(true);
+
+      const response = await getGooglePlayVoidedPurchaseRecordById(recordId);
+
+      setSelectedVoidedRecord(response);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsDetailsLoading(false);
+    }
+  };
+
+  const openRtdnDetails = async (eventId: string) => {
+    try {
+      setIsDetailsLoading(true);
+
+      const response = await getGooglePlayRtdnEventById(eventId);
+
+      setSelectedRtdnEvent(response);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsDetailsLoading(false);
+    }
   };
 
   if (isLoading && !status) {
@@ -251,374 +374,621 @@ export default function BillingReconciliationClient() {
   }
 
   return (
-    <section className="space-y-7">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-[#006B3F]">
-            Billing Reconciliation
-          </h1>
-
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#66736A]">
-            Monitor Google Play voided-purchase reconciliation and retry failed
-            billing processing jobs. This page never shows raw purchase tokens,
-            private keys, or signed payloads.
-          </p>
-        </div>
-
-        <Button
-          variant="outline"
-          disabled={isLoading}
-          onClick={() => void loadStatus()}
-          className="gap-2"
-        >
-          {isLoading ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <RefreshCw className="size-4" />
-          )}
-          Refresh
-        </Button>
-      </div>
-
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatusMetricCard
-          title="Records Found"
-          value={summary.voidedTotal}
-          helper="Total voided records in backend"
-          tone="neutral"
-        />
-
-        <StatusMetricCard
-          title="Records Processed"
-          value={summary.voidedProcessed}
-          helper="Successfully processed"
-          tone="success"
-        />
-
-        <StatusMetricCard
-          title="Unmatched Records"
-          value={summary.voidedUnmatched}
-          helper="Could not match to an internal order yet"
-          tone="warning"
-        />
-
-        <StatusMetricCard
-          title="Failed / Dead Letter"
-          value={summary.voidedFailed + summary.voidedDeadLetter}
-          helper="Needs retry or manual review"
-          tone="danger"
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-full bg-[#DDF3E8] text-[#006B3F]">
-              <DatabaseZap className="size-5" />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold text-[#202420]">
-                Reconciliation Status
-              </h2>
-
-              <p className="text-sm text-[#66736A]">
-                Last run, last successful window and processing checkpoint.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <DetailBox
-              label="Last Run Started"
-              value={formatDateTime(status?.checkpoint?.lastStartedAt)}
-            />
-
-            <DetailBox
-              label="Last Completed"
-              value={formatDateTime(status?.checkpoint?.lastCompletedAt)}
-            />
-
-            <DetailBox
-              label="Last Failed"
-              value={formatDateTime(status?.checkpoint?.lastFailedAt)}
-            />
-
-            <DetailBox
-              label="Last Successful Window"
-              value={formatDateTime(status?.checkpoint?.lastSuccessfulEndTime)}
-            />
-
-            <DetailBox
-              label="Lease Owner"
-              value={status?.checkpoint?.leaseOwner || "—"}
-            />
-
-            <DetailBox
-              label="Lease Expires At"
-              value={formatDateTime(status?.checkpoint?.leaseExpiresAt)}
-            />
-          </div>
-
-          {status?.checkpoint?.lastErrorMessage && (
-            <div className="rounded-2xl border border-[#F4D5D2] bg-[#FFF7F6] p-4">
-              <p className="text-xs font-bold uppercase text-[#B42318]">
-                Last Error
-              </p>
-
-              <p className="mt-2 text-sm leading-6 text-[#7A2E25]">
-                {status.checkpoint.lastErrorMessage}
-              </p>
-            </div>
-          )}
-
-          <div className="rounded-2xl bg-[#F7FAF7] p-4">
-            <p className="text-xs font-bold uppercase text-[#66736A]">
-              Last Result
-            </p>
-
-            <pre className="mt-3 max-h-[260px] overflow-auto rounded-xl bg-white p-4 text-xs text-[#202420]">
-              {formatJson(lastResult)}
-            </pre>
-          </div>
-        </Card>
-
-        <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
+    <>
+      <section className="space-y-7">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <h2 className="text-xl font-bold text-[#202420]">
-              Run Voided Purchase Reconciliation
-            </h2>
+            <h1 className="text-3xl font-bold text-[#006B3F]">
+              Billing Reconciliation
+            </h1>
 
-            <p className="mt-1 text-sm leading-6 text-[#66736A]">
-              Leave dates empty to let backend use the checkpoint window.
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[#66736A]">
+              Monitor Google Play voided-purchase reconciliation and RTDN event
+              processing. This page shows only sanitized provider data, token
+              hashes, processing results and matched internal order IDs.
             </p>
-          </div>
-
-          <div className="space-y-4">
-            <DateTimeField
-              label="Start Time"
-              value={runForm.startTime || ""}
-              onChange={(value) =>
-                setRunForm((current) => ({
-                  ...current,
-                  startTime: value,
-                }))
-              }
-            />
-
-            <DateTimeField
-              label="End Time"
-              value={runForm.endTime || ""}
-              onChange={(value) =>
-                setRunForm((current) => ({
-                  ...current,
-                  endTime: value,
-                }))
-              }
-            />
-
-            <NumberField
-              label="Max Pages"
-              value={runForm.maxPages || 10}
-              min={1}
-              max={100}
-              onChange={(value) =>
-                setRunForm((current) => ({
-                  ...current,
-                  maxPages: value,
-                }))
-              }
-            />
-
-            <NumberField
-              label="Process Limit"
-              value={runForm.processLimit || 100}
-              min={1}
-              max={1000}
-              onChange={(value) =>
-                setRunForm((current) => ({
-                  ...current,
-                  processLimit: value,
-                }))
-              }
-            />
           </div>
 
           <Button
-            fullWidth
-            disabled={Boolean(runningAction)}
-            onClick={handleRunReconciliation}
+            variant="outline"
+            disabled={isLoading}
+            onClick={() => void loadAll()}
             className="gap-2"
           >
-            {runningAction === "run-voided" ? (
+            {isLoading ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (
               <RefreshCw className="size-4" />
             )}
-            Run Voided Purchase Reconciliation
+            Refresh
           </Button>
+        </div>
 
-          <div className="rounded-2xl border border-[#FFE2A8] bg-[#FFF8E8] p-4 text-xs leading-5 text-[#8A5A00]">
-            Google Play allows voided-purchase reconciliation only for the
-            supported recent window. The backend validates the allowed time
-            range.
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
-          <div className="flex items-start gap-3">
-            <RotateCcw className="mt-1 size-5 text-[#006B3F]" />
-
-            <div>
-              <h2 className="text-xl font-bold text-[#202420]">
-                Retry Voided Purchase Records
-              </h2>
-
-              <p className="mt-1 text-sm leading-6 text-[#66736A]">
-                Retry failed/unmatched reconciliation records. A single record
-                can be retried only if you already know its backend UUID.
-              </p>
-            </div>
-          </div>
-
-          <RetryOptionsForm
-            includeDeadLetter={Boolean(retryForm.includeDeadLetter)}
-            limit={Number(retryForm.limit || 100)}
-            onIncludeDeadLetterChange={(value) =>
-              setRetryForm((current) => ({
-                ...current,
-                includeDeadLetter: value,
-              }))
-            }
-            onLimitChange={(value) =>
-              setRetryForm((current) => ({
-                ...current,
-                limit: value,
-              }))
-            }
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <StatusMetricCard
+            title="Records Found"
+            value={summary.voidedTotal}
+            helper="Total voided purchase records"
+            tone="neutral"
           />
 
-          <Button
-            fullWidth
-            disabled={Boolean(runningAction)}
-            onClick={handleRetryFailedVoided}
-            className="gap-2"
-          >
-            {runningAction === "retry-voided-failed" ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RotateCcw className="size-4" />
+          <StatusMetricCard
+            title="Records Processed"
+            value={summary.voidedProcessed}
+            helper="Successfully matched and processed"
+            tone="success"
+          />
+
+          <StatusMetricCard
+            title="Unmatched Records"
+            value={summary.voidedUnmatched}
+            helper="Need matching or manual review"
+            tone="warning"
+          />
+
+          <StatusMetricCard
+            title="Failed / Dead Letter"
+            value={summary.voidedFailed + summary.rtdnFailed}
+            helper="Voided records and RTDN events needing retry"
+            tone="danger"
+          />
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+          <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-full bg-[#DDF3E8] text-[#006B3F]">
+                <DatabaseZap className="size-5" />
+              </div>
+
+              <div>
+                <h2 className="text-xl font-bold text-[#202420]">
+                  Reconciliation Status
+                </h2>
+
+                <p className="text-sm text-[#66736A]">
+                  Last run, checkpoint window and backend processing state.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <DetailBox
+                label="Last Run Started"
+                value={formatDateTime(status?.checkpoint?.lastStartedAt)}
+              />
+
+              <DetailBox
+                label="Last Completed"
+                value={formatDateTime(status?.checkpoint?.lastCompletedAt)}
+              />
+
+              <DetailBox
+                label="Last Failed"
+                value={formatDateTime(status?.checkpoint?.lastFailedAt)}
+              />
+
+              <DetailBox
+                label="Last Successful Window"
+                value={formatDateTime(
+                  status?.checkpoint?.lastSuccessfulEndTime,
+                )}
+              />
+
+              <DetailBox
+                label="Lease Owner"
+                value={status?.checkpoint?.leaseOwner || "—"}
+              />
+
+              <DetailBox
+                label="Lease Expires At"
+                value={formatDateTime(status?.checkpoint?.leaseExpiresAt)}
+              />
+            </div>
+
+            {status?.checkpoint?.lastErrorMessage && (
+              <div className="rounded-2xl border border-[#F4D5D2] bg-[#FFF7F6] p-4">
+                <p className="text-xs font-bold uppercase text-[#B42318]">
+                  Last Error
+                </p>
+
+                <p className="mt-2 text-sm leading-6 text-[#7A2E25]">
+                  {status.checkpoint.lastErrorMessage}
+                </p>
+              </div>
             )}
-            Retry Failed Voided Records
-          </Button>
 
-          <div className="space-y-3 border-t border-[#E7EEE8] pt-5">
-            <TextField
-              label="Single Voided Record ID"
-              value={singleRecordId}
-              placeholder="UUID from backend logs or future list endpoint"
-              onChange={setSingleRecordId}
-            />
+            <div className="rounded-2xl bg-[#F7FAF7] p-4">
+              <p className="text-xs font-bold uppercase text-[#66736A]">
+                Last Result
+              </p>
 
-            <Button
-              variant="outline"
-              fullWidth
-              disabled={Boolean(runningAction)}
-              onClick={handleRetrySingleVoided}
-            >
-              Retry Single Voided Record
-            </Button>
-          </div>
-        </Card>
+              <pre className="mt-3 max-h-[240px] overflow-auto rounded-xl bg-white p-4 text-xs text-[#202420]">
+                {formatJson(status?.checkpoint?.lastResult)}
+              </pre>
+            </div>
+          </Card>
 
-        <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
-          <div className="flex items-start gap-3">
-            <ShieldAlert className="mt-1 size-5 text-[#006B3F]" />
-
+          <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-[#202420]">
-                RTDN Processing Retry
+                Run Voided Purchase Reconciliation
               </h2>
 
               <p className="mt-1 text-sm leading-6 text-[#66736A]">
-                Backend exposes retry actions for failed Google Play RTDN
-                events, but it does not expose an event list yet.
+                Leave dates empty to let backend use the checkpoint window.
               </p>
+            </div>
+
+            <div className="space-y-4">
+              <DateTimeField
+                label="Start Time"
+                value={runForm.startTime || ""}
+                onChange={(value) =>
+                  setRunForm((current) => ({
+                    ...current,
+                    startTime: value,
+                  }))
+                }
+              />
+
+              <DateTimeField
+                label="End Time"
+                value={runForm.endTime || ""}
+                onChange={(value) =>
+                  setRunForm((current) => ({
+                    ...current,
+                    endTime: value,
+                  }))
+                }
+              />
+
+              <NumberField
+                label="Max Pages"
+                value={Number(runForm.maxPages || 10)}
+                min={1}
+                max={100}
+                onChange={(value) =>
+                  setRunForm((current) => ({
+                    ...current,
+                    maxPages: value,
+                  }))
+                }
+              />
+
+              <NumberField
+                label="Process Limit"
+                value={Number(runForm.processLimit || 100)}
+                min={1}
+                max={1000}
+                onChange={(value) =>
+                  setRunForm((current) => ({
+                    ...current,
+                    processLimit: value,
+                  }))
+                }
+              />
+            </div>
+
+            <Button
+              fullWidth
+              disabled={Boolean(runningAction)}
+              onClick={handleRunReconciliation}
+              className="gap-2"
+            >
+              {runningAction === "run-voided" ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <RefreshCw className="size-4" />
+              )}
+              Run Voided Purchase Reconciliation
+            </Button>
+
+            <div className="rounded-2xl border border-[#FFE2A8] bg-[#FFF8E8] p-4 text-xs leading-5 text-[#8A5A00]">
+              Google Play controls refund settlement. Backend reconciliation
+              only matches Google voided purchases to internal orders and
+              revokes entitlements when applicable.
+            </div>
+          </Card>
+        </div>
+
+        <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
+          <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+            <div>
+              <h2 className="text-xl font-bold text-[#202420]">
+                Google Play Voided Purchase Records
+              </h2>
+
+              <p className="mt-1 text-sm leading-6 text-[#66736A]">
+                Row-level refund/revoke records returned by Google Play and
+                processed by backend reconciliation.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <SearchField
+                value={voidedSearch}
+                placeholder="Search order ID, token hash, internal order ID..."
+                onChange={(value) => {
+                  setVoidedSearch(value);
+                  setVoidedPage(1);
+                }}
+              />
+
+              <select
+                value={voidedStatus}
+                onChange={(event) => {
+                  setVoidedStatus(
+                    event.target.value as GooglePlayVoidedRecordStatus | "",
+                  );
+                  setVoidedPage(1);
+                }}
+                className="h-11 rounded-full border border-[#D9E2DA] bg-white px-4 text-sm outline-none"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="processed">Processed</option>
+                <option value="unmatched">Unmatched</option>
+                <option value="manual_review">Manual Review</option>
+                <option value="failed">Failed</option>
+                <option value="dead_letter">Dead Letter</option>
+              </select>
+
+              <Button
+                variant="outline"
+                disabled={Boolean(runningAction)}
+                onClick={handleRetryFailedVoided}
+                className="gap-2"
+              >
+                {runningAction === "retry-voided-failed" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="size-4" />
+                )}
+                Retry Failed
+              </Button>
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <SmallCount label="RTDN Total" value={summary.rtdnTotal} />
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1320px]">
+              <thead>
+                <tr className="bg-[#F7FAF7] text-left text-xs font-bold uppercase text-[#66736A]">
+                  <th className="px-4 py-4">Provider Order</th>
+                  <th className="px-4 py-4">Token Hash</th>
+                  <th className="px-4 py-4">Matched Order</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Attempts</th>
+                  <th className="px-4 py-4">Voided At</th>
+                  <th className="px-4 py-4">Processed At</th>
+                  <th className="px-4 py-4">Last Error</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
 
-            <SmallCount label="RTDN Failed" value={summary.rtdnFailed} />
+              <tbody>
+                {voidedResponse.items.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-4 py-12 text-center text-sm text-[#66736A]"
+                    >
+                      No voided purchase records found.
+                    </td>
+                  </tr>
+                )}
 
-            <SmallCount
-              label="RTDN Dead Letter"
-              value={summary.rtdnDeadLetter}
-            />
+                {voidedResponse.items.map((record) => (
+                  <tr key={record.id} className="border-t border-[#EEF3EC]">
+                    <td className="max-w-[220px] break-all px-4 py-5 text-xs text-[#202420]">
+                      {record.providerOrderId || "—"}
+                    </td>
+
+                    <td className="max-w-[220px] break-all px-4 py-5 text-xs text-[#4F5B52]">
+                      {record.purchaseTokenHash || "—"}
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      <p>{formatLabel(record.matchedDomain)}</p>
+                      <p className="mt-1 max-w-[220px] break-all">
+                        {record.internalOrderId || "—"}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-5">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                          record.status,
+                        )}`}
+                      >
+                        {formatLabel(record.status)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-5 text-sm font-semibold text-[#202420]">
+                      {record.attemptCount}
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      {formatDateTime(record.voidedTime)}
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      {formatDateTime(record.processedAt)}
+                    </td>
+
+                    <td className="max-w-[260px] px-4 py-5 text-xs text-[#B42318]">
+                      {record.lastErrorMessage || "—"}
+                    </td>
+
+                    <td className="px-4 py-5">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          type="button"
+                          disabled={isDetailsLoading}
+                          onClick={() => void openVoidedDetails(record.id)}
+                          className="flex size-9 items-center justify-center rounded-full bg-[#EEF3EC] text-[#4F5B52]"
+                          aria-label="View voided record"
+                        >
+                          <Eye className="size-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={Boolean(runningAction)}
+                          onClick={() => handleRetryVoidedRow(record.id)}
+                          className="flex size-9 items-center justify-center rounded-full bg-[#FFF3C6] text-[#B77900] disabled:opacity-60"
+                          aria-label="Retry voided record"
+                        >
+                          {runningAction === `retry-voided-${record.id}` ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <RotateCcw className="size-4" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          <Button
-            fullWidth
-            disabled={Boolean(runningAction)}
-            onClick={handleRetryFailedRtdn}
-            className="gap-2"
-          >
-            {runningAction === "retry-rtdn-failed" ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <RotateCcw className="size-4" />
-            )}
-            Retry Failed RTDN Events
-          </Button>
+          <PaginationBar
+            page={voidedResponse.meta.page}
+            totalPages={voidedResponse.meta.totalPages}
+            total={voidedResponse.meta.total}
+            onPageChange={setVoidedPage}
+          />
+        </Card>
 
-          <div className="space-y-3 border-t border-[#E7EEE8] pt-5">
-            <TextField
-              label="Single RTDN Event ID"
-              value={singleRtdnEventId}
-              placeholder="UUID from backend logs or future list endpoint"
-              onChange={setSingleRtdnEventId}
-            />
+        <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-6">
+          <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-center">
+            <div>
+              <h2 className="text-xl font-bold text-[#202420]">
+                Google Play RTDN Events
+              </h2>
 
-            <Button
-              variant="outline"
-              fullWidth
-              disabled={Boolean(runningAction)}
-              onClick={handleRetrySingleRtdn}
-            >
-              Retry Single RTDN Event
-            </Button>
+              <p className="mt-1 text-sm leading-6 text-[#66736A]">
+                Real-time Developer Notification events received from Google
+                Play Pub/Sub.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <SearchField
+                value={rtdnSearch}
+                placeholder="Search message, product, order, token hash..."
+                onChange={(value) => {
+                  setRtdnSearch(value);
+                  setRtdnPage(1);
+                }}
+              />
+
+              <select
+                value={rtdnStatus}
+                onChange={(event) => {
+                  setRtdnStatus(
+                    event.target.value as GooglePlayRtdnEventStatus | "",
+                  );
+                  setRtdnPage(1);
+                }}
+                className="h-11 rounded-full border border-[#D9E2DA] bg-white px-4 text-sm outline-none"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="processed">Processed</option>
+                <option value="failed">Failed</option>
+                <option value="dead_letter">Dead Letter</option>
+              </select>
+
+              <input
+                value={rtdnKind}
+                onChange={(event) => {
+                  setRtdnKind(event.target.value);
+                  setRtdnPage(1);
+                }}
+                placeholder="Notification kind"
+                className="h-11 rounded-full border border-[#D9E2DA] bg-white px-4 text-sm outline-none placeholder:text-[#AAB3AD]"
+              />
+
+              <Button
+                variant="outline"
+                disabled={Boolean(runningAction)}
+                onClick={handleRetryFailedRtdn}
+                className="gap-2"
+              >
+                {runningAction === "retry-rtdn-failed" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RotateCcw className="size-4" />
+                )}
+                Retry Failed
+              </Button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[1380px]">
+              <thead>
+                <tr className="bg-[#F7FAF7] text-left text-xs font-bold uppercase text-[#66736A]">
+                  <th className="px-4 py-4">Message ID</th>
+                  <th className="px-4 py-4">Notification</th>
+                  <th className="px-4 py-4">Product / Order</th>
+                  <th className="px-4 py-4">Token Hash</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4">Attempts</th>
+                  <th className="px-4 py-4">Received At</th>
+                  <th className="px-4 py-4">Processed At</th>
+                  <th className="px-4 py-4">Last Error</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {rtdnResponse.items.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={10}
+                      className="px-4 py-12 text-center text-sm text-[#66736A]"
+                    >
+                      No RTDN events found.
+                    </td>
+                  </tr>
+                )}
+
+                {rtdnResponse.items.map((event) => (
+                  <tr key={event.id} className="border-t border-[#EEF3EC]">
+                    <td className="max-w-[220px] break-all px-4 py-5 text-xs text-[#202420]">
+                      {event.messageId || "—"}
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      <p className="font-semibold text-[#202420]">
+                        {formatLabel(event.notificationKind)}
+                      </p>
+                      <p className="mt-1">
+                        Type: {formatLabel(event.notificationType)}
+                      </p>
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      <p className="max-w-[220px] break-all">
+                        Product: {event.productId || "—"}
+                      </p>
+                      <p className="mt-1 max-w-[220px] break-all">
+                        Order: {event.providerOrderId || "—"}
+                      </p>
+                    </td>
+
+                    <td className="max-w-[220px] break-all px-4 py-5 text-xs text-[#4F5B52]">
+                      {event.purchaseTokenHash || "—"}
+                    </td>
+
+                    <td className="px-4 py-5">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                          event.status,
+                        )}`}
+                      >
+                        {formatLabel(event.status)}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-5 text-sm font-semibold text-[#202420]">
+                      {event.attemptCount}
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      {formatDateTime(event.receivedAt)}
+                    </td>
+
+                    <td className="px-4 py-5 text-xs text-[#4F5B52]">
+                      {formatDateTime(event.processedAt)}
+                    </td>
+
+                    <td className="max-w-[260px] px-4 py-5 text-xs text-[#B42318]">
+                      {event.lastErrorMessage || "—"}
+                    </td>
+
+                    <td className="px-4 py-5">
+                      <div className="flex justify-end gap-3">
+                        <button
+                          type="button"
+                          disabled={isDetailsLoading}
+                          onClick={() => void openRtdnDetails(event.id)}
+                          className="flex size-9 items-center justify-center rounded-full bg-[#EEF3EC] text-[#4F5B52]"
+                          aria-label="View RTDN event"
+                        >
+                          <Eye className="size-4" />
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={Boolean(runningAction)}
+                          onClick={() => handleRetryRtdnRow(event.id)}
+                          className="flex size-9 items-center justify-center rounded-full bg-[#FFF3C6] text-[#B77900] disabled:opacity-60"
+                          aria-label="Retry RTDN event"
+                        >
+                          {runningAction === `retry-rtdn-${event.id}` ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <RotateCcw className="size-4" />
+                          )}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <PaginationBar
+            page={rtdnResponse.meta.page}
+            totalPages={rtdnResponse.meta.totalPages}
+            total={rtdnResponse.meta.total}
+            onPageChange={setRtdnPage}
+          />
+        </Card>
+
+        <Card
+          padding="lg"
+          rounded="3xl"
+          shadow="sm"
+          className="border border-[#FFE2A8] bg-[#FFFDF6]"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-1 size-5 text-[#A86500]" />
+
+            <div>
+              <h2 className="text-lg font-bold text-[#202420]">
+                Sensitive data safety
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-[#6F4A00]">
+                This page must never show full purchase tokens, encrypted
+                payloads, private keys, .p8 files or raw signed payloads.
+                Backend only returns token hashes, provider order IDs, sanitized
+                authoritative payload and processing result.
+              </p>
+            </div>
           </div>
         </Card>
-      </div>
+      </section>
 
-      <Card
-        padding="lg"
-        rounded="3xl"
-        shadow="sm"
-        className="border border-[#FFE2A8] bg-[#FFFDF6]"
-      >
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="mt-1 size-5 text-[#A86500]" />
+      <VoidedRecordDetailsDialog
+        record={selectedVoidedRecord}
+        onClose={() => setSelectedVoidedRecord(null)}
+      />
 
-          <div>
-            <h2 className="text-lg font-bold text-[#202420]">
-              Backend endpoint limitation
-            </h2>
-
-            <p className="mt-2 text-sm leading-6 text-[#6F4A00]">
-              This backend currently exposes reconciliation status and retry
-              actions, but not a paginated voided-purchase record list or RTDN
-              event list. Because of that, this page cannot show row-level
-              records, sanitized payload dialogs, or “Open matched order” from a
-              table yet.
-            </p>
-          </div>
-        </div>
-      </Card>
-    </section>
+      <RtdnEventDetailsDialog
+        event={selectedRtdnEvent}
+        onClose={() => setSelectedRtdnEvent(null)}
+      />
+    </>
   );
 }
 
@@ -693,18 +1063,6 @@ function DetailBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SmallCount({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-2xl bg-[#F7FAF7] px-4 py-4 text-center">
-      <p className="text-[10px] font-bold uppercase text-[#8A948C]">{label}</p>
-
-      <p className="mt-2 text-2xl font-bold text-[#006B3F]">
-        {value.toLocaleString()}
-      </p>
-    </div>
-  );
-}
-
 function DateTimeField({
   label,
   value,
@@ -761,73 +1119,261 @@ function NumberField({
   );
 }
 
-function TextField({
-  label,
+function SearchField({
   value,
   placeholder,
   onChange,
 }: {
-  label: string;
   value: string;
   placeholder: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-bold uppercase text-[#66736A]">
-        {label}
-      </span>
+    <div className="flex h-11 min-w-[260px] items-center gap-2 rounded-full border border-[#D9E2DA] bg-white px-4">
+      <Search className="size-4 text-[#8A948D]" />
 
       <input
-        type="text"
         value={value}
         placeholder={placeholder}
         onChange={(event) => onChange(event.target.value)}
-        className="h-12 w-full rounded-full bg-[#EEF3EC] px-5 text-sm outline-none placeholder:text-[#AAB3AD]"
+        className="w-full bg-transparent text-sm outline-none placeholder:text-[#AAB3AD]"
       />
-    </label>
+    </div>
   );
 }
 
-function RetryOptionsForm({
-  includeDeadLetter,
-  limit,
-  onIncludeDeadLetterChange,
-  onLimitChange,
+function PaginationBar({
+  page,
+  totalPages,
+  total,
+  onPageChange,
 }: {
-  includeDeadLetter: boolean;
-  limit: number;
-  onIncludeDeadLetterChange: (value: boolean) => void;
-  onLimitChange: (value: number) => void;
+  page: number;
+  totalPages: number;
+  total: number;
+  onPageChange: (page: number) => void;
 }) {
   return (
-    <div className="grid gap-4 md:grid-cols-[1fr_150px]">
-      <label className="flex items-center justify-between gap-4 rounded-2xl bg-[#F7FAF7] px-5 py-4">
-        <div>
-          <p className="text-sm font-semibold text-[#202420]">
-            Include dead-letter records
-          </p>
+    <div className="flex flex-col justify-between gap-4 border-t border-[#EEF3EC] pt-5 text-sm text-[#66736A] md:flex-row md:items-center">
+      <p>
+        Total records:{" "}
+        <span className="font-bold text-[#202420]">
+          {total.toLocaleString()}
+        </span>
+      </p>
 
-          <p className="mt-1 text-xs text-[#8A948D]">
-            Use carefully. Dead-letter records already exhausted normal retry.
-          </p>
-        </div>
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page <= 1}
+          onClick={() => onPageChange(page - 1)}
+        >
+          Previous
+        </Button>
 
-        <input
-          type="checkbox"
-          checked={includeDeadLetter}
-          onChange={(event) => onIncludeDeadLetterChange(event.target.checked)}
-          className="size-5 accent-[#006B3F]"
-        />
-      </label>
+        <span className="text-sm font-semibold text-[#202420]">
+          Page {page} of {Math.max(totalPages, 1)}
+        </span>
 
-      <NumberField
-        label="Retry Limit"
-        value={limit}
-        min={1}
-        max={1000}
-        onChange={onLimitChange}
-      />
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={page >= totalPages}
+          onClick={() => onPageChange(page + 1)}
+        >
+          Next
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function VoidedRecordDetailsDialog({
+  record,
+  onClose,
+}: {
+  record: GooglePlayVoidedPurchaseRecord | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={Boolean(record)} onClose={onClose} size="lg" className="p-0">
+      <div className="border-b border-[#EEF3EC] px-7 py-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-6 top-6 flex size-9 items-center justify-center rounded-full bg-[#EEF3EC]"
+        >
+          <X className="size-4" />
+        </button>
+
+        <h2 className="text-xl font-bold text-[#006B3F]">
+          Voided Purchase Record
+        </h2>
+
+        <p className="mt-2 text-sm text-[#66736A]">
+          Sanitized Google Play voided-purchase processing details.
+        </p>
+      </div>
+
+      <div className="max-h-[70vh] overflow-y-auto px-7 py-6">
+        {record && (
+          <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <DetailBox label="Record ID" value={record.id} />
+              <DetailBox label="Status" value={formatLabel(record.status)} />
+              <DetailBox
+                label="Provider Order ID"
+                value={record.providerOrderId || "—"}
+              />
+              <DetailBox
+                label="Purchase Token Hash"
+                value={record.purchaseTokenHash || "—"}
+              />
+              <DetailBox
+                label="Matched Domain"
+                value={formatLabel(record.matchedDomain)}
+              />
+              <DetailBox
+                label="Internal Order ID"
+                value={record.internalOrderId || "—"}
+              />
+              <DetailBox
+                label="Voided Time"
+                value={formatDateTime(record.voidedTime)}
+              />
+              <DetailBox
+                label="Processed At"
+                value={formatDateTime(record.processedAt)}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-[#F4D5D2] bg-[#FFF7F6] p-4">
+              <p className="text-xs font-bold uppercase text-[#B42318]">
+                Last Error
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-[#7A2E25]">
+                {record.lastErrorMessage || "—"}
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-[#F7FAF7] p-4">
+              <p className="text-xs font-bold uppercase text-[#66736A]">
+                Processing Result
+              </p>
+
+              <pre className="mt-3 max-h-[300px] overflow-auto rounded-xl bg-white p-4 text-xs text-[#202420]">
+                {formatJson(record.processingResult)}
+              </pre>
+            </div>
+          </div>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+function RtdnEventDetailsDialog({
+  event,
+  onClose,
+}: {
+  event: GooglePlayRtdnEvent | null;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog open={Boolean(event)} onClose={onClose} size="lg" className="p-0">
+      <div className="border-b border-[#EEF3EC] px-7 py-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-6 top-6 flex size-9 items-center justify-center rounded-full bg-[#EEF3EC]"
+        >
+          <X className="size-4" />
+        </button>
+
+        <h2 className="text-xl font-bold text-[#006B3F]">
+          Google Play RTDN Event
+        </h2>
+
+        <p className="mt-2 text-sm text-[#66736A]">
+          Sanitized Pub/Sub notification and backend processing result.
+        </p>
+      </div>
+
+      <div className="max-h-[70vh] overflow-y-auto px-7 py-6">
+        {event && (
+          <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <DetailBox label="Event ID" value={event.id} />
+              <DetailBox label="Message ID" value={event.messageId || "—"} />
+              <DetailBox
+                label="Notification Kind"
+                value={formatLabel(event.notificationKind)}
+              />
+              <DetailBox
+                label="Notification Type"
+                value={formatLabel(event.notificationType)}
+              />
+              <DetailBox label="Product ID" value={event.productId || "—"} />
+              <DetailBox
+                label="Provider Order ID"
+                value={event.providerOrderId || "—"}
+              />
+              <DetailBox
+                label="Purchase Token Hash"
+                value={event.purchaseTokenHash || "—"}
+              />
+              <DetailBox label="Status" value={formatLabel(event.status)} />
+              <DetailBox
+                label="Received At"
+                value={formatDateTime(event.receivedAt)}
+              />
+              <DetailBox
+                label="Processed At"
+                value={formatDateTime(event.processedAt)}
+              />
+            </div>
+
+            <div className="rounded-2xl border border-[#F4D5D2] bg-[#FFF7F6] p-4">
+              <p className="text-xs font-bold uppercase text-[#B42318]">
+                Last Error
+              </p>
+
+              <p className="mt-2 text-sm leading-6 text-[#7A2E25]">
+                {event.lastErrorMessage || "—"}
+              </p>
+            </div>
+
+            <JsonBlock
+              title="Pub/Sub Attributes"
+              value={event.pubsubAttributes}
+            />
+
+            <JsonBlock
+              title="Authoritative Payload"
+              value={event.authoritativePayload}
+            />
+
+            <JsonBlock
+              title="Processing Result"
+              value={event.processingResult}
+            />
+          </div>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+function JsonBlock({ title, value }: { title: string; value: unknown }) {
+  return (
+    <div className="rounded-2xl bg-[#F7FAF7] p-4">
+      <p className="text-xs font-bold uppercase text-[#66736A]">{title}</p>
+
+      <pre className="mt-3 max-h-[300px] overflow-auto rounded-xl bg-white p-4 text-xs text-[#202420]">
+        {formatJson(value)}
+      </pre>
     </div>
   );
 }
