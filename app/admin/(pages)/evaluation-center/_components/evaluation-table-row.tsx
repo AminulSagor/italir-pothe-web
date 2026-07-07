@@ -34,6 +34,38 @@ const formatSubmissionDate = (value: string | null) => {
       });
 };
 
+const canOpenAttempt = (item: EvaluationQueueItem) => {
+  if (item.action.enabled) return true;
+
+  return (
+    item.action.type === "view_result" ||
+    item.action.type === "review_sent" ||
+    item.status === "evaluated" ||
+    item.status === "certificate_issued" ||
+    item.status === "retake_requested"
+  );
+};
+
+const getActionLabel = (item: EvaluationQueueItem) => {
+  if (item.status === "certificate_issued") {
+    return "View Certificate";
+  }
+
+  if (item.status === "evaluated") {
+    return "View Result";
+  }
+
+  if (item.status === "retake_requested") {
+    return "View Feedback";
+  }
+
+  if (item.action.type === "review_sent") {
+    return "View Result";
+  }
+
+  return item.action.label;
+};
+
 export default function EvaluationTableRow({
   item,
   targetWaitHours,
@@ -41,6 +73,8 @@ export default function EvaluationTableRow({
 }: EvaluationTableRowProps) {
   const exceededTarget =
     item.timeInQueueSeconds > Math.max(0, targetWaitHours) * 3600;
+
+  const canOpen = canOpenAttempt(item);
 
   return (
     <tr className="border-b border-[#EEF2EE] last:border-b-0">
@@ -108,15 +142,17 @@ export default function EvaluationTableRow({
       <td className="px-4 py-6">
         <Button
           size="sm"
-          disabled={!item.action.enabled}
+          disabled={!canOpen}
           onClick={() => onOpen(item)}
           className={
-            !item.action.enabled
+            !canOpen
               ? "bg-[#EEF0ED] text-[#9BA49D] hover:bg-[#EEF0ED]"
-              : ""
+              : item.status === "certificate_issued"
+                ? "bg-[#DDF3E8] !text-[#006B3F] hover:bg-[#CBEBD8]"
+                : ""
           }
         >
-          {item.action.label}
+          {getActionLabel(item)}
         </Button>
       </td>
     </tr>

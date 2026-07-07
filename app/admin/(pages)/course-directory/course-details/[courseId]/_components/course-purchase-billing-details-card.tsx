@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   CheckCircle2,
   Clock3,
@@ -8,9 +9,11 @@ import {
 } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
+import type { CourseEnrollmentDetails } from "@/types/course-directory/course-commerce.type";
 
 interface CoursePurchaseBillingDetailsCardProps {
-  enrollment: unknown;
+  enrollment: CourseEnrollmentDetails;
+  footerActions?: ReactNode;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -86,29 +89,34 @@ const getVerificationStyle = (status?: string | null) => {
 
 export default function CoursePurchaseBillingDetailsCard({
   enrollment,
+  footerActions,
 }: CoursePurchaseBillingDetailsCardProps) {
-  const root = isRecord(enrollment) ? enrollment : {};
+  const enrollmentRecord = enrollment as unknown as UnknownRecord;
 
-  const order = getRecord(root, "order");
+  const order = getRecord(enrollmentRecord, "order");
 
   const providerSnapshot =
-    getRecord(order, "providerSnapshot") || getRecord(root, "storeProduct");
+    getRecord(order, "providerSnapshot") ||
+    getRecord(enrollmentRecord, "storeProduct");
 
   const providerTransaction =
-    getRecord(order, "providerTransaction") || getRecord(root, "verification");
+    getRecord(order, "providerTransaction") ||
+    getRecord(enrollmentRecord, "verification");
 
   const refundOperation =
-    getRecord(order, "refundOperation") || getRecord(root, "refundOperation");
+    getRecord(order, "refundOperation") ||
+    getRecord(enrollmentRecord, "refundOperation");
 
-  const payment = getRecord(root, "payment");
+  const payment = getRecord(enrollmentRecord, "payment");
 
-  const subscription = getRecord(root, "subscription");
+  const subscription = getRecord(enrollmentRecord, "subscription");
 
   const provider =
     getString(providerSnapshot, "provider") ||
     getString(providerTransaction, "provider") ||
     getString(payment, "provider") ||
-    getString(order, "paymentProvider");
+    getString(order, "paymentProvider") ||
+    enrollment.paymentProvider;
 
   const productId =
     getString(providerSnapshot, "productId") ||
@@ -130,10 +138,10 @@ export default function CoursePurchaseBillingDetailsCard({
 
   const VerificationIcon = verificationStyle.icon;
 
-  const providerTransactionId = getString(
-    providerTransaction,
-    "providerTransactionId",
-  );
+  const providerTransactionId =
+    getString(providerTransaction, "providerTransactionId") ||
+    enrollment.paymentReference ||
+    "";
 
   const tokenHash =
     getString(providerTransaction, "tokenHash") ||
@@ -148,7 +156,11 @@ export default function CoursePurchaseBillingDetailsCard({
   const refundedAt =
     getString(order, "refundedAt") ||
     getString(payment, "refundedAt") ||
-    getString(root, "refundedAt");
+    enrollment.refundedAt ||
+    "";
+
+  const orderStatus =
+    getString(order, "status") || enrollment.paymentStatus || enrollment.status;
 
   return (
     <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-7">
@@ -231,12 +243,11 @@ export default function CoursePurchaseBillingDetailsCard({
 
           <DetailBox label="Refunded At" value={formatDateTime(refundedAt)} />
 
-          <DetailBox
-            label="Order Status"
-            value={formatLabel(getString(order, "status"))}
-          />
+          <DetailBox label="Order Status" value={formatLabel(orderStatus)} />
         </div>
       </section>
+
+      {footerActions}
 
       <section className="rounded-3xl border border-[#F4D5D2] bg-[#FFF7F6] p-5">
         <div className="mb-4 flex items-center gap-3">
