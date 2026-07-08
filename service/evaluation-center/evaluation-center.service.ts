@@ -25,6 +25,8 @@ const ADMIN_EVALUATION_ENDPOINT = "/admin/final-exam-evaluations";
 
 const ADMIN_CERTIFICATES_ENDPOINT = "/admin/certificates";
 
+const PUBLIC_CERTIFICATES_ENDPOINT = "/certificates";
+
 type QueryValue = string | number | undefined | null;
 
 interface SignedReadUrlResponse {
@@ -224,6 +226,20 @@ export const verifyAdminCertificate = async (identifier: string) => {
 
   return serviceClient.get<VerifyCertificateResponse>(
     `${ADMIN_CERTIFICATES_ENDPOINT}/verify/${encodeURIComponent(
+      normalizedIdentifier,
+    )}`,
+  );
+};
+
+export const verifyPublicCertificate = async (identifier: string) => {
+  const normalizedIdentifier = identifier.trim();
+
+  if (!normalizedIdentifier) {
+    throw new Error("Certificate identifier is required.");
+  }
+
+  return serviceClient.get<VerifyCertificateResponse>(
+    `${PUBLIC_CERTIFICATES_ENDPOINT}/public/verify/${encodeURIComponent(
       normalizedIdentifier,
     )}`,
   );
