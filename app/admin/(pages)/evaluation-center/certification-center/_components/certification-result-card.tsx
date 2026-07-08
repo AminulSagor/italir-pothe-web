@@ -21,9 +21,7 @@ import type { CertificationTab } from "./certification-center-client";
 interface CertificationResultCardProps {
   activeTab: CertificationTab;
   data: CertificationCenterResponse;
-
   onTabChange: (tab: CertificationTab) => void;
-
   onIssueCertificate: () => void;
   onRequestRetake: () => void;
   onReEvaluate: () => void;
@@ -34,9 +32,7 @@ interface CertificationResultCardProps {
 }
 
 const formatDate = (value: string | null) => {
-  if (!value) {
-    return "Pending";
-  }
+  if (!value) return "Pending";
 
   const date = new Date(value);
 
@@ -259,17 +255,18 @@ function PassedContent({ data }: { data: CertificationCenterResponse }) {
 
           <div className="text-right">
             <p className="text-[9px] font-bold uppercase text-[#202420]">
-              Certificato Di Competenza
+              Certificate of Completion
             </p>
 
             <p className="text-[8px] text-[#66736A]">
-              ID: {certificate?.certificateNumber || "Pending issue"}
+              Certificate ID:{" "}
+              {certificate?.certificateNumber || "Pending issue"}
             </p>
           </div>
         </div>
 
-        <p className="text-xs italic text-[#66736A]">
-          Official Italian Language Institute
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#66736A]">
+          Italir Pothe
         </p>
 
         <h3 className="mt-3 text-xl font-bold text-[#006B3F]">
@@ -279,11 +276,11 @@ function PassedContent({ data }: { data: CertificationCenterResponse }) {
         <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-[#59F94D]" />
 
         <p className="mt-4 text-xs text-[#66736A]">
-          Has successfully attained the proficiency level of
+          has successfully completed the course
         </p>
 
-        <h4 className="mt-2 text-3xl font-bold text-[#006B3F]">
-          {data.course.level || "Final Exam"}
+        <h4 className="mt-2 text-2xl font-bold text-[#202420]">
+          {data.course.title}
         </h4>
 
         <p className="mt-5 text-[10px] text-[#66736A]">
