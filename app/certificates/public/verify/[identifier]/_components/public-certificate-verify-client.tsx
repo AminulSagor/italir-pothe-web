@@ -4,7 +4,6 @@ import {
   Award,
   CalendarDays,
   CheckCircle2,
-  Download,
   ExternalLink,
   Loader2,
   ShieldCheck,
@@ -13,20 +12,120 @@ import {
   XCircle,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/UI/buttons/button";
 import { verifyPublicCertificate } from "@/service/evaluation-center/evaluation-center.service";
-import type { VerifyCertificateResponse } from "@/types/evaluation-center/evaluation-center.type";
 
 interface PublicCertificateVerifyClientProps {
   identifier: string;
+}
+
+interface PublicCertificateFile {
+  id: string;
+  originalName?: string;
+  mimeType?: string;
+  sizeBytes?: number;
+}
+
+interface NormalizedPublicCertificate {
+  id: string;
+  certificateNumber: string;
+  recipientName: string;
+  courseTitle: string;
+  courseLevel: string | null;
+  verificationUrl: string | null;
+  status: string;
+  issuedAt: string | null;
+  revokedAt: string | null;
+  revocationReason: string | null;
+  isValid: boolean;
+  pdfUrl: string | null;
+  pdfFile: PublicCertificateFile | null;
 }
 
 const getErrorMessage = (error: unknown) => {
   return error instanceof Error
     ? error.message
     : "Unable to verify certificate.";
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null;
+};
+
+const readString = (source: Record<string, unknown> | null, key: string) => {
+  if (!source) return "";
+
+  const value = source[key];
+
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+};
+
+const readBoolean = (source: Record<string, unknown> | null, key: string) => {
+  if (!source) return false;
+
+  const value = source[key];
+
+  return value === true;
+};
+
+const normalizePublicCertificate = (
+  response: unknown,
+): NormalizedPublicCertificate | null => {
+  if (!isRecord(response)) {
+    return null;
+  }
+
+  const nestedCertificate = isRecord(response.certificate)
+    ? response.certificate
+    : null;
+
+  const source = nestedCertificate || response;
+
+  const id = readString(source, "id");
+
+  const certificateNumber = readString(source, "certificateNumber");
+
+  if (!id || !certificateNumber) {
+    return null;
+  }
+
+  const pdfFile = isRecord(source.pdfFile)
+    ? {
+        id: readString(source.pdfFile, "id"),
+        originalName: readString(source.pdfFile, "originalName"),
+        mimeType: readString(source.pdfFile, "mimeType"),
+        sizeBytes: Number(source.pdfFile.sizeBytes || 0),
+      }
+    : null;
+
+  return {
+    id,
+    certificateNumber,
+    recipientName:
+      readString(source, "recipientName") ||
+      readString(source, "studentName") ||
+      "—",
+    courseTitle:
+      readString(source, "courseTitle") ||
+      readString(source, "courseName") ||
+      "—",
+    courseLevel: readString(source, "courseLevel") || null,
+    verificationUrl: readString(source, "verificationUrl") || null,
+    status: readString(source, "status") || "unknown",
+    issuedAt: readString(source, "issuedAt") || null,
+    revokedAt: readString(source, "revokedAt") || null,
+    revocationReason: readString(source, "revocationReason") || null,
+    isValid: readBoolean(response, "isValid") || readBoolean(source, "isValid"),
+    pdfUrl:
+      readString(source, "pdfUrl") || readString(source, "publicUrl") || null,
+    pdfFile,
+  };
 };
 
 const formatDate = (value?: string | null) => {
@@ -54,11 +153,15 @@ const formatLabel = (value?: string | null) => {
 export default function PublicCertificateVerifyClient({
   identifier,
 }: PublicCertificateVerifyClientProps) {
-  const [data, setData] = useState<VerifyCertificateResponse | null>(null);
+  const [rawData, setRawData] = useState<unknown>(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState("");
+
+  const certificate = useMemo(() => {
+    return normalizePublicCertificate(rawData);
+  }, [rawData]);
 
   useEffect(() => {
     let mounted = true;
@@ -73,10 +176,11 @@ export default function PublicCertificateVerifyClient({
         );
 
         if (mounted) {
-          setData(response);
+          setRawData(response);
         }
       } catch (error) {
         if (mounted) {
+          setRawData(null);
           setErrorMessage(getErrorMessage(error));
         }
       } finally {
@@ -93,12 +197,10 @@ export default function PublicCertificateVerifyClient({
     };
   }, [identifier]);
 
-  const certificate = data?.certificate;
-
-  const isValid = data?.isValid === true;
+  const isValid = certificate?.isValid === true;
 
   const isRevoked =
-    data?.reason === "revoked" || certificate?.status === "revoked";
+    certificate?.status === "revoked" || Boolean(certificate?.revokedAt);
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#F3FAF4] px-5 py-8 text-[#142418]">
@@ -136,7 +238,7 @@ export default function PublicCertificateVerifyClient({
             </div>
           ) : errorMessage ? (
             <NotFoundState title="Verification failed" message={errorMessage} />
-          ) : !data || !certificate ? (
+          ) : !certificate ? (
             <NotFoundState
               title="Certificate not found"
               message="We could not find a certificate for this verification link or certificate ID."
@@ -171,14 +273,13 @@ export default function PublicCertificateVerifyClient({
 
               <p className="mt-5 max-w-2xl text-base leading-7 text-[#66736A]">
                 This page verifies the certificate record directly from the
-                Italir Pothe backend. The certificate number and certificate ID
-                are backend-generated and are not static frontend values.
+                Italir Pothe backend.
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-2">
                 <DetailCard
                   icon={Award}
-                  label="Certificate ID"
+                  label="Certificate Number"
                   value={certificate.certificateNumber}
                 />
 
@@ -208,9 +309,27 @@ export default function PublicCertificateVerifyClient({
 
                 <DetailCard
                   icon={Award}
-                  label="Backend Record"
+                  label="Certificate ID"
                   value={certificate.id}
                 />
+
+                {certificate.courseLevel && (
+                  <DetailCard
+                    icon={Award}
+                    label="Course Level"
+                    value={certificate.courseLevel}
+                  />
+                )}
+
+                {certificate.pdfFile && (
+                  <DetailCard
+                    icon={Award}
+                    label="PDF File"
+                    value={
+                      certificate.pdfFile.originalName || certificate.pdfFile.id
+                    }
+                  />
+                )}
               </div>
 
               {isRevoked && (
@@ -249,7 +368,7 @@ export default function PublicCertificateVerifyClient({
                     }
                     className="gap-3"
                   >
-                    <Download className="size-5" />
+                    <ExternalLink className="size-5" />
                     Open Certificate PDF
                   </Button>
                 )}
@@ -278,6 +397,7 @@ export default function PublicCertificateVerifyClient({
 
         <div className="relative hidden items-center justify-center bg-[#ECF8F0] p-10 lg:flex">
           <div className="absolute left-16 top-16 size-28 rounded-full border border-[#006B3F]/10" />
+
           <div className="absolute bottom-20 right-16 size-36 rounded-full border border-[#006B3F]/10" />
 
           <div className="relative flex size-80 items-center justify-center rounded-full bg-white shadow-xl shadow-[#006B3F]/10">
