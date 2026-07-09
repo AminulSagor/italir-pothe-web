@@ -165,6 +165,28 @@ const getCouponTrailingDiscount = (couponCode: string) => {
   return match ? Number(match[1]) : null;
 };
 
+const buildCouponProviderProductId = (regularProductId: string) => {
+  const normalized = regularProductId.trim();
+
+  if (!normalized) return "";
+
+  if (normalized.toLowerCase().startsWith("coupon_")) {
+    return normalized;
+  }
+
+  return `coupon_${normalized}`;
+};
+
+const isValidCouponProviderProductId = (
+  regularProductId: string,
+  discountedProductId: string,
+) => {
+  return (
+    discountedProductId.trim() ===
+    buildCouponProviderProductId(regularProductId)
+  );
+};
+
 const getSnapshot = (
   form: InfluencerFormState,
   socialHandles: SocialHandleForm[],
@@ -441,6 +463,12 @@ export default function InfluencerPartnerForm(
           ...values,
         };
 
+        if (values.regularProviderProductId !== undefined) {
+          nextItem.discountedProviderProductId = buildCouponProviderProductId(
+            values.regularProviderProductId,
+          );
+        }
+
         if (values.productDomain === "store_package") {
           nextItem.courseId = "";
         }
@@ -587,11 +615,28 @@ export default function InfluencerPartnerForm(
       }
 
       if (
-        mapping.regularProviderProductId.trim() ===
-        mapping.discountedProviderProductId.trim()
+        mapping.regularProviderProductId
+          .trim()
+          .toLowerCase()
+          .startsWith("coupon_")
       ) {
         toast.error(
-          `Regular and discounted product IDs must be different in mapping row ${rowNumber}.`,
+          `Regular product ID must not start with coupon_ in mapping row ${rowNumber}.`,
+        );
+
+        return false;
+      }
+
+      if (
+        !isValidCouponProviderProductId(
+          mapping.regularProviderProductId,
+          mapping.discountedProviderProductId,
+        )
+      ) {
+        toast.error(
+          `Discounted product ID must be ${buildCouponProviderProductId(
+            mapping.regularProviderProductId,
+          )} in mapping row ${rowNumber}.`,
         );
 
         return false;
@@ -1227,12 +1272,9 @@ export default function InfluencerPartnerForm(
                     label="Discounted Product ID"
                     value={mapping.discountedProviderProductId}
                     required
-                    placeholder="ai_bundle_001_20"
-                    onChange={(value) =>
-                      updateProviderMapping(index, {
-                        discountedProviderProductId: value,
-                      })
-                    }
+                    disabled
+                    placeholder="coupon_ai_bundle_001"
+                    onChange={() => undefined}
                   />
 
                   <InputField

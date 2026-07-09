@@ -11,7 +11,10 @@ import {
   refundAdminStoreOrder,
 } from "@/service/package-store/package-store.service";
 import type { StoreAdminOrder } from "@/types/package-store/package-store.type";
-import { downloadTextFile } from "@/utils/package-store-download.util";
+import {
+  downloadBlobFile,
+  downloadTextFile,
+} from "@/utils/package-store-download.util";
 
 import CustomerInfoCard from "./customer-info-card";
 import OrderDetailsHeader from "./order-details-header";
@@ -81,20 +84,19 @@ export default function OrderDetailsClient({
   const handleDownloadInvoice = async () => {
     if (!order) return;
 
-    const toastId = toast.loading("Preparing invoice...");
+    const toastId = toast.loading("Preparing PDF invoice...");
 
     try {
       setIsDownloading(true);
 
-      const html = await getAdminStoreOrderInvoice(order.id);
+      const invoice = await getAdminStoreOrderInvoice(order.id);
 
-      downloadTextFile(
-        html,
-        `invoice-${order.orderNumber}.html`,
-        "text/html;charset=utf-8",
+      downloadBlobFile(
+        invoice.blob,
+        invoice.fileName || `italir-pothe-invoice-${order.orderNumber}.pdf`,
       );
 
-      toast.success("Invoice downloaded.", {
+      toast.success("PDF invoice downloaded.", {
         id: toastId,
       });
     } catch (error) {

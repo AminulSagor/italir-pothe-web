@@ -17,10 +17,18 @@ export type ServiceClientError = Error & {
   };
 };
 
+export interface ServiceFileDownload {
+  blob: Blob;
+  fileName: string;
+  contentType: string;
+}
+
 const getErrorMessage = (payload?: ApiErrorPayload) => {
   if (!payload) return "Request failed";
 
-  if (Array.isArray(payload.message)) return payload.message.join(", ");
+  if (Array.isArray(payload.message)) {
+    return payload.message.join(", ");
+  }
 
   return payload.message || payload.error || "Request failed";
 };
@@ -37,6 +45,22 @@ const createServiceError = (
   };
 
   return error;
+};
+
+const getFileNameFromContentDisposition = (contentDisposition?: string) => {
+  if (!contentDisposition) {
+    return "";
+  }
+
+  const utf8Match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1].replace(/"/g, ""));
+  }
+
+  const normalMatch = contentDisposition.match(/filename="?([^"]+)"?/i);
+
+  return normalMatch?.[1] || "";
 };
 
 const apiClient = axios.create({
@@ -60,6 +84,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiErrorPayload>) => {
     const status = error.response?.status || 500;
+
     const data = error.response?.data || {
       message: error.message || "Request failed",
       statusCode: status,
@@ -84,22 +109,57 @@ apiClient.interceptors.response.use(
 export const serviceClient = {
   get: async <T>(path: string) => {
     const response = await apiClient.get<T>(path);
+
     return response.data;
   },
+
+  getFile: async (
+    path: string,
+    fallbackFileName: string,
+  ): Promise<ServiceFileDownload> => {
+    const response = await apiClient.get<Blob>(path, {
+      responseType: "blob",
+    });
+
+    const headers = response.headers as Record<string, string | undefined>;
+
+    const contentType =
+      headers["content-type"] ||
+      response.data.type ||
+      "application/octet-stream";
+
+    const fileName =
+      getFileNameFromContentDisposition(headers["content-disposition"]) ||
+      fallbackFileName;
+
+    return {
+      blob: response.data,
+      fileName,
+      contentType,
+    };
+  },
+
   post: async <T>(path: string, body?: unknown) => {
     const response = await apiClient.post<T>(path, body);
+
     return response.data;
   },
+
   patch: async <T>(path: string, body?: unknown) => {
     const response = await apiClient.patch<T>(path, body);
+
     return response.data;
   },
+
   put: async <T>(path: string, body?: unknown) => {
     const response = await apiClient.put<T>(path, body);
+
     return response.data;
   },
+
   delete: async <T>(path: string) => {
     const response = await apiClient.delete<T>(path);
+
     return response.data;
   },
 };

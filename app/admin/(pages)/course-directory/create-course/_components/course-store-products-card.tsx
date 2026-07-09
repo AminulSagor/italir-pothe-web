@@ -187,8 +187,8 @@ export default function CourseStoreProductsCard({
               </h2>
 
               <p className="mt-1 max-w-xl text-sm leading-6 text-[#66736A]">
-                Connect this course to its Google Play and App Store
-                non-consumable products.
+                Connect this course to its regular and coupon_ Google Play / App
+                Store non-consumable products.
               </p>
             </div>
           </div>

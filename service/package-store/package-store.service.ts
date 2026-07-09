@@ -269,8 +269,9 @@ export const getAdminStoreOrderById = async (orderId: string) => {
 export const getAdminStoreOrderInvoice = async (orderId: string) => {
   const safeOrderId = assertValidUuid(orderId, "Order ID");
 
-  return serviceClient.get<string>(
+  return serviceClient.getFile(
     `${PACKAGE_STORE_BASE_PATH}/orders/${safeOrderId}/invoice`,
+    `italir-pothe-invoice-${safeOrderId}.pdf`,
   );
 };
 

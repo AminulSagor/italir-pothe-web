@@ -286,7 +286,8 @@ export default function CourseStoreProductDialog({
               </p>
 
               <p className="mt-1 text-xs text-[#8A948D]">
-                Only active mappings should be offered to users.
+                Keep the regular course product and its coupon_ product active
+                when coupon checkout is enabled.
               </p>
             </div>
 
@@ -335,6 +336,14 @@ export default function CourseStoreProductDialog({
             <li>Lifetime course products must be non-consumable.</li>
             <li>
               Do not reuse old product IDs for a different course meaning.
+            </li>
+            <li>
+              Coupon course products must use coupon_ prefix. Example:
+              coupon_italian_a1_course.
+            </li>
+            <li>
+              Regular and coupon-prefixed mappings can both stay active for the
+              same provider.
             </li>
           </ul>
 
