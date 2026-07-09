@@ -80,6 +80,11 @@ export interface StoreProviderProductMutationResponse {
   providerProduct: StoreProviderProduct;
 }
 
+export interface DeleteStoreProviderProductResponse {
+  message: string;
+  providerProductId: string;
+}
+
 export interface StorePackage {
   id: string;
   type: StorePackageType;

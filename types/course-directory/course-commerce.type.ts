@@ -52,6 +52,11 @@ export interface CourseProviderProductMutationResponse {
   providerProduct: CourseProviderProduct;
 }
 
+export interface DeleteCourseProviderProductResponse {
+  message: string;
+  providerProductId: string;
+}
+
 export type CourseEnrollmentSortBy = "enrolledAt" | "amountPaid";
 
 export interface CourseEnrollmentBilling {
