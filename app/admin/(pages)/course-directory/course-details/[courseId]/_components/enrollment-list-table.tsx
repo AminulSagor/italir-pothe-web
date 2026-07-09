@@ -59,12 +59,28 @@ const formatCurrency = (enrollment: CourseEnrollment) => {
   }
 };
 
-const formatBillingLabel = (value?: string | null) => {
+const formatLabel = (value?: string | null) => {
   if (!value) return "—";
 
   return value
     .replace(/_/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
+};
+
+const formatDate = (value?: string | null) => {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 };
 
 const getBilling = (enrollment: CourseEnrollment) => {
@@ -81,24 +97,6 @@ const getProvider = (enrollment: CourseEnrollment) => {
     enrollment.paymentProvider ||
     "—"
   );
-};
-
-const getProductId = (enrollment: CourseEnrollment) => {
-  const billing = getBilling(enrollment);
-
-  return billing?.productId || enrollment.storeProduct?.productId || "—";
-};
-
-const getProductType = (enrollment: CourseEnrollment) => {
-  const billing = getBilling(enrollment);
-
-  return billing?.productType || enrollment.storeProduct?.productType || null;
-};
-
-const getEnvironment = (enrollment: CourseEnrollment) => {
-  const billing = getBilling(enrollment);
-
-  return billing?.environment || enrollment.verification?.environment || null;
 };
 
 const getVerificationStatus = (enrollment: CourseEnrollment) => {
@@ -122,15 +120,26 @@ const getTransactionId = (enrollment: CourseEnrollment) => {
   );
 };
 
-const getTokenHash = (enrollment: CourseEnrollment) => {
-  const billing = getBilling(enrollment);
+const getStatusClassName = (statusValue: string) => {
+  const normalizedStatus = statusValue.toLowerCase();
 
-  return (
-    billing?.tokenHash ||
-    enrollment.verification?.tokenHash ||
-    enrollment.verification?.purchaseTokenHash ||
-    "—"
-  );
+  if (
+    normalizedStatus === "active" ||
+    normalizedStatus === "paid" ||
+    normalizedStatus === "completed"
+  ) {
+    return "bg-[#DDF3E8] text-[#006B3F]";
+  }
+
+  if (
+    normalizedStatus === "refunded" ||
+    normalizedStatus === "cancelled" ||
+    normalizedStatus === "canceled"
+  ) {
+    return "bg-[#FCEBEC] text-[#B42318]";
+  }
+
+  return "bg-[#EEF3EC] text-[#4F5B52]";
 };
 
 const EnrollmentListTable = ({
@@ -205,7 +214,7 @@ const EnrollmentListTable = ({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1240px]">
+        <table className="w-full min-w-[1320px]">
           <thead className="bg-[#F7FAF6]">
             <tr className="text-left">
               <th className="px-10 py-6 text-xs font-bold uppercase text-[#3F463F]">
@@ -218,6 +227,14 @@ const EnrollmentListTable = ({
 
               <th className="px-6 py-6 text-xs font-bold uppercase text-[#3F463F]">
                 Amount <br /> Paid
+              </th>
+
+              <th className="px-6 py-6 text-xs font-bold uppercase text-[#3F463F]">
+                Date
+              </th>
+
+              <th className="px-6 py-6 text-xs font-bold uppercase text-[#3F463F]">
+                Status
               </th>
 
               <th className="px-6 py-6 text-xs font-bold uppercase text-[#3F463F]">
@@ -234,7 +251,7 @@ const EnrollmentListTable = ({
             {isLoading ? (
               <tr className="border-t border-black/5">
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="px-10 py-12 text-center text-sm text-black/60"
                 >
                   Loading enrollments...
@@ -242,9 +259,12 @@ const EnrollmentListTable = ({
               </tr>
             ) : enrollmentList.items.length > 0 ? (
               enrollmentList.items.map((enrollment) => {
+                const normalizedStatus = enrollment.status || "unknown";
+
                 const isInactive =
-                  enrollment.status === "refunded" ||
-                  enrollment.status === "cancelled";
+                  normalizedStatus === "refunded" ||
+                  normalizedStatus === "cancelled" ||
+                  normalizedStatus === "canceled";
 
                 return (
                   <tr
@@ -296,37 +316,33 @@ const EnrollmentListTable = ({
                       {formatCurrency(enrollment)}
                     </td>
 
+                    <td className="px-6 py-6 text-sm font-medium text-[#202420]">
+                      {formatDate(enrollment.enrolledAt)}
+                    </td>
+
+                    <td className="px-6 py-6">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${getStatusClassName(
+                          normalizedStatus,
+                        )}`}
+                      >
+                        {formatLabel(normalizedStatus)}
+                      </span>
+                    </td>
+
                     <td className="px-6 py-6 align-top">
                       <div className="space-y-1">
                         <p className="text-sm font-semibold text-[#202420]">
-                          {formatBillingLabel(getProvider(enrollment))}
+                          {formatLabel(getProvider(enrollment))}
                         </p>
 
-                        <p className="max-w-[230px] break-all text-xs text-[#4F5B52]">
-                          Product: {getProductId(enrollment)}
-                        </p>
-
-                        <p className="text-xs text-[#8A948C]">
-                          Type: {formatBillingLabel(getProductType(enrollment))}
-                        </p>
-
-                        <p className="text-xs text-[#8A948C]">
-                          Env: {formatBillingLabel(getEnvironment(enrollment))}
+                        <p className="max-w-[220px] break-all text-xs text-[#8A948C]">
+                          Txn: {getTransactionId(enrollment)}
                         </p>
 
                         <p className="text-xs text-[#8A948C]">
                           Verification:{" "}
-                          {formatBillingLabel(
-                            getVerificationStatus(enrollment),
-                          )}
-                        </p>
-
-                        <p className="max-w-[230px] break-all text-xs text-[#8A948C]">
-                          Txn: {getTransactionId(enrollment)}
-                        </p>
-
-                        <p className="max-w-[230px] break-all text-xs text-[#8A948C]">
-                          Token Hash: {getTokenHash(enrollment)}
+                          {formatLabel(getVerificationStatus(enrollment))}
                         </p>
                       </div>
                     </td>
@@ -347,7 +363,7 @@ const EnrollmentListTable = ({
             ) : (
               <tr className="border-t border-black/5">
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="px-10 py-12 text-center text-sm text-black/60"
                 >
                   No enrollments found.

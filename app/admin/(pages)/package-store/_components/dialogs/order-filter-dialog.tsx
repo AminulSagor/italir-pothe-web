@@ -94,6 +94,8 @@ export default function OrderFilterDialog({
             { label: "Pending", value: "pending" },
             { label: "Completed", value: "completed" },
             { label: "Failed", value: "failed" },
+            { label: "Cancelled", value: "cancelled" },
+            { label: "Expired", value: "expired" },
             { label: "Refunded", value: "refunded" },
           ]}
         />
@@ -124,6 +126,7 @@ export default function OrderFilterDialog({
           <span className="mb-2 block text-xs font-medium text-[#5F675F]">
             DATE FROM
           </span>
+
           <input
             type="date"
             value={draft.dateFrom}
@@ -136,6 +139,7 @@ export default function OrderFilterDialog({
           <span className="mb-2 block text-xs font-medium text-[#5F675F]">
             DATE TO
           </span>
+
           <input
             type="date"
             value={draft.dateTo}
@@ -190,6 +194,7 @@ function SelectField({
       <span className="mb-2 block text-xs font-medium text-[#5F675F]">
         {label.toUpperCase()}
       </span>
+
       <select
         value={value}
         onChange={(event) => onChange(event.target.value)}
