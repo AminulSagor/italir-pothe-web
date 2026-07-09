@@ -6,6 +6,7 @@ import type {
   CourseListParams,
   CourseListResponse,
   CreateCoursePayload,
+  PermanentlyDeleteCourseResponse,
   UpdateCoursePayload,
 } from "@/types/course-directory/course.type";
 
@@ -95,6 +96,6 @@ export const checkPermanentDeleteCourse = (courseId: string) =>
   );
 
 export const permanentlyDeleteCourse = (courseId: string) =>
-  serviceClient.delete<{ message?: string }>(
+  serviceClient.delete<PermanentlyDeleteCourseResponse>(
     COURSE_ENDPOINTS.permanentDelete(courseId),
   );

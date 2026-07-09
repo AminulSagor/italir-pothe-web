@@ -11,16 +11,9 @@ const escapeCsvCell = (value: string | number | null | undefined) => {
   return `"${normalizedValue.replace(/"/g, '""')}"`;
 };
 
-export const downloadTextFile = (
-  content: string,
-  filename: string,
-  mimeType: string,
-) => {
-  const blob = new Blob([content], {
-    type: mimeType,
-  });
-
+export const downloadBlobFile = (blob: Blob, filename: string) => {
   const downloadUrl = URL.createObjectURL(blob);
+
   const anchor = document.createElement("a");
 
   anchor.href = downloadUrl;
@@ -32,6 +25,18 @@ export const downloadTextFile = (
   anchor.remove();
 
   URL.revokeObjectURL(downloadUrl);
+};
+
+export const downloadTextFile = (
+  content: string,
+  filename: string,
+  mimeType: string,
+) => {
+  const blob = new Blob([content], {
+    type: mimeType,
+  });
+
+  downloadBlobFile(blob, filename);
 };
 
 export const downloadCurrentStoreOrdersCsv = (

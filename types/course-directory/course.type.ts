@@ -2,7 +2,7 @@ export type CourseStatus = "draft" | "published" | "archived";
 
 export interface CourseChapter {
   id: string;
-  courseId: string;
+  courseId: string | null;
   title: string;
   sortOrder: number;
   isPublished: boolean;
@@ -12,7 +12,7 @@ export interface CourseChapter {
 
 export interface CourseLesson {
   id: string;
-  courseId: string;
+  courseId: string | null;
   chapterId?: string | null;
   title: string;
   slug: string;
@@ -100,13 +100,37 @@ export interface CourseDeleteSafety {
   courseId: string;
   status: CourseStatus;
   canDeletePermanently: boolean;
-  dependencies: {
-    hasDependencies: boolean;
-    chapterCount: number;
-    lessonCount: number;
+  requiresArchiveFirst?: boolean;
+
+  dependencies?: {
+    hasDependencies?: boolean;
+    hasHistoricalDependencies?: boolean;
+    blocksPermanentDelete?: boolean;
+    chapterCount?: number;
+    lessonCount?: number;
     studentEnrollmentCount?: number;
     purchaseHistoryCount?: number;
     revenueHistoryCount?: number;
   };
+
+  recordsToBeDetached?: {
+    chapterCount: number;
+    lessonCount: number;
+    providerProductCount: number;
+    enrollmentCount: number;
+    purchaseOrderCount: number;
+    certificateCount: number;
+    examTemplateCount: number;
+    examAttemptCount: number;
+    legacyEnrollmentCount: number;
+  };
+
   recommendation: string;
+}
+
+export interface PermanentlyDeleteCourseResponse {
+  message: string;
+  id: string;
+  preservedDependencies?: CourseDeleteSafety["dependencies"];
+  detachedRecords?: CourseDeleteSafety["recordsToBeDetached"];
 }

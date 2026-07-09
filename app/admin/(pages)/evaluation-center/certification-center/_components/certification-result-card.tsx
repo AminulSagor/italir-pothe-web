@@ -156,7 +156,7 @@ export default function CertificationResultCard({
                 className="gap-3 bg-[#59F94D] !text-[#006B3F] hover:!bg-[#4EF044]"
               >
                 <FileText className="size-5" />
-                Open Certificate PDF
+                Open Certificate
               </Button>
 
               <Button

@@ -23,6 +23,7 @@ import type {
   StoreSortOrder,
 } from "@/types/package-store/package-store.type";
 import {
+  downloadBlobFile,
   downloadCurrentStoreOrdersCsv,
   downloadTextFile,
 } from "@/utils/package-store-download.util";
@@ -233,20 +234,19 @@ export default function OrderHistoryTable({
   };
 
   const handleDownloadInvoice = async (order: StoreAdminOrder) => {
-    const toastId = toast.loading("Preparing invoice...");
+    const toastId = toast.loading("Preparing PDF invoice...");
 
     try {
       setDownloadingOrderId(order.id);
 
-      const html = await getAdminStoreOrderInvoice(order.id);
+      const invoice = await getAdminStoreOrderInvoice(order.id);
 
-      downloadTextFile(
-        html,
-        `invoice-${order.orderNumber}.html`,
-        "text/html;charset=utf-8",
+      downloadBlobFile(
+        invoice.blob,
+        invoice.fileName || `italir-pothe-invoice-${order.orderNumber}.pdf`,
       );
 
-      toast.success("Invoice downloaded.", {
+      toast.success("PDF invoice downloaded.", {
         id: toastId,
       });
     } catch (error) {

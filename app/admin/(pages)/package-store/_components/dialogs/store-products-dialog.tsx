@@ -589,6 +589,7 @@ export default function StoreProductsDialog({
                 </p>
 
                 <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#6F4A00]">
+                  \
                   <li>
                     Google Play product ID must exactly match Play Console.
                   </li>
@@ -605,6 +606,14 @@ export default function StoreProductsDialog({
                   <li>
                     Do not reuse old product IDs for a different package
                     meaning.
+                  </li>
+                  <li>
+                    Coupon/discount products must use coupon_ prefix. Example:
+                    coupon_ai_bundle_001.
+                  </li>
+                  <li>
+                    Regular and coupon-prefixed mappings can both stay active
+                    for the same provider.
                   </li>
                 </ul>
 

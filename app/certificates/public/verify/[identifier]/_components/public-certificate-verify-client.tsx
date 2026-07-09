@@ -369,7 +369,7 @@ export default function PublicCertificateVerifyClient({
                     className="gap-3"
                   >
                     <ExternalLink className="size-5" />
-                    Open Certificate PDF
+                    Open Certificate
                   </Button>
                 )}
 
