@@ -177,16 +177,6 @@ const buildCouponProviderProductId = (regularProductId: string) => {
   return `coupon_${normalized}`;
 };
 
-const isValidCouponProviderProductId = (
-  regularProductId: string,
-  discountedProductId: string,
-) => {
-  return (
-    discountedProductId.trim() ===
-    buildCouponProviderProductId(regularProductId)
-  );
-};
-
 const getSnapshot = (
   form: InfluencerFormState,
   socialHandles: SocialHandleForm[],
@@ -628,15 +618,24 @@ export default function InfluencerPartnerForm(
       }
 
       if (
-        !isValidCouponProviderProductId(
-          mapping.regularProviderProductId,
-          mapping.discountedProviderProductId,
-        )
+        mapping.discountedProviderProductId.trim() ===
+        mapping.regularProviderProductId.trim()
       ) {
         toast.error(
-          `Discounted product ID must be ${buildCouponProviderProductId(
-            mapping.regularProviderProductId,
-          )} in mapping row ${rowNumber}.`,
+          `Regular and discounted product IDs must be different in mapping row ${rowNumber}.`,
+        );
+
+        return false;
+      }
+
+      if (
+        !mapping.discountedProviderProductId
+          .trim()
+          .toLowerCase()
+          .startsWith("coupon_")
+      ) {
+        toast.error(
+          `Discounted product ID should start with coupon_ in mapping row ${rowNumber}.`,
         );
 
         return false;
@@ -1272,9 +1271,12 @@ export default function InfluencerPartnerForm(
                     label="Discounted Product ID"
                     value={mapping.discountedProviderProductId}
                     required
-                    disabled
                     placeholder="coupon_ai_bundle_001"
-                    onChange={() => undefined}
+                    onChange={(value) =>
+                      updateProviderMapping(index, {
+                        discountedProviderProductId: value,
+                      })
+                    }
                   />
 
                   <InputField
