@@ -4,6 +4,7 @@ import type {
   CreateStorePackagePayload,
   CreateStoreProviderProductPayload,
   CvEconomyConfiguration,
+  DeleteStoreProviderProductResponse,
   PackageStoreDashboard,
   PackageStoreMessageResponse,
   ProviderRefundOperation,
@@ -16,7 +17,6 @@ import type {
   StorePackageQuery,
   StoreProviderProduct,
   StoreProviderProductListResponse,
-  StoreProviderProductMutationResponse,
   UpdateCvEconomyConfigurationPayload,
   UpdateStorePackagePayload,
   UpdateStoreProviderProductPayload,
@@ -185,7 +185,26 @@ export const deactivateStoreProviderProduct = async (
     "Provider product ID",
   );
 
-  return serviceClient.delete<StoreProviderProductMutationResponse>(
+  return serviceClient.patch<StoreProviderProduct>(
+    `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/provider-products/${safeProviderProductId}`,
+    {
+      isActive: false,
+    },
+  );
+};
+
+export const deleteStoreProviderProduct = async (
+  packageId: string,
+  providerProductId: string,
+) => {
+  const safePackageId = assertValidUuid(packageId, "Package ID");
+
+  const safeProviderProductId = assertValidUuid(
+    providerProductId,
+    "Provider product ID",
+  );
+
+  return serviceClient.delete<DeleteStoreProviderProductResponse>(
     `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/provider-products/${safeProviderProductId}`,
   );
 };

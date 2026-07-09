@@ -1,13 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Loader2, Pencil, Plus, Power, PowerOff, Store } from "lucide-react";
+import {
+  Loader2,
+  Pencil,
+  Plus,
+  Power,
+  PowerOff,
+  Store,
+  Trash2,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "@/components/UI/buttons/button";
 import Card from "@/components/UI/cards/card";
 import {
   deactivateCourseProviderProduct,
+  deleteCourseProviderProduct,
   getCourseProviderProducts,
   updateCourseProviderProduct,
 } from "@/service/course-directory/course-commerce.service";
@@ -83,6 +92,40 @@ export default function CourseStoreProductsCard({
   const closeDialog = () => {
     setEditorOpen(false);
     setSelectedProduct(null);
+  };
+
+  const handleDelete = async (product: CourseProviderProduct) => {
+    if (!courseId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete course store product mapping "${product.productId}" permanently?\n\nIf this mapping is already used by an order, backend will reject this action. Use deactivate for historical/used mappings.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const toastId = toast.loading("Deleting course store product mapping...");
+
+    try {
+      setRunningActionId(product.id);
+
+      await deleteCourseProviderProduct(courseId, product.id);
+
+      await loadProducts();
+
+      toast.success("Course store product mapping deleted.", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
+    } finally {
+      setRunningActionId(null);
+    }
   };
 
   const handleActiveChange = async (
@@ -264,6 +307,21 @@ export default function CourseStoreProductsCard({
                         <PowerOff className="size-4" />
                       ) : (
                         <Power className="size-4" />
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={runningActionId === item.id}
+                      onClick={() => void handleDelete(item)}
+                      className="flex size-9 items-center justify-center rounded-full bg-[#FCEBEC] text-[#B42318] disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Delete ${item.productId}`}
+                      title="Delete permanently"
+                    >
+                      {runningActionId === item.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
                       )}
                     </button>
                   </div>

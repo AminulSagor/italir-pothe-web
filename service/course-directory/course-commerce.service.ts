@@ -12,8 +12,8 @@ import type {
   CourseEnrollmentSummary,
   CourseProviderProduct,
   CourseProviderProductListResponse,
-  CourseProviderProductMutationResponse,
   CreateCourseProviderProductPayload,
+  DeleteCourseProviderProductResponse,
   UpdateCourseProviderProductPayload,
 } from "@/types/course-directory/course-commerce.type";
 import { assertValidUuid } from "@/utils/uuid";
@@ -59,7 +59,22 @@ export const deactivateCourseProviderProduct = async (
   const safeCourseId = assertValidUuid(courseId, "Course ID");
   const safeMappingId = assertValidUuid(mappingId, "Course product mapping ID");
 
-  return serviceClient.delete<CourseProviderProductMutationResponse>(
+  return serviceClient.patch<CourseProviderProduct>(
+    `/admin/courses/${safeCourseId}/provider-products/${safeMappingId}`,
+    {
+      isActive: false,
+    },
+  );
+};
+
+export const deleteCourseProviderProduct = async (
+  courseId: string,
+  mappingId: string,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+  const safeMappingId = assertValidUuid(mappingId, "Course product mapping ID");
+
+  return serviceClient.delete<DeleteCourseProviderProductResponse>(
     `/admin/courses/${safeCourseId}/provider-products/${safeMappingId}`,
   );
 };

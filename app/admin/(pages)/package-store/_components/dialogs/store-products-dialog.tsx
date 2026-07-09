@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Pencil, Plus, Power, PowerOff, Store, X } from "lucide-react";
+import {
+  Loader2,
+  Pencil,
+  Plus,
+  Power,
+  PowerOff,
+  Store,
+  Trash2,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "@/components/UI/buttons/button";
@@ -11,6 +20,7 @@ import { useUnsavedChangesWarning } from "@/hooks/use-unsaved-changes-warning";
 import {
   createStoreProviderProduct,
   deactivateStoreProviderProduct,
+  deleteStoreProviderProduct,
   getStoreProviderProducts,
   updateStoreProviderProduct,
 } from "@/service/package-store/package-store.service";
@@ -317,6 +327,37 @@ export default function StoreProductsDialog({
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (item: StoreProviderProduct) => {
+    const confirmed = window.confirm(
+      `Delete provider product mapping "${item.productId}" permanently?\n\nIf this mapping is already used by an order, backend will reject this action. Use deactivate for historical/used mappings.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const toastId = toast.loading("Deleting store product mapping...");
+
+    try {
+      setRunningActionId(item.id);
+
+      await deleteStoreProviderProduct(storePackage.id, item.id);
+
+      await loadItems();
+      await onChanged();
+
+      toast.success("Store product mapping deleted.", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error), {
+        id: toastId,
+      });
+    } finally {
+      setRunningActionId(null);
     }
   };
 
@@ -680,6 +721,21 @@ export default function StoreProductsDialog({
                             <PowerOff className="size-4" />
                           ) : (
                             <Power className="size-4" />
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => void handleDelete(item)}
+                          disabled={runningActionId === item.id}
+                          className="flex size-9 items-center justify-center rounded-full bg-[#FCEBEC] text-[#B42318] disabled:opacity-50"
+                          aria-label={`Delete ${item.productId}`}
+                          title="Delete permanently"
+                        >
+                          {runningActionId === item.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
                           )}
                         </button>
                       </div>
