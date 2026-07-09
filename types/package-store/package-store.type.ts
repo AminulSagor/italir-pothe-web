@@ -23,7 +23,22 @@ export type StoreProviderEnvironment = "development" | "sandbox" | "production";
 
 export type StoreProviderVerificationStatus = "pending" | "verified" | "failed";
 
-export type StoreOrderStatus = "pending" | "completed" | "failed" | "refunded";
+export type StoreOrderStatus =
+  | "pending"
+  | "completed"
+  | "failed"
+  | "cancelled"
+  | "expired"
+  | "refunded";
+
+export type StoreTimelineEventType =
+  | "order_placed"
+  | "order_cancelled"
+  | "order_expired"
+  | "payment_processed"
+  | "payment_failed"
+  | "entitlement_granted"
+  | "refund_processed";
 
 export type StoreSortOrder = "ASC" | "DESC";
 
@@ -73,38 +88,26 @@ export interface StorePackage {
   priceEur: string;
   billingModel: StoreBillingModel;
   marketingBadge: StoreMarketingBadge | null;
-
   aiVoiceMinutes: number;
   aiTextTokens: number;
   cvCredits: number;
-
   streakFreezeCount: number;
-
   streakProtectionMode: StreakProtectionMode | null;
-
   protectionDurationDays: number | null;
-
   couponEnabled: boolean;
   couponCode: string | null;
-
   sortOrder: number;
-
   storeProduct: StoreProviderProduct | null;
-
   providerProducts?: StoreProviderProduct[];
-
   status: StorePackageStatus;
-
   publishedAt: string | null;
   archivedAt: string | null;
-
   createdAt: string;
   updatedAt: string;
 }
 
 export interface StorePackageListResponse {
   items: StorePackage[];
-
   meta: {
     page: number;
     limit: number;
@@ -127,20 +130,14 @@ export interface CreateStorePackagePayload {
   name: string;
   description?: string;
   priceEur: string;
-
   billingModel?: StoreBillingModel;
-
   voiceMinutes?: number;
   textTokens?: number;
   freezeCount?: number;
-
   streakProtectionMode?: StreakProtectionMode;
-
   protectionDurationDays?: number;
   cvCreditCount?: number;
-
   marketingBadge?: StoreMarketingBadge;
-
   couponsEnabled?: boolean;
   couponCode?: string;
   sortOrder?: number;
@@ -150,21 +147,14 @@ export interface UpdateStorePackagePayload {
   name?: string;
   description?: string | null;
   priceEur?: string;
-
   billingModel?: StoreBillingModel;
-
   voiceMinutes?: number;
   textTokens?: number;
   freezeCount?: number;
-
   streakProtectionMode?: StreakProtectionMode | null;
-
   protectionDurationDays?: number | null;
-
   cvCreditCount?: number;
-
   marketingBadge?: StoreMarketingBadge;
-
   couponsEnabled?: boolean;
   couponCode?: string | null;
   sortOrder?: number;
@@ -180,39 +170,31 @@ export interface ReorderStorePackagesPayload {
 export interface CvEconomyConfiguration {
   id?: string;
   configKey?: string;
-
   freeCreditsPerSignup: number;
-
   allowEditingWithoutCredit: boolean;
-
   updatedByAdminId?: string | null;
-
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface UpdateCvEconomyConfigurationPayload {
   freeCreditsPerSignup: number;
-
   allowEditingWithoutCredit: boolean;
 }
 
 export interface PackageStoreDashboard {
   totalRevenueEur: string;
   totalOrders: number;
-
   topPackage: {
     id: string;
     name: string;
     orderCount: number;
     salesPercentage: number;
   } | null;
-
   changes: {
     revenuePercentage: number;
     orderPercentage: number;
   };
-
   packageCounts: {
     total: number;
     published: number;
@@ -224,18 +206,12 @@ export interface AdminStoreOrderQuery {
   page?: number;
   limit?: number;
   search?: string;
-
   packageType?: StorePackageType;
-
   status?: StoreOrderStatus;
-
   paymentProvider?: StorePaymentProvider;
-
   dateFrom?: string;
   dateTo?: string;
-
   sortBy?: StoreOrderSortBy;
-
   sortOrder?: StoreSortOrder;
 }
 
@@ -251,49 +227,33 @@ export interface StoreOrderPackage {
   type: StorePackageType;
   name: string;
   description: string | null;
-
   billingModel: StoreBillingModel;
-
   marketingBadge: StoreMarketingBadge | null;
-
   entitlements: {
     voiceMinutes: number;
     textTokens: number;
     streakFreezes: number;
     cvCredits: number;
-
     streakProtectionMode: StreakProtectionMode | null;
-
     protectionDurationDays: number | null;
   };
 }
 
 export interface StoreOrderProductSnapshot {
   providerProductId: string;
-
   provider: StorePaymentProvider;
-
   productId: string;
-
   productType: StoreProviderProductType;
-
   basePlanId: string | null;
   offerId: string | null;
 }
 
 export interface StoreOrderVerification {
   environment: StoreProviderEnvironment;
-
   status: StoreProviderVerificationStatus;
-
   providerTransactionId: string | null;
-
-  /**
-   * Backend should return only a hash/masked token, never full purchase token.
-   */
   purchaseTokenHash?: string | null;
   tokenHash?: string | null;
-
   verifiedAt: string | null;
 }
 
@@ -311,12 +271,9 @@ export interface StoreOrderPricing {
 
 export interface StoreOrderPayment {
   provider: StorePaymentProvider;
-
   providerReference: string | null;
-
   failureCode: string | null;
   failureMessage: string | null;
-
   paidAt: string | null;
   refundedAt: string | null;
   refundReason: string | null;
@@ -324,31 +281,22 @@ export interface StoreOrderPayment {
 
 export interface StoreOrderTimelineItem {
   id: string;
-  eventType: string;
+  eventType: StoreTimelineEventType | string;
   title: string;
   description: string | null;
-
   metadata: Record<string, unknown> | null;
-
   occurredAt: string;
 }
 
 export interface StoreAdminOrder {
   id: string;
   orderNumber: string;
-
   status: StoreOrderStatus;
-
   user: StoreOrderUser | null;
-
   package: StoreOrderPackage;
-
   storeProduct: StoreOrderProductSnapshot;
-
   verification: StoreOrderVerification;
-
   pricing: StoreOrderPricing;
-
   payment: StoreOrderPayment;
 
   reversal: {
@@ -356,7 +304,6 @@ export interface StoreAdminOrder {
     textTokens: number;
     freezeCount: number;
     cvCredits: number;
-
     unlimitedProtectionGrantedUntil: string | null;
   };
 
@@ -374,13 +321,16 @@ export interface StoreAdminOrder {
 
   timeline: StoreOrderTimelineItem[];
 
+  checkoutExpiresAt: string | null;
+  cancelledAt: string | null;
+  expiredAt: string | null;
+
   createdAt: string;
   updatedAt: string;
 }
 
 export interface StoreAdminOrderListResponse {
   items: StoreAdminOrder[];
-
   meta: {
     page: number;
     limit: number;

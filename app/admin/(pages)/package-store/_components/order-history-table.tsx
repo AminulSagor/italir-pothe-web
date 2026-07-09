@@ -53,10 +53,12 @@ const initialResponse: StoreAdminOrderListResponse = {
   },
 };
 
-const statusClasses: Record<string, string> = {
+const statusClasses: Record<StoreOrderStatus, string> = {
   completed: "bg-[#DDF3E8] text-[#007A35]",
   pending: "bg-[#FFF3C6] text-[#D89600]",
   failed: "bg-[#FCEBEC] text-[#B42318]",
+  cancelled: "bg-[#EEF3EC] text-[#4F5B52]",
+  expired: "bg-[#F4E8FF] text-[#7A3EB1]",
   refunded: "bg-[#FCEBEC] text-[#D92D20]",
 };
 
@@ -92,6 +94,22 @@ const getInitials = (name: string) =>
 
 const getTokenHash = (order: StoreAdminOrder) =>
   order.verification.purchaseTokenHash || order.verification.tokenHash || "—";
+
+const getLifecycleLabel = (order: StoreAdminOrder) => {
+  if (order.status === "cancelled") {
+    return `Cancelled: ${formatDate(order.cancelledAt)}`;
+  }
+
+  if (order.status === "expired") {
+    return `Expired: ${formatDate(order.expiredAt)}`;
+  }
+
+  if (order.status === "pending") {
+    return `Expires: ${formatDate(order.checkoutExpiresAt)}`;
+  }
+
+  return null;
+};
 
 export default function OrderHistoryTable({
   search,
@@ -130,6 +148,8 @@ export default function OrderHistoryTable({
       status === "pending" ||
       status === "completed" ||
       status === "failed" ||
+      status === "cancelled" ||
+      status === "expired" ||
       status === "refunded"
         ? status
         : undefined;
@@ -297,7 +317,8 @@ export default function OrderHistoryTable({
             </h2>
 
             <p className="mt-1 text-sm text-[#6F776F]">
-              Read-only billing details from Google Play and App Store.
+              Admin logs show all checkout states, including pending, cancelled,
+              expired, failed, completed and refunded orders.
             </p>
           </div>
 
@@ -320,7 +341,7 @@ export default function OrderHistoryTable({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1320px]">
+          <table className="w-full min-w-[1420px]">
             <thead>
               <tr>
                 {[
@@ -370,6 +391,8 @@ export default function OrderHistoryTable({
               {!isLoading &&
                 response.items.map((order) => {
                   const customerName = order.user?.name || "Unknown Customer";
+
+                  const lifecycleLabel = getLifecycleLabel(order);
 
                   return (
                     <tr key={order.id} className="border-t border-[#EEF2EE]">
@@ -476,6 +499,12 @@ export default function OrderHistoryTable({
                         <p className="mt-1 text-xs text-[#4F5B52]">
                           Refunded: {formatDate(order.payment.refundedAt)}
                         </p>
+
+                        {lifecycleLabel && (
+                          <p className="mt-1 text-xs font-semibold text-[#8A5A00]">
+                            {lifecycleLabel}
+                          </p>
+                        )}
                       </td>
 
                       <td className="px-4 py-7 align-top text-sm font-bold">
@@ -491,6 +520,12 @@ export default function OrderHistoryTable({
                         >
                           {formatLabel(order.status)}
                         </span>
+
+                        {order.payment.failureMessage && (
+                          <p className="mt-2 max-w-[180px] text-xs text-[#B42318]">
+                            {order.payment.failureMessage}
+                          </p>
+                        )}
 
                         {order.payment.refundedAt && (
                           <p className="mt-2 text-xs font-semibold text-[#D92D20]">
