@@ -58,7 +58,13 @@ function WebinarHandlePageContent() {
   const [activePanelTab, setActivePanelTab] = useState<PanelTab>("participants");
   const [now, setNow] = useState(() => Date.now());
 
-  const participantCount = participants.length;
+  const participantCount = useMemo(
+  () =>
+    participants.filter(
+      (participant) => !participant.leftAt,
+    ).length,
+  [participants],
+);
 
   const liveDuration = useMemo(() => {
     if (!webinar?.liveStartedAt) return "00:00:00";
