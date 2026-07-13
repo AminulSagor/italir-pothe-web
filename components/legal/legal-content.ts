@@ -11,249 +11,361 @@ export type LegalDocument = {
   sections: LegalSection[];
 };
 
-export const supportEmail = "support@lumina.it";
+const fallbackSupportEmail = "support@italirpothe.com";
+
+export const supportEmail =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() || fallbackSupportEmail;
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective June 27, 2026",
+  effectiveDate: "Effective July 13, 2026",
   introduction:
-    "This Privacy Policy explains how Italir Pothe collects, uses, stores, and shares information when you use the mobile application, its backend services, and related support or administrative services.",
+    "This Privacy Policy explains how Italir Pothe collects, uses, stores, and shares information when you use our public website, mobile application when available, backend services, learning features, certificate-verification service, customer support, and related services.",
+
   sections: [
     {
-      title: "1. Who this policy applies to",
+      title: "1. Scope of this policy",
       paragraphs: [
-        "This policy applies to learners, community members, and other users of Italir Pothe. By using the service, you acknowledge the practices described here. Where consent is required by law, we request it before collecting or using the relevant data.",
+        "This policy applies to visitors to the Italir Pothe public website, learners, community members, mobile-app users, webinar participants, certificate holders, and people who contact our support team.",
+        "The public website can be browsed without signing in. Additional information may be collected when you contact us, use certificate verification, access the mobile application, register for a service, or interact with learning features.",
       ],
     },
     {
       title: "2. Information we collect",
       paragraphs: [
-        "We collect only information reasonably needed to provide, secure, personalize, and improve the service.",
+        "We collect information that is reasonably necessary to provide, secure, operate, personalize, and improve Italir Pothe.",
       ],
       bullets: [
-        "Account and profile information: full name, email address or phone number, password hash, verification status, profile photo, and account identifiers.",
-        "Learning information: course enrollment and progress, lessons, quiz and exam answers, scores, certificates, streaks, XP, saved learning items, AI Tutor level results, strengths, and focus areas.",
-        "Content and communications: messages, attachments, CV details and generated documents, reports, support requests, and information you intentionally provide in AI Tutor conversations.",
-        "Audio, video, and media: microphone audio and transcripts used for AI voice chat, speaking tests, speaking exams, calls, and webinars; photos or files you choose to upload; and camera input only when you choose a camera-based feature.",
-        "Purchase and entitlement information: order number, purchased package or course, price, currency, discounts, payment provider, payment status, refunds, and resulting balances such as AI minutes, text tokens, CV credits, or streak freezes.",
-        "Device and technical information: device identifier, platform, app version, timezone, app state, push-notification tokens, IP address, request logs, diagnostic information, and security events.",
-        "Safety and moderation information: blocks, reports, uploaded evidence, moderation decisions, and records needed to prevent abuse or protect users.",
+        "Website and contact information: your name, email address, phone number, message content, and other information you voluntarily submit through a contact form, email, or support request.",
+        "Account and profile information: your full name, email address or phone number, password hash, verification status, profile photo, preferences, and internal account identifiers.",
+        "Learning information: course enrollment, lesson progress, quiz and examination answers, scores, certificates, streaks, XP, achievements, saved items, AI Tutor results, strengths, and recommended focus areas.",
+        "Content and communications: messages, attachments, reports, support requests, CV details, generated documents, webinar interactions, and information you intentionally provide through learning or communication features.",
+        "Audio, video, and uploaded media: microphone audio, transcripts, speaking-test recordings, webinar participation, calls, photos, documents, and camera input when you choose to use a related feature.",
+        "Purchase and entitlement information: order identifiers, purchased packages or courses, price, currency, discounts, payment provider, payment status, refunds, and digital balances such as AI minutes, text tokens, CV credits, rewards, or streak freezes.",
+        "Certificate information: certificate identifiers, learner name, course or examination details, issue date, status, and limited information required to provide public certificate verification.",
+        "Device and technical information: device type, platform, browser, operating system, app version, timezone, IP address, request logs, push-notification tokens, diagnostic information, and security events.",
+        "Safety and moderation information: blocks, reports, uploaded evidence, moderation decisions, and records required to prevent abuse or protect users and the platform.",
       ],
     },
     {
       title: "3. Device permissions",
       paragraphs: [
-        "Depending on the feature you use, the app may request microphone, camera or photo access, notifications, network access, and limited file access. You can deny or later revoke optional permissions in your device settings, although the related feature may stop working.",
-        "The current app does not request access to your precise device location or address book contacts.",
+        "Depending on the feature you choose to use, the mobile application may request access to your microphone, camera, photos, notifications, network connection, or selected files.",
+        "You can deny or later revoke optional permissions through your device settings. The associated feature may not work correctly when a required permission is disabled.",
+        "The current version of the application does not require access to your precise device location or address-book contacts unless a future feature clearly requests that permission and provides an appropriate explanation.",
       ],
     },
     {
       title: "4. How we use information",
       bullets: [
-        "Create, verify, authenticate, and maintain your account.",
-        "Deliver courses, practice activities, exams, certificates, CV tools, webinars, messaging, calls, notifications, rewards, purchases, and customer support.",
-        "Personalize lessons and AI Tutor responses using your level, recent context, mistakes, and learning progress.",
-        "Process orders, grant purchased digital entitlements, prevent duplicate transactions, and handle refunds or disputes.",
-        "Operate, troubleshoot, secure, moderate, and improve the app and backend.",
-        "Comply with legal obligations, enforce our Terms, and protect users, Italir Pothe, and the public.",
+        "Respond to enquiries, contact requests, account-deletion requests, and customer-support messages.",
+        "Create, verify, authenticate, maintain, and protect user accounts.",
+        "Deliver courses, practice activities, quizzes, examinations, certificates, CV tools, webinars, messages, calls, notifications, rewards, and purchased digital services.",
+        "Verify certificates and display limited certificate information when a valid verification identifier is submitted.",
+        "Personalize lessons and AI Tutor responses using learner level, recent context, mistakes, goals, and learning progress.",
+        "Process orders, confirm payments, grant digital entitlements, prevent duplicate transactions, and manage refunds or disputes.",
+        "Operate, troubleshoot, secure, moderate, analyze, maintain, and improve the website, application, backend, and related services.",
+        "Comply with legal obligations, enforce our Terms and Conditions, prevent fraud, and protect Italir Pothe, its users, and the public.",
       ],
     },
     {
       title: "5. AI Tutor and voice processing",
       paragraphs: [
-        "AI Tutor text, voice, writing-help, and level-test requests may be sent to AI, speech-to-text, text-to-speech, and real-time communication providers so they can generate a response. This can include your prompt, recent conversation context, selected learning topic, learner level, audio, and transcript.",
-        "Live AI audio is generally processed as a stream. Some speaking-exam recordings, uploaded files, transcripts, level results, or conversation context may be stored when required to provide the feature. Do not submit highly sensitive information that is not needed for language learning.",
+        "AI Tutor text, voice, writing assistance, translation, pronunciation, and level-test requests may be sent to artificial-intelligence, speech-to-text, text-to-speech, and real-time communication providers to generate a response.",
+        "Information sent for processing may include your prompt, recent conversation context, selected lesson or topic, learner level, audio, transcript, and information required to produce an educational response.",
+        "Live audio may be processed as a stream. Speaking-exam recordings, uploaded files, transcripts, assessment results, or recent conversation context may be retained when reasonably necessary to provide the requested feature.",
+        "Do not submit highly sensitive personal, financial, medical, legal, or identity information that is not necessary for language learning.",
       ],
     },
     {
-      title: "6. When information is shared",
+      title: "6. Service providers and information sharing",
       paragraphs: [
-        "We do not sell personal information. The current version does not use personal information for cross-app behavioral advertising or tracking.",
-        "We may share limited information with service providers only as needed to operate the service, including:",
+        "We do not sell personal information. We do not share personal information for unrelated cross-service behavioral advertising unless we provide clear notice and obtain any consent required by applicable law.",
+        "We may share limited information with service providers only when reasonably necessary to operate, secure, support, or improve Italir Pothe.",
       ],
       bullets: [
-        "Cloud hosting, database, file-storage, and email providers, including AWS-based services where configured.",
-        "Firebase for push notifications and device delivery.",
-        "OpenAI, Pipecat, and LiveKit for AI, transcription, speech, and real-time AI sessions.",
-        "Agora for user calls and live webinar communication.",
-        "Google Play, Apple, Stripe, or another configured payment provider for purchases, verification, refunds, and fraud prevention.",
-        "Authorized administrators, moderators, or support staff who need access to provide support, manage content, or investigate safety issues.",
-        "Authorities or other parties when required by law, necessary to protect rights or safety, or involved in a business transfer subject to appropriate safeguards.",
+        "Cloud hosting, database, file-storage, content-delivery, email, security, and infrastructure providers, including AWS-based services where configured.",
+        "Firebase or similar providers for push notifications and device-message delivery.",
+        "OpenAI, Pipecat, LiveKit, or similar providers for AI processing, transcription, speech generation, and real-time AI sessions.",
+        "Agora or similar communication providers for calls, audio, video, and webinar functionality.",
+        "Google Play, Apple, Stripe, or another displayed payment provider for purchases, payment verification, refunds, fraud prevention, or transaction support.",
+        "Lulu when you follow a Lulu link or purchase a printed book through Lulu. Lulu independently processes information required for ordering, payment, printing, delivery, customer service, and returns under its own policies.",
+        "Authorized employees, administrators, moderators, instructors, or support personnel who require access to perform their assigned responsibilities.",
+        "Authorities, professional advisers, or other parties when disclosure is required by law, necessary to protect rights or safety, or connected with a lawful business transaction subject to appropriate safeguards.",
       ],
     },
     {
-      title: "7. Data retention and account deletion",
+      title: "7. Public certificate verification",
       paragraphs: [
-        "We keep account and service data while your account is active and for as long as reasonably necessary for the purposes described in this policy. Retention periods vary by data type, operational need, legal obligations, fraud prevention, payment disputes, and backup cycles.",
-        "You can initiate account deletion in Settings → Privacy & Legal → Delete Account. Account access is disabled and direct profile identifiers are removed or anonymized. Associated personal data is deleted or de-identified according to our operational retention process, except records we must retain for legal, accounting, security, fraud-prevention, or dispute-resolution reasons.",
-        "You may also request deletion through our public account-deletion page or by contacting support. Backup copies may remain for a limited period before being overwritten and are not used for ordinary product activity.",
+        "Italir Pothe may provide a public certificate-verification feature. A person who enters or opens a valid certificate identifier may be shown limited information needed to confirm whether the certificate is authentic.",
+        "Displayed information may include the certificate holder’s name, certificate title, course or examination, issue date, verification status, and certificate identifier.",
+        "Do not publicly share your certificate identifier unless you are comfortable allowing another person to verify the certificate.",
       ],
     },
     {
-      title: "8. Your choices and rights",
+      title: "8. External book purchases",
+      paragraphs: [
+        "The Italir Pothe website may include links to books offered through Lulu. Clicking a book-purchase link takes you to an external Lulu website.",
+        "Italir Pothe does not directly receive complete payment-card information entered on Lulu. Lulu’s privacy policy and purchasing terms govern the information Lulu collects and processes during an order.",
+      ],
+    },
+    {
+      title: "9. Data retention and account deletion",
+      paragraphs: [
+        "We retain account and service information while an account is active and for as long as reasonably necessary for the purposes described in this policy.",
+        "Retention periods may vary based on the type of information, operational requirements, payment disputes, security needs, fraud prevention, legal obligations, accounting requirements, and backup cycles.",
+        "You can initiate account deletion through Settings → Privacy & Legal → Delete Account when that option is available in the mobile application.",
+        "After a verified deletion request, account access is disabled and direct profile identifiers are deleted, removed, or anonymized through our retention process. Limited records may be retained when required for accounting, legal compliance, security, fraud prevention, transaction history, or dispute resolution.",
+        "You may also submit a deletion request through the public account-deletion page or contact support. Protected backup copies may remain for a limited period before being overwritten and are not used for ordinary product activity.",
+      ],
+    },
+    {
+      title: "10. Your choices and rights",
       bullets: [
-        "Review or update your name, profile photo, verified email, verified phone, and password from Settings, subject to verification requirements.",
-        "Control microphone, camera, photo, and notification permissions through your device settings.",
+        "Review or update available account and profile information, subject to identity and verification requirements.",
+        "Control microphone, camera, photo, file, and notification permissions through your device settings.",
+        "Choose whether to submit optional contact forms, upload content, or use AI and voice features.",
         "Block users and use available reporting or moderation tools.",
-        "Request access, correction, deletion, restriction, or a copy of your personal data where applicable law provides those rights.",
+        "Request access, correction, deletion, restriction, objection, or a copy of personal information where applicable law provides those rights.",
         "Withdraw consent for optional processing without affecting processing already lawfully completed.",
       ],
     },
     {
-      title: "9. Security",
+      title: "11. Security",
       paragraphs: [
-        "We use reasonable administrative, technical, and organizational safeguards, including authenticated APIs, password hashing, access controls, secure token storage, and encrypted network connections in production. No service can guarantee absolute security, so keep your password private and contact us if you suspect unauthorized access.",
+        "We use reasonable administrative, technical, and organizational safeguards designed to protect information. These safeguards may include authenticated APIs, password hashing, access controls, secure token handling, encrypted network connections, monitoring, and restricted administrative access.",
+        "No website, application, transmission, or storage system can guarantee absolute security. Keep your password and verification codes private and contact us promptly if you suspect unauthorized access.",
       ],
     },
     {
-      title: "10. International processing",
+      title: "12. International processing",
       paragraphs: [
-        "Our service providers may process information in countries other than your own. Where required, we use appropriate contractual, technical, or legal safeguards for international transfers.",
+        "Italir Pothe and its service providers may process information in countries other than the country where you live.",
+        "Where required, we use reasonable contractual, technical, organizational, or legal safeguards for international processing and transfers.",
       ],
     },
     {
-      title: "11. Children",
+      title: "13. Children",
       paragraphs: [
-        "Italir Pothe is not directed to children under 13. If the law where you live requires a higher minimum age, you may use the service only with valid permission from a parent or legal guardian. Contact us if you believe a child provided personal information without appropriate authorization.",
+        "Italir Pothe is not directed to children under 13.",
+        "When the law where a user lives requires a higher minimum age, the user may access the service only with valid permission from a parent or legal guardian.",
+        "Contact us if you believe a child has provided personal information without appropriate authorization.",
       ],
     },
     {
-      title: "12. Policy updates",
+      title: "14. External links",
       paragraphs: [
-        "We may update this policy when features, providers, or legal requirements change. We will update the effective date and provide additional notice when a change is material.",
+        "The public website and application may contain links to third-party websites, stores, social networks, communication services, or other external platforms.",
+        "We are not responsible for the privacy practices, security, availability, or content of third-party services. Review the relevant third party’s policies before submitting information.",
       ],
     },
     {
-      title: "13. Contact us",
+      title: "15. Changes to this policy",
       paragraphs: [
-        `For privacy questions, requests, or complaints, contact ${supportEmail}. Please include the email address or phone number connected to your account so we can securely verify and respond to your request.`,
+        "We may update this Privacy Policy when our services, technology, providers, operational practices, or legal requirements change.",
+        "We will update the effective date and provide additional notice when a change is material or when applicable law requires notice.",
+      ],
+    },
+    {
+      title: "16. Contact us",
+      paragraphs: [
+        `For privacy questions, requests, account-deletion enquiries, or complaints, contact ${supportEmail}. Include the email address or phone number associated with your account when relevant so we can securely verify and respond to your request.`,
       ],
     },
   ],
 };
 
 export const termsOfService: LegalDocument = {
-  title: "Terms of Service",
-  effectiveDate: "Effective June 27, 2026",
+  title: "Terms & Conditions",
+  effectiveDate: "Effective July 13, 2026",
   introduction:
-    "These Terms of Service govern your access to and use of Italir Pothe, including the mobile app, learning content, AI Tutor, community features, purchases, and related backend services.",
+    "These Terms and Conditions govern your access to and use of the Italir Pothe public website, mobile application when available, learning content, AI Tutor, webinars, certificate-verification service, community features, digital purchases, and related services.",
+
   sections: [
     {
-      title: "1. Acceptance and eligibility",
+      title: "1. Acceptance of these Terms",
       paragraphs: [
-        "By creating an account or using Italir Pothe, you agree to these Terms and the Privacy Policy. If you do not agree, do not use the service.",
-        "You must be at least 13 years old. If the law where you live requires a higher age, you may use the service only with permission from a parent or legal guardian who accepts these Terms for you.",
+        "By accessing or using Italir Pothe, you agree to these Terms and Conditions and acknowledge our Privacy Policy.",
+        "If you do not agree with these Terms, do not use the relevant service.",
+        "Browsing the public website does not require an account. Additional conditions may apply when you create an account, purchase a service, participate in a webinar, or use the mobile application.",
       ],
     },
     {
-      title: "2. Your account",
+      title: "2. Eligibility",
+      paragraphs: [
+        "You must be at least 13 years old to create an account or independently use account-based features.",
+        "If applicable law requires a higher minimum age, you may use the service only with valid permission from a parent or legal guardian who accepts these Terms on your behalf.",
+      ],
+    },
+    {
+      title: "3. Your account",
       bullets: [
-        "Provide accurate information and keep your verified email or phone number current.",
-        "Protect your password and access codes, and do not share your account.",
+        "Provide accurate and current registration information.",
+        "Maintain access to your verified email address or phone number.",
+        "Protect your password, one-time codes, and other authentication credentials.",
+        "Do not share, sell, transfer, or allow another person to misuse your account.",
         "Notify support promptly if you suspect unauthorized access.",
-        "You are responsible for activity performed through your account unless applicable law states otherwise.",
+        "You are responsible for activity performed through your account unless applicable law provides otherwise.",
       ],
     },
     {
-      title: "3. The service",
+      title: "4. Website and application availability",
       paragraphs: [
-        "Italir Pothe provides Italian-language courses, practice activities, tests, certificates, AI-assisted learning, guided voice practice, messaging and calls, webinars, CV-building tools, rewards, and digital purchases. Some features may be unavailable by device, language, region, account status, or plan.",
-        "We may improve, replace, limit, or discontinue features. We will try to give reasonable notice when a material change significantly affects a paid feature, unless an urgent security, legal, or technical issue requires immediate action.",
+        "The Italir Pothe public website provides information about our business, learning services, courses, books, webinars, and certificates.",
+        "The mobile application may be marked as coming soon until it is publicly released. A coming-soon notice is informational and does not guarantee a particular release date, device, country, platform, or feature.",
+        "Some services may be unavailable depending on device, language, region, account status, subscription, course access, or technical limitations.",
       ],
     },
     {
-      title: "4. AI and educational limitations",
+      title: "5. Learning services",
       paragraphs: [
-        "AI-generated responses, translations, corrections, level estimates, and speech recognition may be incomplete or incorrect. Review important output before relying on it.",
-        "Italir Pothe is an educational tool. It does not provide legal, immigration, medical, financial, employment, or other professional advice, and it does not guarantee exam results, language proficiency, employment, residency, or any official outcome.",
+        "Italir Pothe may provide Italian-language courses, practical learning activities, quizzes, examinations, certificates, AI-assisted learning, guided speaking practice, webinars, CV-building tools, messages, calls, rewards, and digital learning products.",
+        "We may add, improve, replace, limit, suspend, or discontinue features. We will try to provide reasonable notice when a material change significantly affects a paid service, unless an urgent security, legal, operational, or technical issue requires immediate action.",
       ],
     },
     {
-      title: "5. Acceptable use",
-      paragraphs: ["You must use the service lawfully and respectfully. You must not:"],
+      title: "6. Educational and AI limitations",
+      paragraphs: [
+        "AI-generated responses, translations, pronunciation feedback, writing corrections, level estimates, transcripts, and speech recognition may be incomplete, inaccurate, or inappropriate for a particular situation.",
+        "You should review important output before relying on it.",
+        "Italir Pothe is an educational service. It does not provide legal, immigration, medical, financial, employment, or other regulated professional advice.",
+        "Using Italir Pothe does not guarantee language proficiency, examination results, employment, residency, admission, certification recognition, or any other official outcome.",
+      ],
+    },
+    {
+      title: "7. Acceptable use",
+      paragraphs: [
+        "You must use Italir Pothe lawfully, honestly, and respectfully. You must not:",
+      ],
       bullets: [
-        "Harass, threaten, exploit, impersonate, or share another person’s private information without permission.",
+        "Harass, threaten, exploit, deceive, impersonate, or abuse another person.",
+        "Share another person’s private information without proper authorization.",
         "Upload illegal, abusive, deceptive, infringing, sexually exploitative, malicious, or unsafe content.",
-        "Record or distribute another person’s voice, video, messages, or personal information without all legally required consent.",
-        "Interfere with the app, bypass access controls, probe security, introduce malware, scrape content, or use unauthorized automation.",
-        "Manipulate purchases, credits, rewards, exams, referrals, or platform systems.",
-        "Use AI or community features to facilitate unlawful activity or violate another person’s rights.",
+        "Record, reproduce, or distribute another person’s voice, video, messages, or personal information without all required permissions.",
+        "Interfere with the website, application, servers, APIs, security systems, or access controls.",
+        "Introduce malware, probe security, scrape protected content, reverse engineer restricted functionality, or use unauthorized automation.",
+        "Manipulate purchases, credits, rewards, examinations, certificates, referrals, rankings, or platform systems.",
+        "Use AI, communication, or community features to facilitate unlawful activity or violate another person’s rights.",
       ],
     },
     {
-      title: "6. User content and permissions",
+      title: "8. User content",
       paragraphs: [
-        "You keep ownership of content you create and upload. You grant Italir Pothe a limited, worldwide, non-exclusive license to host, process, reproduce, transmit, adapt, and display that content only as reasonably necessary to operate, secure, moderate, and improve the service.",
-        "You confirm that you have the rights and permissions needed for content you submit. You can remove some content through available app tools or request assistance from support, subject to legal and operational retention requirements.",
+        "You retain ownership of content that you create and upload.",
+        "You grant Italir Pothe a limited, worldwide, non-exclusive license to host, store, process, reproduce, transmit, adapt, moderate, and display that content only as reasonably necessary to operate, secure, support, and improve the service.",
+        "You confirm that you have all rights and permissions required for content you submit.",
+        "You may remove certain content through available product tools or request assistance from support, subject to legal, security, moderation, and operational retention requirements.",
       ],
     },
     {
-      title: "7. Community, calls, and moderation",
+      title: "9. Community, calls, webinars, and moderation",
       paragraphs: [
-        "Messages, calls, reports, and community interactions must follow these Terms. We may use automated tools and authorized staff to investigate reports, enforce safety rules, restrict features, remove content, or suspend accounts. Blocking and reporting tools do not replace emergency services.",
+        "Messages, calls, webinars, reports, and community interactions must comply with these Terms.",
+        "We may use automated systems and authorized personnel to investigate reports, protect users, enforce safety rules, remove content, restrict features, or suspend accounts.",
+        "Blocking and reporting features are not emergency services. Contact local emergency services when immediate assistance is required.",
       ],
     },
     {
-      title: "8. Purchases, credits, and refunds",
+      title: "10. Courses, examinations, and certificates",
+      paragraphs: [
+        "Course completion, scores, examination outcomes, and certificate eligibility are determined according to the requirements displayed for the relevant learning activity.",
+        "We may withhold, revoke, correct, or invalidate a certificate when it was issued because of fraud, impersonation, manipulation, administrative error, payment reversal, or violation of these Terms.",
+        "A certificate confirms the information displayed by Italir Pothe. It does not guarantee acceptance by an employer, government authority, educational institution, professional body, or another third party.",
+      ],
+    },
+    {
+      title: "11. Public certificate verification",
+      paragraphs: [
+        "Certificates may include a public verification identifier or verification link.",
+        "Anyone with access to a valid identifier may be able to view limited certificate information required to confirm authenticity.",
+        "You are responsible for deciding whether to share your certificate or verification identifier publicly.",
+      ],
+    },
+    {
+      title: "12. Purchases, digital credits, and refunds",
       bullets: [
-        "Prices, taxes, currency, package contents, and payment terms are shown before confirmation and may vary by platform or region.",
-        "Purchases may be processed by Google Play, Apple, Stripe, or another displayed provider. Their payment and refund rules may also apply.",
-        "AI minutes, AI text tokens, CV credits, streak freezes, rewards, and similar digital entitlements are personal, non-transferable, not legal tender, and have no cash value unless required by law.",
-        "Digital entitlements may be reversed when a payment is refunded, cancelled, charged back, duplicated, fraudulent, or granted in error.",
-        "Refund requests are handled under the purchasing platform’s rules, the displayed offer, and mandatory consumer law.",
+        "Prices, taxes, currencies, package contents, validity periods, and payment terms are displayed before purchase and may vary by platform, country, or provider.",
+        "Digital purchases may be processed by Google Play, Apple, Stripe, or another displayed payment provider. The provider’s payment and refund rules may also apply.",
+        "AI minutes, AI text tokens, CV credits, streak freezes, rewards, and similar digital entitlements are personal, non-transferable, not legal tender, and have no cash value unless applicable law requires otherwise.",
+        "Digital entitlements may be reversed when a payment is refunded, cancelled, charged back, duplicated, fraudulent, unauthorized, or granted in error.",
+        "Refund requests are handled according to the displayed offer, the purchasing provider’s rules, and mandatory consumer-protection law.",
       ],
     },
     {
-      title: "9. Third-party services and links",
+      title: "13. Books sold through Lulu",
       paragraphs: [
-        "The service may use or link to third-party services such as app stores, payment providers, OpenAI, Pipecat, LiveKit, Agora, Firebase, AWS, WhatsApp, Facebook, email, or phone services. Their own terms and privacy policies apply. Italir Pothe is not responsible for third-party content or services outside our control.",
+        "Italir Pothe may advertise or link to printed books offered through Lulu.",
+        "When you select Buy on Lulu, you leave the Italir Pothe website and complete the purchase through Lulu.",
+        "Lulu may independently manage product availability, printing, payment processing, taxes, shipping, delivery estimates, cancellations, returns, refunds, and customer support under its own terms and policies.",
+        "Book descriptions and previews are provided for informational purposes. Minor differences in printing, binding, paper, colour, or formatting may occur depending on the printing and fulfilment process.",
       ],
     },
     {
-      title: "10. Intellectual property",
+      title: "14. Third-party services and links",
       paragraphs: [
-        "The app, software, designs, lessons, branding, and service content are owned by Italir Pothe or its licensors. We give you a limited, revocable, non-exclusive, non-transferable license to use the service for personal learning. You may not copy, sell, redistribute, or create unauthorized derivative works from protected service content.",
+        "Italir Pothe may use or link to third-party services such as Lulu, app stores, payment providers, OpenAI, Pipecat, LiveKit, Agora, Firebase, AWS, WhatsApp, Facebook, email, or phone services.",
+        "Third-party services operate under their own terms and privacy policies.",
+        "To the extent permitted by law, Italir Pothe is not responsible for third-party content, availability, transactions, policies, security, or services outside our reasonable control.",
       ],
     },
     {
-      title: "11. Privacy",
+      title: "15. Intellectual property",
       paragraphs: [
-        "Our Privacy Policy explains how information is collected and handled. By using the service, you acknowledge that policy and any permission or consent prompts presented for particular features.",
+        "The Italir Pothe name, logos, website, application, software, designs, lessons, books, course materials, media, branding, and service content are owned by Italir Pothe or its licensors.",
+        "We grant you a limited, revocable, non-exclusive, non-transferable license to access the service and use authorized learning content for personal, non-commercial educational purposes.",
+        "You may not copy, reproduce, sell, publish, redistribute, sublicense, scrape, or create unauthorized derivative works from protected Italir Pothe content.",
       ],
     },
     {
-      title: "12. Suspension, termination, and deletion",
+      title: "16. Privacy",
       paragraphs: [
-        "You may stop using the service at any time and can initiate account deletion from Settings. We may warn, limit, suspend, or terminate access when reasonably necessary for security, fraud prevention, non-payment, legal compliance, serious or repeated violations, or protection of users and the service.",
+        "Our Privacy Policy explains how personal information is collected, used, retained, protected, and shared.",
+        "By using the service, you acknowledge the Privacy Policy and any permission or consent request presented for a particular feature.",
       ],
     },
     {
-      title: "13. Availability and disclaimers",
+      title: "17. Suspension, termination, and account deletion",
       paragraphs: [
-        "We work to provide a reliable service, but availability may be interrupted by maintenance, network conditions, provider outages, device limitations, or events outside our control. To the extent permitted by law, the service is provided ‘as is’ and ‘as available.’ Nothing in these Terms excludes consumer rights that cannot legally be excluded.",
+        "You may stop using Italir Pothe at any time and may request account deletion through available application settings or our public account-deletion page.",
+        "We may warn, restrict, suspend, or terminate access when reasonably necessary for security, fraud prevention, non-payment, legal compliance, serious or repeated violations, or protection of users and the service.",
+        "Terms that by their nature should continue after termination, including intellectual-property, payment, disclaimer, liability, and dispute provisions, remain effective.",
       ],
     },
     {
-      title: "14. Limitation of liability",
+      title: "18. Service availability and disclaimers",
       paragraphs: [
-        "To the maximum extent permitted by law, Italir Pothe and its providers are not liable for indirect, incidental, special, consequential, or punitive loss, or for lost data, profit, opportunity, or reputation arising from use of the service. Mandatory consumer protections remain unaffected.",
+        "We work to provide a reliable service, but availability may be interrupted by maintenance, updates, network conditions, provider outages, device limitations, security incidents, or events outside our reasonable control.",
+        "To the extent permitted by law, the service is provided on an “as is” and “as available” basis.",
+        "Nothing in these Terms excludes, restricts, or modifies consumer rights that cannot legally be excluded or restricted.",
       ],
     },
     {
-      title: "15. Changes to these Terms",
+      title: "19. Limitation of liability",
       paragraphs: [
-        "We may update these Terms to reflect changes in the service, providers, law, or safety requirements. We will update the effective date and provide additional notice for material changes when required.",
+        "To the maximum extent permitted by applicable law, Italir Pothe and its service providers are not liable for indirect, incidental, special, consequential, exemplary, or punitive loss arising from the use of or inability to use the service.",
+        "This may include loss of data, profit, opportunity, expected savings, business, or reputation.",
+        "Mandatory consumer protections and liabilities that cannot legally be excluded remain unaffected.",
       ],
     },
     {
-      title: "16. Applicable law and disputes",
+      title: "20. Changes to these Terms",
       paragraphs: [
-        "These Terms are governed by applicable law. Any dispute will be handled by a court or process with lawful jurisdiction, while preserving mandatory rights or venue protections available to consumers in their country of residence.",
+        "We may update these Terms to reflect changes in the website, application, services, providers, operational practices, safety requirements, or applicable law.",
+        "We will update the effective date and provide additional notice when a change is material or when applicable law requires notice.",
       ],
     },
     {
-      title: "17. Contact",
-      paragraphs: [`Questions about these Terms may be sent to ${supportEmail}.`],
+      title: "21. Applicable law and disputes",
+      paragraphs: [
+        "These Terms are governed by applicable law.",
+        "Any dispute will be handled by a court, tribunal, or other process with lawful jurisdiction, while preserving mandatory consumer rights and venue protections available in the user’s country of residence.",
+      ],
+    },
+    {
+      title: "22. Contact",
+      paragraphs: [
+        `Questions about these Terms and Conditions may be sent to ${supportEmail}.`,
+      ],
     },
   ],
 };

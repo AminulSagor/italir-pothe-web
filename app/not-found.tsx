@@ -5,8 +5,8 @@ export default function NotFoundPage() {
     <AppStatusPage
       variant="not-found"
       primaryAction={{
-        label: "Go to Dashboard",
-        href: "/admin/dashboard",
+        label: "Go to Homepage",
+        href: "/",
       }}
       secondaryAction={{
         label: "Go Back",
