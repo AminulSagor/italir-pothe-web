@@ -1,16 +1,12 @@
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  BookOpen,
-  Mail,
-  UsersRound,
-} from "lucide-react";
+import { ArrowUpRight, Mail, UsersRound } from "lucide-react";
 
 import { BrandLogo } from "@/components/public/shared/brand-logo";
 import {
   PUBLIC_NAVIGATION,
   PUBLIC_SITE_CONFIG,
 } from "@/constant/public-site.constant";
+import { YouTubeIcon } from "../shared/youtube-icon";
 
 const legalLinks = [
   { label: "Privacy Policy", href: "/privacy-policy" },
@@ -23,10 +19,7 @@ interface FacebookIconProps {
   size?: number;
 }
 
-function FacebookIcon({
-  className,
-  size = 19,
-}: FacebookIconProps) {
+function FacebookIcon({ className, size = 19 }: FacebookIconProps) {
   return (
     <svg
       aria-hidden="true"
@@ -96,23 +89,20 @@ export function PublicFooter() {
 
         <div>
           <h2 className="text-sm font-extrabold uppercase tracking-[0.18em] text-[#8FE0B1]">
-            Books, community &amp; support
+            Community &amp; support
           </h2>
 
           <div className="mt-5 space-y-3">
             <a
-              href={PUBLIC_SITE_CONFIG.luluBookUrl}
+              href={PUBLIC_SITE_CONFIG.youtubeUrl}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="Visit the Italir Pothe YouTube channel"
               className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 text-sm text-white/75 transition hover:bg-white/10 hover:text-white"
             >
-              <BookOpen
-                aria-hidden="true"
-                className="shrink-0 text-[#8FE0B1]"
-                size={19}
-              />
+              <YouTubeIcon className="size-[19px] shrink-0 text-[#8FE0B1]" />
 
-              <span className="flex-1">Buy our book on Lulu</span>
+              <span className="flex-1">Watch us on YouTube</span>
 
               <ArrowUpRight aria-hidden="true" size={17} />
             </a>
@@ -124,10 +114,7 @@ export function PublicFooter() {
               aria-label="Visit the Italir Pothe Facebook page"
               className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 text-sm text-white/75 transition hover:bg-white/10 hover:text-white"
             >
-              <FacebookIcon
-  className="shrink-0 text-[#8FE0B1]"
-  size={19}
-/>
+              <FacebookIcon className="shrink-0 text-[#8FE0B1]" size={19} />
 
               <span className="flex-1">Follow our Facebook page</span>
 
@@ -172,9 +159,7 @@ export function PublicFooter() {
 
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-xs text-white/50 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>
-            © {new Date().getFullYear()} Italir Pothe. All rights reserved.
-          </p>
+          <p>© {new Date().getFullYear()} Italir Pothe. All rights reserved.</p>
 
           <p>Practical Italian learning with Bangla-friendly guidance.</p>
         </div>

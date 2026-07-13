@@ -11,7 +11,7 @@ export const PUBLIC_SITE_CONFIG = {
     "A practical learning platform for Italian language, career preparation, live webinars, examinations and verified certificates.",
   contactEmail:
     process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@italirpothe.com",
-  luluBookUrl: process.env.NEXT_PUBLIC_LULU_BOOK_URL ?? "https://www.lulu.com/",
+  youtubeUrl: "https://www.youtube.com/@italirpothe",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://italirpothe.com",
 
   facebookPageUrl: "https://www.facebook.com/ItalirPothe",

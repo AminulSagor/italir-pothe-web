@@ -27,7 +27,7 @@ const enquiryTypes = [
   },
   {
     title: "Books",
-    description: "Questions about the printed learning guide and Lulu orders.",
+    description: "Questions about the printed learning guide.",
     icon: BookOpen,
   },
   {
@@ -133,13 +133,7 @@ export default function ContactPage() {
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             {socialLinks.map(
-              ({
-                title,
-                description,
-                href,
-                linkLabel,
-                icon: Icon,
-              }) => (
+              ({ title, description, href, linkLabel, icon: Icon }) => (
                 <article
                   key={title}
                   className="group rounded-[1.75rem] border border-[#DCE7E0] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md sm:p-7"
@@ -152,9 +146,7 @@ export default function ContactPage() {
                     {title}
                   </h3>
 
-                  <p className="mt-3 leading-7 text-[#657269]">
-                    {description}
-                  </p>
+                  <p className="mt-3 leading-7 text-[#657269]">{description}</p>
 
                   <a
                     href={href}

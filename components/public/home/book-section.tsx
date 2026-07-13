@@ -36,8 +36,8 @@ export function BookSection() {
             Continue learning with our printed guide
           </h2>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-white/70">
-            “গ্রামার সহ ইতালিয়ান ভাষা শেখা” supports learners with Bangla
-            pronunciation and step-by-step guidance for studying Italian.
+            “ইতালিয়ান ভাষা সহজে পাঠ” supports learners with Bangla pronunciation
+            and step-by-step guidance for studying Italian.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
@@ -60,15 +60,6 @@ export function BookSection() {
           </div>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <a
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#75FF33] px-6 font-black text-[#17211D] transition hover:bg-[#8CFF58] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#17211D]"
-              href={PUBLIC_SITE_CONFIG.luluBookUrl}
-              rel="noreferrer"
-              target="_blank"
-            >
-              Buy on Lulu
-              <ArrowUpRight aria-hidden="true" size={18} />
-            </a>
             <Link
               className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/25 px-6 font-bold text-white transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               href="/books"

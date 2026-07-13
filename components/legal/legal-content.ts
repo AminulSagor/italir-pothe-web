@@ -89,7 +89,6 @@ export const privacyPolicy: LegalDocument = {
         "OpenAI, Pipecat, LiveKit, or similar providers for AI processing, transcription, speech generation, and real-time AI sessions.",
         "Agora or similar communication providers for calls, audio, video, and webinar functionality.",
         "Google Play, Apple, Stripe, or another displayed payment provider for purchases, payment verification, refunds, fraud prevention, or transaction support.",
-        "Lulu when you follow a Lulu link or purchase a printed book through Lulu. Lulu independently processes information required for ordering, payment, printing, delivery, customer service, and returns under its own policies.",
         "Authorized employees, administrators, moderators, instructors, or support personnel who require access to perform their assigned responsibilities.",
         "Authorities, professional advisers, or other parties when disclosure is required by law, necessary to protect rights or safety, or connected with a lawful business transaction subject to appropriate safeguards.",
       ],
@@ -105,8 +104,8 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "8. External book purchases",
       paragraphs: [
-        "The Italir Pothe website may include links to books offered through Lulu. Clicking a book-purchase link takes you to an external Lulu website.",
-        "Italir Pothe does not directly receive complete payment-card information entered on Lulu. Lulu’s privacy policy and purchasing terms govern the information Lulu collects and processes during an order.",
+        "The Italir Pothe website may include links to books offered through external third-party platforms. Clicking a purchase link may take you to another website.",
+        "Italir Pothe does not directly receive complete payment-card information entered on external platforms. The third party’s privacy policy and purchasing terms govern the information collected and processed during an order.",
       ],
     },
     {
@@ -291,19 +290,11 @@ export const termsOfService: LegalDocument = {
         "Refund requests are handled according to the displayed offer, the purchasing provider’s rules, and mandatory consumer-protection law.",
       ],
     },
+
     {
-      title: "13. Books sold through Lulu",
+      title: "13. Third-party services and links",
       paragraphs: [
-        "Italir Pothe may advertise or link to printed books offered through Lulu.",
-        "When you select Buy on Lulu, you leave the Italir Pothe website and complete the purchase through Lulu.",
-        "Lulu may independently manage product availability, printing, payment processing, taxes, shipping, delivery estimates, cancellations, returns, refunds, and customer support under its own terms and policies.",
-        "Book descriptions and previews are provided for informational purposes. Minor differences in printing, binding, paper, colour, or formatting may occur depending on the printing and fulfilment process.",
-      ],
-    },
-    {
-      title: "14. Third-party services and links",
-      paragraphs: [
-        "Italir Pothe may use or link to third-party services such as Lulu, app stores, payment providers, OpenAI, Pipecat, LiveKit, Agora, Firebase, AWS, WhatsApp, Facebook, email, or phone services.",
+        "Italir Pothe may use or link to third-party services such as app stores, payment providers, OpenAI, Pipecat, LiveKit, Agora, Firebase, AWS, WhatsApp, Facebook, email, or phone services.",
         "Third-party services operate under their own terms and privacy policies.",
         "To the extent permitted by law, Italir Pothe is not responsible for third-party content, availability, transactions, policies, security, or services outside our reasonable control.",
       ],
