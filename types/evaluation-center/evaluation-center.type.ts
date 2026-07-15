@@ -235,6 +235,7 @@ export interface FinalExamEvaluationDetails {
   examTemplate: FinalExamEvaluationTemplate;
   answers: FinalExamEvaluationAnswer[];
   review: FinalExamReview | null;
+  autoGrading: FinalExamAutoGrading;
 }
 
 export interface GiveFinalVerdictPayload {
@@ -448,4 +449,14 @@ export interface VerifyCertificateResponse {
     verificationUrl: string | null;
     pdfUrl: string | null;
   } | null;
+}
+
+export interface FinalExamAutoGrading {
+  earnedPoints: number;
+  possiblePoints: number;
+  scorePercent: number;
+  scoreOutOfTen: number;
+  answeredQuestionCount: number;
+  skippedQuestionCount: number;
+  totalQuestionCount: number;
 }

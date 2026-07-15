@@ -93,34 +93,6 @@ const findAnswer = (
   );
 };
 
-const getAutoScore = (answers: FinalExamEvaluationAnswer[]) => {
-  const autoAnswers = answers.filter((answer) =>
-    ["core_quiz", "listening_lab"].includes(answer.section?.sectionType),
-  );
-
-  const earnedPoints = autoAnswers.reduce(
-    (total, answer) => total + Number(answer.score || 0),
-    0,
-  );
-
-  const possiblePoints = autoAnswers.reduce(
-    (total, answer) => total + Number(answer.question?.points || 0),
-    0,
-  );
-
-  const percent =
-    possiblePoints > 0 ? (earnedPoints / possiblePoints) * 100 : 0;
-
-  return {
-    earnedPoints,
-    possiblePoints,
-
-    scorePercent: Number(percent.toFixed(2)),
-
-    scoreOutOfTen: Number((percent / 10).toFixed(2)),
-  };
-};
-
 const createInitialForm = (
   details: FinalExamEvaluationDetails,
 ): EvaluationFormState => {
@@ -260,7 +232,7 @@ export default function EvaluationBoardClient({
 
     const speakingAnswer = findAnswer(details.answers, "speaking_lab");
 
-    const autoScore = getAutoScore(details.answers);
+    const autoScore = details.autoGrading;
 
     return {
       level: extractLevel(details),
