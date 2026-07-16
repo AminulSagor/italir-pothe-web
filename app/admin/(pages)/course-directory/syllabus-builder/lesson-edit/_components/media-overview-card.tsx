@@ -42,6 +42,17 @@ type SignedReadUrlResponse = {
   };
 };
 
+interface MediaOverviewCardProps {
+  title: string;
+  videoFileId: string;
+  disabled?: boolean;
+  isUploadingVideo?: boolean;
+  videoUploadProgress?: number;
+  onTitleChange: (value: string) => void;
+  onVideoSelect: (file: File) => void;
+  onDeleteVideo: () => void;
+}
+
 const getErrorMessage = (error: unknown) => {
   if (error instanceof Error) return error.message;
   return "Something went wrong. Please try again.";
@@ -85,6 +96,7 @@ export default function MediaOverviewCard({
   videoFileId,
   disabled = false,
   isUploadingVideo = false,
+  videoUploadProgress = 0,
   onTitleChange,
   onVideoSelect,
   onDeleteVideo,
@@ -266,11 +278,45 @@ export default function MediaOverviewCard({
                 />
               ) : null}
 
+              {isUploadingVideo ? (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 px-6 backdrop-blur-sm">
+                  <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-bold text-[#202420]">
+                          Uploading course video
+                        </p>
+
+                        <p className="mt-1 text-xs text-[#66736B]">
+                          Please keep this page open.
+                        </p>
+                      </div>
+
+                      <span className="text-lg font-extrabold text-[#007A4A]">
+                        {Math.round(videoUploadProgress)}%
+                      </span>
+                    </div>
+
+                    <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#E4ECE5]">
+                      <div
+                        className="h-full rounded-full bg-[#007A4A] transition-[width] duration-200"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            Math.max(0, videoUploadProgress),
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="absolute inset-0 bg-black/15" />
 
               <button
                 type="button"
-                disabled={!videoPreview?.previewUrl}
+                disabled={isUploadingVideo || !videoPreview?.previewUrl}
                 onClick={handleTogglePlay}
                 className="absolute left-1/2 top-1/2 z-20 flex size-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/35 backdrop-blur transition hover:bg-white/45 disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label={isPlaying ? "Pause video" : "Play video"}
@@ -354,13 +400,21 @@ export default function MediaOverviewCard({
           <FileUploader
             title={
               isUploadingVideo
-                ? "Uploading Course Video..."
+                ? `Uploading Course Video ${Math.round(videoUploadProgress)}%`
                 : "Upload Course Video"
             }
-            description="Drag & drop course video here or click to browse. Supported formats: MP4, MOV. Max size 500MB."
+            description={
+              isUploadingVideo
+                ? "Please keep this page open while the video uploads."
+                : "Drag & drop course video here or click to browse. Supported formats: MP4, MOV. Max size 500MB."
+            }
             accept="video/mp4,video/quicktime"
             icon={<Video className="size-5" />}
-            onFileSelect={handleVideoSelect}
+            onFileSelect={(file) => {
+              if (isUploadingVideo) return;
+
+              handleVideoSelect(file);
+            }}
           />
         )}
       </div>

@@ -25,6 +25,7 @@ export type FilePurpose =
 
 export type FileVisibility = "private" | "public";
 export type MediaType = "image" | "audio" | "video" | "pdf";
+export type UploadProgressCallback = (percentage: number) => void;
 
 export interface SignedUploadUrlPayload {
   originalName: string;
@@ -93,22 +94,52 @@ export const confirmUpload = (payload: ConfirmUploadPayload) =>
 export const createSignedReadUrl = (fileId: string) =>
   serviceClient.get<SignedReadUrlResponse>(`/files/${fileId}/signed-read-url`);
 
-export const uploadToSignedUrl = async (
+export const uploadToSignedUrl = (
   signedUploadUrl: string,
   file: File,
   contentType: string,
-) => {
-  const response = await fetch(signedUploadUrl, {
-    method: "PUT",
-    headers: {
-      "Content-Type": contentType,
-    },
-    body: file,
-  });
+  onProgress?: UploadProgressCallback,
+): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    const request = new XMLHttpRequest();
 
-  if (!response.ok) {
-    throw new Error("Thumbnail upload failed. Please try again.");
-  }
+    request.open("PUT", signedUploadUrl);
+
+    request.setRequestHeader("Content-Type", contentType);
+
+    request.upload.onprogress = (event: ProgressEvent<EventTarget>) => {
+      if (!event.lengthComputable || event.total <= 0) {
+        return;
+      }
+
+      const percentage = Math.min(
+        100,
+        Math.round((event.loaded / event.total) * 100),
+      );
+
+      onProgress?.(percentage);
+    };
+
+    request.onload = () => {
+      if (request.status >= 200 && request.status < 300) {
+        onProgress?.(100);
+        resolve();
+        return;
+      }
+
+      reject(new Error(`File upload failed with status ${request.status}.`));
+    };
+
+    request.onerror = () => {
+      reject(new Error("File upload failed because of a network error."));
+    };
+
+    request.onabort = () => {
+      reject(new Error("File upload was cancelled."));
+    };
+
+    request.send(file);
+  });
 };
 
 const uploadImageFile = async (file: File, filePurpose: FilePurpose) => {

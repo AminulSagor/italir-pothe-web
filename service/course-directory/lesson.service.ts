@@ -2,6 +2,7 @@ import { serviceClient } from "@/service/base/service_client";
 import {
   confirmUpload,
   createSignedUploadUrl,
+  UploadProgressCallback,
   uploadToSignedUrl,
 } from "@/service/files/file_upload";
 import type {
@@ -128,6 +129,7 @@ const uploadLessonFile = async (params: {
   file: File;
   filePurpose: "lesson_video" | "lesson_audio" | "lesson_pdf";
   mediaType: "video" | "audio" | "pdf";
+  onProgress?: UploadProgressCallback;
 }) => {
   const mimeType =
     params.file.type ||
@@ -145,7 +147,12 @@ const uploadLessonFile = async (params: {
     visibility: "private",
   });
 
-  await uploadToSignedUrl(signedUpload.signedUploadUrl, params.file, mimeType);
+  await uploadToSignedUrl(
+    signedUpload.signedUploadUrl,
+    params.file,
+    mimeType,
+    params.onProgress,
+  );
 
   const confirmedUpload = await confirmUpload({
     storageKey: signedUpload.storageKey,
@@ -161,11 +168,15 @@ const uploadLessonFile = async (params: {
   return confirmedUpload.file.id;
 };
 
-export const uploadLessonVideo = (file: File) =>
+export const uploadLessonVideo = (
+  file: File,
+  onProgress?: UploadProgressCallback,
+) =>
   uploadLessonFile({
     file,
     filePurpose: "lesson_video",
     mediaType: "video",
+    onProgress,
   });
 
 export const uploadLessonAudio = (file: File) =>

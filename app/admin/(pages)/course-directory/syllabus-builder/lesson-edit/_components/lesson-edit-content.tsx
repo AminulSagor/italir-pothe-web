@@ -100,6 +100,7 @@ export default function LessonEditContent() {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [isUploadingPdf, setIsUploadingPdf] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
 
   const [isAccessConfirmOpen, setIsAccessConfirmOpen] = useState(false);
   const [pendingAccessValue, setPendingAccessValue] = useState<boolean | null>(
@@ -398,15 +399,20 @@ export default function LessonEditContent() {
   const handleVideoSelect = async (file: File) => {
     try {
       setIsUploadingVideo(true);
+      setVideoUploadProgress(0);
 
-      const fileId = await uploadLessonVideo(file);
+      const fileId = await uploadLessonVideo(file, (percentage) => {
+        setVideoUploadProgress(percentage);
+      });
 
       updateForm("videoFileId", fileId);
-      toast.success("Video uploaded.");
+
+      toast.success("Video uploaded successfully.");
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
       setIsUploadingVideo(false);
+      setVideoUploadProgress(0);
     }
   };
 
@@ -478,6 +484,7 @@ export default function LessonEditContent() {
               videoFileId={form.videoFileId}
               disabled={isLoading || isSaving}
               isUploadingVideo={isUploadingVideo}
+              videoUploadProgress={videoUploadProgress}
               onTitleChange={handleTitleChange}
               onVideoSelect={handleVideoSelect}
               onDeleteVideo={() => updateForm("videoFileId", "")}
