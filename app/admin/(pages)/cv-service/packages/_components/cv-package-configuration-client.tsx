@@ -46,8 +46,8 @@ const getErrorMessage = (error: unknown) => {
 };
 
 const emptyEconomy: CvEconomyConfiguration = {
-  freeCreditsPerSignup: 0,
-  allowEditingWithoutCredit: false,
+  freeCreditsPerSignup: 3,
+  allowEditingWithoutCredit: true,
 };
 
 export default function CvPackageConfigurationClient({

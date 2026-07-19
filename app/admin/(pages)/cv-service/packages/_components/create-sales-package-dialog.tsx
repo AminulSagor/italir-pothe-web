@@ -29,6 +29,8 @@ interface FormState {
   credits: string;
   priceEur: string;
   marketingBadge: StoreMarketingBadge;
+  couponsEnabled: boolean;
+  couponCode: string;
 }
 
 const badges: Array<{
@@ -43,9 +45,16 @@ const badges: Array<{
 
 const getInitialForm = (initialPackage: StorePackage | null): FormState => ({
   name: initialPackage?.name || "",
+
   credits: initialPackage ? String(initialPackage.cvCredits) : "",
+
   priceEur: initialPackage?.priceEur || "",
+
   marketingBadge: initialPackage?.marketingBadge || "none",
+
+  couponsEnabled: initialPackage?.couponEnabled ?? false,
+
+  couponCode: initialPackage?.couponCode || "",
 });
 
 export default function CreateSalesPackageDialog({
@@ -104,6 +113,26 @@ export default function CreateSalesPackageDialog({
       return;
     }
 
+    const couponCode = form.couponCode.trim().toUpperCase();
+
+    if (form.couponsEnabled) {
+      if (!couponCode) {
+        setValidationError("Coupon code is required when coupons are enabled.");
+        return;
+      }
+
+      const percentageMatch = couponCode.match(/(\d{2})$/);
+
+      const percentage = percentageMatch ? Number(percentageMatch[1]) : 0;
+
+      if (!percentageMatch || percentage < 1 || percentage > 99) {
+        setValidationError(
+          "Coupon code must end with a percentage from 01 to 99. Example: CVSAVE20.",
+        );
+        return;
+      }
+    }
+
     setValidationError("");
 
     if (initialPackage) {
@@ -112,18 +141,30 @@ export default function CreateSalesPackageDialog({
         priceEur: price.toFixed(2),
         cvCreditCount: credits,
         marketingBadge: form.marketingBadge,
+
+        couponsEnabled: form.couponsEnabled,
+
+        couponCode: form.couponsEnabled ? couponCode : null,
       });
       return;
     }
 
     await onCreate({
       packageType: "cv_credit",
+
       name: form.name.trim(),
+
       priceEur: price.toFixed(2),
+
       billingModel: "one_time",
+
       cvCreditCount: credits,
+
       marketingBadge: form.marketingBadge,
-      couponsEnabled: false,
+
+      couponsEnabled: form.couponsEnabled,
+
+      couponCode: form.couponsEnabled ? couponCode : undefined,
     });
   };
 
@@ -230,6 +271,61 @@ export default function CreateSalesPackageDialog({
                 );
               })}
             </div>
+          </div>
+
+          <div className="mt-7 rounded-2xl border border-black/10 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-[#202420]">
+                  Package Coupon
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-black/50">
+                  This coupon belongs only to this CV package.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() =>
+                  updateForm("couponsEnabled", !form.couponsEnabled)
+                }
+                className={`relative h-6 w-11 rounded-full transition ${
+                  form.couponsEnabled ? "bg-[#56EF59]" : "bg-[#CCD4CE]"
+                }`}
+                aria-pressed={form.couponsEnabled}
+              >
+                <span
+                  className={`absolute top-1 size-4 rounded-full bg-white transition ${
+                    form.couponsEnabled ? "right-1" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {form.couponsEnabled && (
+              <div className="mt-4">
+                <label className="mb-2 block text-xs font-bold uppercase text-black/45">
+                  Coupon code
+                </label>
+
+                <input
+                  value={form.couponCode}
+                  disabled={isSubmitting}
+                  onChange={(event) =>
+                    updateForm("couponCode", event.target.value.toUpperCase())
+                  }
+                  placeholder="CVSAVE20"
+                  className="h-12 w-full rounded-full bg-[#EEF3EB] px-5 text-sm font-semibold uppercase outline-none"
+                />
+
+                <p className="mt-2 text-xs leading-5 text-black/45">
+                  The last two digits are the discount percentage. CVSAVE20
+                  means 20% off.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 

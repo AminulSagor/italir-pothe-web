@@ -30,7 +30,7 @@ export default function FreeTierConfiguration({
       </div>
 
       <label className="mb-3 block text-xs font-semibold uppercase text-black/45">
-        Free credits per new signup
+        Free CV creations per user
       </label>
 
       <div className="flex items-center justify-between rounded-full bg-[#EEF3EB] px-5 py-3">
@@ -47,11 +47,13 @@ export default function FreeTierConfiguration({
           }
           className="w-20 bg-transparent text-lg font-bold text-[#006B3F] outline-none disabled:opacity-60"
         />
-        <span className="text-xs text-black/55">credits</span>
+        <span className="text-xs text-black/55">free CVs</span>
       </div>
 
-      <p className="mt-4 text-sm text-black/55">
-        Each credit allows 1 PDF generation/download.
+      <p className="mt-4 text-sm leading-6 text-black/55">
+        The first {freeCreditsPerSignup} new CV creations are free. When the
+        free allowance reaches zero, each new CV consumes one purchased CV
+        credit.
       </p>
 
       <div className="mt-6 flex items-center justify-between rounded-2xl border border-black/10 p-4">
