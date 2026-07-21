@@ -22,7 +22,9 @@ interface SidebarProps {
 }
 
 const isPathActive = (pathname: string, href?: string) => {
-  if (!href || href === "#") return false;
+  if (!href || href === "#") {
+    return false;
+  }
 
   return pathname === href || pathname.startsWith(`${href}/`);
 };
@@ -32,20 +34,54 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
   const router = useRouter();
 
   const [user, setUser] = useState<AuthUser | null>(null);
+
   const [openMenus, setOpenMenus] = useState<string[]>([
     "Revenue & Analytics",
     "Final Exam Manager",
+    "Reports & Moderation",
   ]);
 
   useEffect(() => {
     setUser(getAuthUser());
   }, []);
 
+  /*
+   * Automatically open the parent menu when the current page
+   * belongs to one of its child routes.
+   *
+   * Example:
+   * /admin/reports-moderation/ai-reports
+   * automatically opens "Reports & Moderation".
+   */
+  useEffect(() => {
+    const activeParentTitles = adminNavigation.flatMap((group) =>
+      group.items
+        .filter((item) =>
+          item.children?.some((child) => isPathActive(pathname, child.href)),
+        )
+        .map((item) => item.title),
+    );
+
+    if (activeParentTitles.length === 0) {
+      return;
+    }
+
+    setOpenMenus((previousMenus) => {
+      const nextMenus = new Set(previousMenus);
+
+      activeParentTitles.forEach((title) => {
+        nextMenus.add(title);
+      });
+
+      return Array.from(nextMenus);
+    });
+  }, [pathname]);
+
   const toggleMenu = (title: string) => {
-    setOpenMenus((prev) =>
-      prev.includes(title)
-        ? prev.filter((item) => item !== title)
-        : [...prev, title],
+    setOpenMenus((previousMenus) =>
+      previousMenus.includes(title)
+        ? previousMenus.filter((item) => item !== title)
+        : [...previousMenus, title],
     );
   };
 
@@ -76,7 +112,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         }`}
       >
         <div className="flex items-center gap-2 px-6 py-6">
-          <Image src={IMAGE.logo} width={25} height={100} alt="logo" />
+          <Image
+            src={IMAGE.logo}
+            width={25}
+            height={100}
+            alt="ItalirPothe logo"
+          />
+
           <h1 className="font-bold">ItalirPothe</h1>
         </div>
 
@@ -90,16 +132,22 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
               <div className="space-y-1">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const hasChildren = Boolean(item.children?.length);
+
+                  const hasChildren = Boolean(
+                    item.children && item.children.length > 0,
+                  );
+
                   const isMenuOpen = openMenus.includes(item.title);
 
                   const isParentActive = isPathActive(pathname, item.href);
 
-                  const isChildActive = item.children?.some((child) =>
-                    isPathActive(pathname, child.href),
+                  const isChildActive = Boolean(
+                    item.children?.some((child) =>
+                      isPathActive(pathname, child.href),
+                    ),
                   );
 
-                  const isActive = isParentActive || Boolean(isChildActive);
+                  const isActive = isParentActive || isChildActive;
 
                   if (hasChildren) {
                     return (
@@ -117,6 +165,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
                           >
                             <Icon className="size-4 shrink-0" />
+
                             <span className="truncate">{item.title}</span>
                           </Link>
 
@@ -124,10 +173,11 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                             type="button"
                             onClick={() => toggleMenu(item.title)}
                             aria-label={`Toggle ${item.title}`}
-                            className="flex size-9 shrink-0 items-center justify-center rounded-xl transition hover:bg-white/10"
+                            aria-expanded={isMenuOpen}
+                            className="flex size-9 shrink-0 items-center justify-center rounded-xl transition hover:bg-black/10"
                           >
                             <ChevronDown
-                              className={`size-4 transition ${
+                              className={`size-4 transition-transform duration-200 ${
                                 isMenuOpen ? "rotate-180" : ""
                               }`}
                             />
@@ -138,6 +188,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                           <div className="ml-7 mt-1 space-y-1">
                             {item.children?.map((child) => {
                               const ChildIcon = child.icon;
+
                               const childIsActive = isPathActive(
                                 pathname,
                                 child.href,
@@ -154,8 +205,13 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                       : "text-white/75 hover:bg-white/10 hover:text-white"
                                   }`}
                                 >
-                                  <ChildIcon className="size-4" />
-                                  <span>{child.title}</span>
+                                  {ChildIcon && (
+                                    <ChildIcon className="size-4 shrink-0" />
+                                  )}
+
+                                  <span className="truncate">
+                                    {child.title}
+                                  </span>
                                 </Link>
                               );
                             })}
@@ -176,8 +232,9 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                           : "text-white/85 hover:bg-white/10 hover:text-white"
                       }`}
                     >
-                      <Icon className="size-4" />
-                      <span>{item.title}</span>
+                      <Icon className="size-4 shrink-0" />
+
+                      <span className="truncate">{item.title}</span>
                     </Link>
                   );
                 })}
@@ -200,6 +257,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
 
               <div className="min-w-0">
                 <p className="truncate font-semibold">{fullName}</p>
+
                 <p className="truncate text-sm text-black/60">{role}</p>
               </div>
             </div>

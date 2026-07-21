@@ -163,4 +163,8 @@ export interface PerformModerationActionResponse {
   caseNumber: string;
 
   status: ModerationReportStatus;
+  notification: {
+    created: boolean;
+    sentCount: number;
+  };
 }

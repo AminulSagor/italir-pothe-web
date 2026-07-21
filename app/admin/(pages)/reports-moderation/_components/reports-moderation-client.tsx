@@ -14,6 +14,7 @@ import type {
 } from "@/types/reports-moderation/reports-moderation.type";
 
 import ModerationHeader from "./moderation-header";
+import ModerationTabs from "./moderation-tabs";
 import ModerationStatsGrid from "./moderation-stats-grid";
 import QueueDetailsCard from "./queue-details-card";
 
@@ -146,6 +147,8 @@ export default function ReportsModerationClient() {
           setRefreshVersion((current) => current + 1);
         }}
       />
+
+      <ModerationTabs />
 
       <ModerationStatsGrid metrics={metrics} isLoading={isMetricsLoading} />
 

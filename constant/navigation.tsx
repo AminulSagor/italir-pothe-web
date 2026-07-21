@@ -2,6 +2,7 @@ import {
   BarChart3,
   Bell,
   BookOpen,
+  Bot,
   Briefcase,
   ChartNoAxesColumn,
   ClipboardCheck,
@@ -10,9 +11,11 @@ import {
   LayoutDashboard,
   Network,
   Package,
+  ShieldAlert,
   ShieldCheck,
   Trophy,
   UserRound,
+  UserRoundX,
   UsersRound,
 } from "lucide-react";
 
@@ -126,7 +129,19 @@ export const adminNavigation: NavigationGroup[] = [
       {
         title: "Reports & Moderation",
         href: "/admin/reports-moderation",
-        icon: ShieldCheck,
+        icon: ShieldAlert,
+        children: [
+          {
+            title: "User Reports",
+            href: "/admin/reports-moderation",
+            icon: UserRoundX,
+          },
+          {
+            title: "AI Reports",
+            href: "/admin/reports-moderation/ai-reports",
+            icon: Bot,
+          },
+        ],
       },
     ],
   },
