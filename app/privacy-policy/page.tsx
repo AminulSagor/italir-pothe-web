@@ -10,10 +10,23 @@ export const metadata: Metadata = {
     "Read the Italir Pothe Privacy Policy to understand how personal information is collected, used, stored and protected.",
 };
 
-export default function PrivacyPolicyPage() {
-  return (
-    <PublicPageShell>
-      <LegalDocumentPage document={privacyPolicy} />
-    </PublicPageShell>
-  );
+type PrivacyPolicyPageProps = {
+  searchParams: Promise<{
+    embedded?: string;
+  }>;
+};
+
+export default async function PrivacyPolicyPage({
+  searchParams,
+}: PrivacyPolicyPageProps) {
+  const params = await searchParams;
+  const isEmbedded = params.embedded === "true";
+
+  const document = <LegalDocumentPage document={privacyPolicy} />;
+
+  if (isEmbedded) {
+    return <main>{document}</main>;
+  }
+
+  return <PublicPageShell>{document}</PublicPageShell>;
 }
