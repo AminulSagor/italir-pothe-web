@@ -4,6 +4,7 @@ import {
   createSignedUploadUrl,
   UploadProgressCallback,
   uploadToSignedUrl,
+  uploadVideoMultipart,
 } from "@/service/files/file_upload";
 import type {
   CourseLessonDetails,
@@ -168,17 +169,18 @@ const uploadLessonFile = async (params: {
   return confirmedUpload.file.id;
 };
 
-export const uploadLessonVideo = (
+export const uploadLessonVideo = async (
   file: File,
   onProgress?: UploadProgressCallback,
-) =>
-  uploadLessonFile({
+) => {
+  const confirmed = await uploadVideoMultipart({
     file,
     filePurpose: "lesson_video",
-    mediaType: "video",
     onProgress,
   });
 
+  return confirmed.file.id;
+};
 export const uploadLessonAudio = (file: File) =>
   uploadLessonFile({
     file,

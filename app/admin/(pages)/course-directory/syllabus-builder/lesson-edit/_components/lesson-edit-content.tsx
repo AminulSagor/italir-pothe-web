@@ -397,6 +397,15 @@ export default function LessonEditContent() {
   };
 
   const handleVideoSelect = async (file: File) => {
+    const maximumVideoSize = Number(
+      process.env.NEXT_PUBLIC_MAX_VIDEO_UPLOAD_BYTES ?? "2147483648",
+    );
+
+    if (file.size > maximumVideoSize) {
+      toast.error("The selected video must not exceed 2 GiB.");
+      return;
+    }
+
     try {
       setIsUploadingVideo(true);
       setVideoUploadProgress(0);
@@ -406,7 +415,6 @@ export default function LessonEditContent() {
       });
 
       updateForm("videoFileId", fileId);
-
       toast.success("Video uploaded successfully.");
     } catch (error) {
       toast.error(getErrorMessage(error));
