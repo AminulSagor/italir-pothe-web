@@ -2,15 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 
-import AddCareerTrackCard from "./add-career-track-card";
-import CareerTrackCard from "./career-track-card";
-
-import { getCareerTracks } from "@/service/skill-builder/skill-builder.service";
+import ConfirmActionDialog from "@/components/UI/dialogs/confirm-action-dialog";
+import {
+  deleteCareerTrack,
+  getCareerTracks,
+} from "@/service/skill-builder/skill-builder.service";
 import type {
   CareerTrackListResponse,
   SkillBuilderCareerTrack,
 } from "@/types/skill-builder/skill-builder.type";
+
+import AddCareerTrackCard from "./add-career-track-card";
+import CareerTrackCard from "./career-track-card";
 
 interface CareerTrackGridProps {
   refreshKey?: number;
@@ -30,7 +35,10 @@ const initialListResponse: CareerTrackListResponse = {
 };
 
 const getErrorMessage = (error: unknown) => {
-  if (error instanceof Error) return error.message;
+  if (error instanceof Error) {
+    return error.message;
+  }
+
   return "Something went wrong. Please try again.";
 };
 
@@ -38,6 +46,7 @@ export default function CareerTrackGrid({
   refreshKey = 0,
   isCreating = false,
   onCreateTrack,
+  onMutated,
 }: CareerTrackGridProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,8 +55,14 @@ export default function CareerTrackGrid({
 
   const [listResponse, setListResponse] =
     useState<CareerTrackListResponse>(initialListResponse);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [trackPendingDelete, setTrackPendingDelete] =
+    useState<SkillBuilderCareerTrack | null>(null);
+
+  const [isDeletingTrack, setIsDeletingTrack] = useState(false);
 
   const loadCareerTracks = async () => {
     try {
@@ -70,13 +85,50 @@ export default function CareerTrackGrid({
   };
 
   useEffect(() => {
-    loadCareerTracks();
+    void loadCareerTracks();
   }, [careerTrackSearch, refreshKey]);
 
   const handleEditTrack = (track: SkillBuilderCareerTrack) => {
     router.push(
       `/admin/skill-builder-manager/career-track-studio?careerTrackId=${track.id}`,
     );
+  };
+
+  const handleDeleteRequest = (track: SkillBuilderCareerTrack) => {
+    setTrackPendingDelete(track);
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeletingTrack) {
+      return;
+    }
+
+    setTrackPendingDelete(null);
+  };
+
+  const handleConfirmDeleteTrack = async () => {
+    if (!trackPendingDelete) {
+      return;
+    }
+
+    try {
+      setIsDeletingTrack(true);
+
+      await deleteCareerTrack(trackPendingDelete.id);
+
+      toast.success("Career track deleted.");
+      setTrackPendingDelete(null);
+
+      if (onMutated) {
+        onMutated();
+      } else {
+        await loadCareerTracks();
+      }
+    } catch (deleteError) {
+      toast.error(getErrorMessage(deleteError));
+    } finally {
+      setIsDeletingTrack(false);
+    }
   };
 
   if (isLoading) {
@@ -95,30 +147,48 @@ export default function CareerTrackGrid({
   }
 
   return (
-    <div className="space-y-5">
-      {error ? (
-        <div className="rounded-3xl border border-[#F7C6C7] bg-[#FFF8F8] px-6 py-4 text-sm text-[#D92D20]">
-          {error}
+    <>
+      <div className="space-y-5">
+        {error ? (
+          <div className="rounded-3xl border border-[#F7C6C7] bg-[#FFF8F8] px-6 py-4 text-sm text-[#D92D20]">
+            {error}
+          </div>
+        ) : null}
+
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {listResponse.items.map((track) => (
+            <CareerTrackCard
+              key={track.id}
+              track={track}
+              onEdit={() => handleEditTrack(track)}
+              onDelete={() => handleDeleteRequest(track)}
+            />
+          ))}
+
+          <AddCareerTrackCard isCreating={isCreating} onAdd={onCreateTrack} />
         </div>
-      ) : null}
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-        {listResponse.items.map((track) => (
-          <CareerTrackCard
-            key={track.id}
-            track={track}
-            onEdit={() => handleEditTrack(track)}
-          />
-        ))}
-
-        <AddCareerTrackCard isCreating={isCreating} onAdd={onCreateTrack} />
+        {!error && listResponse.items.length === 0 ? (
+          <div className="rounded-3xl border border-[#E5ECE6] bg-white px-6 py-8 text-center text-sm text-[#5F675F]">
+            No career tracks found.
+          </div>
+        ) : null}
       </div>
 
-      {!error && listResponse.items.length === 0 ? (
-        <div className="rounded-3xl border border-[#E5ECE6] bg-white px-6 py-8 text-center text-sm text-[#5F675F]">
-          No career tracks found.
-        </div>
-      ) : null}
-    </div>
+      <ConfirmActionDialog
+        open={Boolean(trackPendingDelete)}
+        title="Delete Career Track"
+        description={
+          trackPendingDelete
+            ? `Are you sure you want to delete "${trackPendingDelete.title}"? Its modules, sentences, and learner progress may also be removed.`
+            : ""
+        }
+        confirmLabel="Delete Track"
+        danger
+        isSubmitting={isDeletingTrack}
+        onCancel={handleCancelDelete}
+        onConfirm={handleConfirmDeleteTrack}
+      />
+    </>
   );
 }

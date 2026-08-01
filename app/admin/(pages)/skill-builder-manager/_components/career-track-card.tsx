@@ -1,4 +1,4 @@
-import { Pencil } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
 import type { SkillBuilderCareerTrack } from "@/types/skill-builder/skill-builder.type";
@@ -14,9 +14,10 @@ import {
 interface Props {
   track: SkillBuilderCareerTrack;
   onEdit: () => void;
+  onDelete: () => void;
 }
 
-export default function CareerTrackCard({ track, onEdit }: Props) {
+export default function CareerTrackCard({ track, onEdit, onDelete }: Props) {
   const Icon = getCareerTrackIcon(track.iconKey);
 
   return (
@@ -69,13 +70,25 @@ export default function CareerTrackCard({ track, onEdit }: Props) {
             Updated {getCareerTrackUpdatedLabel(track)}
           </p>
 
-          <button
-            type="button"
-            onClick={onEdit}
-            className="text-[#006B3F] transition hover:opacity-70"
-          >
-            <Pencil className="size-5" />
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label={`Delete ${track.title}`}
+              className="text-[#D92D20] transition hover:opacity-70"
+            >
+              <Trash2 className="size-5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onEdit}
+              aria-label={`Edit ${track.title}`}
+              className="text-[#006B3F] transition hover:opacity-70"
+            >
+              <Pencil className="size-5" />
+            </button>
+          </div>
         </div>
       </div>
     </Card>

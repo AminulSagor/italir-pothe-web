@@ -32,6 +32,8 @@ const SKILL_BUILDER_ENDPOINTS = {
     `/admin/skill-builder/career-tracks/${careerTrackId}`,
   careerTrackResources: (careerTrackId: string) =>
     `/admin/skill-builder/career-tracks/${careerTrackId}/resources`,
+  careerTrackIntroVideo: (careerTrackId: string) =>
+    `/admin/skill-builder/career-tracks/${careerTrackId}/intro-video`,
   syncCareerTrack: (careerTrackId: string) =>
     `/admin/skill-builder/career-tracks/${careerTrackId}/sync`,
   careerTrackModules: (careerTrackId: string) =>
@@ -190,6 +192,10 @@ export const updateCareerTrackResources = async (
   return normalizeCareerTrackMutationResponse(response);
 };
 
+export const deleteCareerTrackIntroVideo = (careerTrackId: string) =>
+  serviceClient.delete<SkillBuilderCareerTrack>(
+    SKILL_BUILDER_ENDPOINTS.careerTrackIntroVideo(careerTrackId),
+  );
 export const syncCareerTrack = (careerTrackId: string) =>
   serviceClient.post<SkillBuilderCareerTrack>(
     SKILL_BUILDER_ENDPOINTS.syncCareerTrack(careerTrackId),

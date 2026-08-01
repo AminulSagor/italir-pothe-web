@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import Button from "@/components/UI/buttons/button";
 import {
   createCareerTrack,
+  deleteCareerTrackIntroVideo,
   getCareerTrackDetails,
   getCareerTrackSummaryMetrics,
   getSkillBuilderFileReadUrl,
@@ -26,6 +27,7 @@ import CareerTrackFields from "./career-track-fields";
 import CareerTrackResourceUploader from "./career-track-resource-uploader";
 import ConnectedModulesPanel from "./connected-modules-panel";
 import UnsavedChangesDialog from "./unsaved-changes-dialog";
+import ConfirmActionDialog from "@/components/UI/dialogs/confirm-action-dialog";
 
 const HUB_PATH = "/admin/skill-builder-manager";
 const STUDIO_PATH = "/admin/skill-builder-manager/career-track-studio";
@@ -103,6 +105,8 @@ export default function CareerTrackStudioContent({
   const [moduleRefreshKey, setModuleRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(!isCreateMode);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleteVideoDialogOpen, setIsDeleteVideoDialogOpen] = useState(false);
+  const [isDeletingVideo, setIsDeletingVideo] = useState(false);
 
   const getActiveCareerTrackId = () => {
     return careerTrackId || careerTrack?.id || careerTrackIdFromUrl || "";
@@ -294,6 +298,70 @@ export default function CareerTrackStudioContent({
       window.open(fileUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       toast.error(getErrorMessage(error));
+    }
+  };
+
+  const handleClearIntroVideo = () => {
+    // A newly selected video has not been uploaded yet.
+    if (introVideoFile) {
+      setIntroVideoFile(null);
+
+      setIntroVideoDisplayName(
+        getFileName(careerTrack?.introVideoFile) ||
+          (careerTrack?.introVideoFileId ? "Intro video attached" : ""),
+      );
+
+      return;
+    }
+
+    // No saved video exists.
+    if (!careerTrack?.introVideoFileId) {
+      return;
+    }
+
+    setIsDeleteVideoDialogOpen(true);
+  };
+
+  const handleConfirmDeleteIntroVideo = async () => {
+    const activeCareerTrackId = getActiveCareerTrackId();
+
+    if (!activeCareerTrackId) {
+      toast.error("Career track ID is missing.");
+      return;
+    }
+
+    try {
+      setIsDeletingVideo(true);
+
+      await deleteCareerTrackIntroVideo(activeCareerTrackId);
+
+      const refreshedTrack = await getCareerTrackDetails(activeCareerTrackId);
+
+      setCareerTrack(refreshedTrack);
+      setIntroVideoFile(null);
+      setIntroVideoDisplayName("");
+
+      setSavedSnapshot(
+        buildSnapshot({
+          title,
+          subtitleBn,
+          description,
+          iconKey,
+          cardColor,
+          sortOrder,
+          introVideoFileId: null,
+          theoryResourceFileId: refreshedTrack.theoryResourceFileId,
+          introVideoFileName: "",
+          theoryPdfFileName: getTheoryPdfName(refreshedTrack),
+        }),
+      );
+
+      setIsDeleteVideoDialogOpen(false);
+      toast.success("Introduction video deleted.");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsDeletingVideo(false);
     }
   };
 
@@ -588,9 +656,7 @@ export default function CareerTrackStudioContent({
                       setIntroVideoFile(file);
                       setIntroVideoDisplayName(file.name);
                     }}
-                    onClear={() => {
-                      setIntroVideoFile(null);
-                    }}
+                    onClear={handleClearIntroVideo}
                     onView={() => handleViewFile(careerTrack?.introVideoFileId)}
                   />
                 </div>
@@ -649,6 +715,16 @@ export default function CareerTrackStudioContent({
         open={pendingBack}
         onCancel={() => setPendingBack(false)}
         onOk={handleConfirmBack}
+      />
+      <ConfirmActionDialog
+        open={isDeleteVideoDialogOpen}
+        title="Delete Introduction Video"
+        description="Delete this introduction video from the career track? The track will remain available without a video."
+        confirmLabel="Delete Video"
+        danger
+        isSubmitting={isDeletingVideo}
+        onCancel={() => setIsDeleteVideoDialogOpen(false)}
+        onConfirm={handleConfirmDeleteIntroVideo}
       />
     </>
   );
