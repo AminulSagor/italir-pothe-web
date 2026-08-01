@@ -32,7 +32,7 @@ export interface SkillBuilderCareerTrack {
   description?: string | null;
   iconKey: string;
   cardColor: string;
-  introVideoFileId: string;
+  introVideoFileId: string | null;
   theoryResourceFileId: string;
   introVideoFile?: SkillBuilderFileReference | null;
   theoryResourceFile?: SkillBuilderFileReference | null;
@@ -58,7 +58,7 @@ export interface CreateCareerTrackPayload {
   description?: string;
   iconKey: string;
   cardColor: string;
-  introVideoFileId: string;
+  introVideoFileId?: string;
   theoryResourceFileId: string;
   sortOrder: number;
 }

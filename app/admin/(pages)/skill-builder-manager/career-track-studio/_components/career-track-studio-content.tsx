@@ -61,7 +61,7 @@ const buildSnapshot = (params: {
   iconKey: string;
   cardColor: string;
   sortOrder: number;
-  introVideoFileId?: string;
+  introVideoFileId?: string | null;
   theoryResourceFileId?: string;
   introVideoFileName?: string;
   theoryPdfFileName?: string;
@@ -270,8 +270,8 @@ export default function CareerTrackStudioContent({
       return false;
     }
 
-    if (isCreateMode && !introVideoFile) {
-      toast.error("Intro video is required before creating a career track.");
+    if (isCreateMode && !theoryPdfFile) {
+      toast.error("Theory PDF is required before creating a career track.");
       return false;
     }
 
@@ -320,8 +320,10 @@ export default function CareerTrackStudioContent({
           ...(description.trim() ? { description: description.trim() } : {}),
           iconKey,
           cardColor,
-          introVideoFileId: uploadedIntroVideoFileId || "",
-          theoryResourceFileId: uploadedTheoryResourceFileId || "",
+          ...(uploadedIntroVideoFileId
+            ? { introVideoFileId: uploadedIntroVideoFileId }
+            : {}),
+          theoryResourceFileId: uploadedTheoryResourceFileId!,
           sortOrder:
             (metrics.totalCareerTracks || metrics.totalTracks || 0) + 1,
         });
