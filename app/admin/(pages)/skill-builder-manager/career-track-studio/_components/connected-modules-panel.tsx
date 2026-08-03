@@ -1,16 +1,15 @@
 "use client";
 
-import {
-  ChevronLeft,
-  ChevronRight,
-  GripVertical,
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 import Button from "@/components/UI/buttons/button";
-import { getCareerTrackModules } from "@/service/skill-builder/skill-builder.service";
+import ConfirmActionDialog from "@/components/UI/dialogs/confirm-action-dialog";
+import {
+  deleteCareerTrackModule,
+  getCareerTrackModules,
+} from "@/service/skill-builder/skill-builder.service";
 import type { SkillBuilderCareerTrackModule } from "@/types/skill-builder/skill-builder.type";
 
 interface ConnectedModulesPanelProps {
@@ -26,6 +25,14 @@ const getSentenceCount = (module: SkillBuilderCareerTrackModule) => {
   return module.sentenceCount || module.totalSentences || 0;
 };
 
+const getErrorMessage = (error: unknown) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "Something went wrong. Please try again.";
+};
+
 export default function ConnectedModulesPanel({
   careerTrackId,
   refreshKey = 0,
@@ -37,6 +44,12 @@ export default function ConnectedModulesPanel({
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const [modulePendingDelete, setModulePendingDelete] =
+    useState<SkillBuilderCareerTrackModule | null>(null);
+
+  const [isDeletingModule, setIsDeletingModule] = useState(false);
 
   /*
    * When the user opens another career track,
@@ -83,6 +96,13 @@ export default function ConnectedModulesPanel({
         setModules(response.items);
         setTotalItems(response.totalItems);
         setTotalPages(availablePages);
+      } catch (error) {
+        if (isMounted) {
+          toast.error(getErrorMessage(error));
+          setModules([]);
+          setTotalItems(0);
+          setTotalPages(1);
+        }
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -95,7 +115,7 @@ export default function ConnectedModulesPanel({
     return () => {
       isMounted = false;
     };
-  }, [careerTrackId, page, refreshKey]);
+  }, [careerTrackId, page, refreshKey, reloadKey]);
 
   const startItem = totalItems === 0 ? 0 : (page - 1) * MODULES_PER_PAGE + 1;
 
@@ -120,119 +140,186 @@ export default function ConnectedModulesPanel({
     setPage((currentPage) => currentPage + 1);
   };
 
+  const handleDeleteRequest = (module: SkillBuilderCareerTrackModule) => {
+    setModulePendingDelete(module);
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeletingModule) {
+      return;
+    }
+
+    setModulePendingDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!modulePendingDelete || isDeletingModule) {
+      return;
+    }
+
+    try {
+      setIsDeletingModule(true);
+
+      await deleteCareerTrackModule(modulePendingDelete.id);
+
+      toast.success("Module deleted successfully.");
+      setModulePendingDelete(null);
+
+      /*
+       * When the deleted module was the only item on the current
+       * page, return to the previous page. Otherwise reload the
+       * current page.
+       */
+      if (modules.length === 1 && page > 1) {
+        setPage((currentPage) => currentPage - 1);
+      } else {
+        setReloadKey((currentKey) => currentKey + 1);
+      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsDeletingModule(false);
+    }
+  };
+
   return (
-    <aside className="rounded-3xl bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-[#202420]">
-        Connected Modules
-      </h2>
+    <>
+      <aside className="rounded-3xl bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-semibold text-[#202420]">
+          Connected Modules
+        </h2>
 
-      <div className="mt-6 space-y-3">
-        {isLoading ? (
-          <p className="rounded-2xl bg-[#F6F8F4] px-4 py-4 text-sm text-[#5F675F]">
-            Loading modules...
-          </p>
-        ) : modules.length > 0 ? (
-          modules.map((module, index) => {
-            const moduleNumber = (page - 1) * MODULES_PER_PAGE + index + 1;
+        <div className="mt-6 space-y-3">
+          {isLoading ? (
+            <p className="rounded-2xl bg-[#F6F8F4] px-4 py-4 text-sm text-[#5F675F]">
+              Loading modules...
+            </p>
+          ) : modules.length > 0 ? (
+            modules.map((module, index) => {
+              const moduleNumber = (page - 1) * MODULES_PER_PAGE + index + 1;
 
-            return (
-              <div
-                key={module.id}
-                className="flex items-center gap-4 rounded-2xl bg-[#F8F6F1] px-4 py-3"
-              >
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#F6E8D4] text-sm font-semibold text-[#7A4B18]">
-                  {moduleNumber}
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-semibold text-[#202420]">
-                    {module.name}
-                  </h3>
-
-                  <p className="mt-1 text-xs text-[#66736B]">
-                    Module {String(module.sortOrder).padStart(2, "0")} •{" "}
-                    {getSentenceCount(module)} Sentences
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => onEditModule(module)}
-                  className="text-[#006B3F]"
-                  title="Edit module"
-                  aria-label={`Edit ${module.name}`}
+              return (
+                <div
+                  key={module.id}
+                  className="flex items-center gap-4 rounded-2xl bg-[#F8F6F1] px-4 py-3"
                 >
-                  <Pencil className="size-4" />
-                </button>
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#F6E8D4] text-sm font-semibold text-[#7A4B18]">
+                    {moduleNumber}
+                  </div>
 
-                <GripVertical className="size-5 shrink-0 text-[#889188]" />
-              </div>
-            );
-          })
-        ) : (
-          <p className="rounded-2xl bg-[#F6F8F4] px-4 py-4 text-sm text-[#5F675F]">
-            No modules connected yet.
-          </p>
-        )}
-      </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-sm font-semibold text-[#202420]">
+                      {module.name}
+                    </h3>
 
-      {totalItems > 0 ? (
-        <div className="mt-5 border-t border-[#E7ECE7] pt-4">
-          <p className="text-center text-xs text-[#66736B]">
-            Showing{" "}
-            <span className="font-semibold text-[#006B3F]">
-              {startItem}-{endItem}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold text-[#006B3F]">{totalItems}</span>{" "}
-            modules
-          </p>
+                    <p className="mt-1 text-xs text-[#66736B]">
+                      Module {String(module.sortOrder).padStart(2, "0")} •{" "}
+                      {getSentenceCount(module)} Sentences
+                    </p>
+                  </div>
 
-          <div className="mt-3 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              disabled={!canGoPrevious || isLoading}
-              onClick={handlePreviousPage}
-              className="flex size-10 items-center justify-center rounded-full border border-[#DCE5DA] text-[#202420] transition hover:bg-[#F4F7F4] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Previous modules page"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
+                  <button
+                    type="button"
+                    onClick={() => onEditModule(module)}
+                    className="text-[#006B3F] transition hover:opacity-70"
+                    title="Edit module"
+                    aria-label={`Edit ${module.name}`}
+                  >
+                    <Pencil className="size-4" />
+                  </button>
 
-            <span className="text-sm font-medium text-[#66736B]">
-              Page {page} of {totalPages}
-            </span>
-
-            <button
-              type="button"
-              disabled={!canGoNext || isLoading}
-              onClick={handleNextPage}
-              className="flex size-10 items-center justify-center rounded-full border border-[#DCE5DA] text-[#202420] transition hover:bg-[#F4F7F4] disabled:cursor-not-allowed disabled:opacity-40"
-              aria-label="Next modules page"
-            >
-              <ChevronRight className="size-5" />
-            </button>
-          </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteRequest(module)}
+                    className="text-[#D92D20] transition hover:opacity-70"
+                    title="Delete module"
+                    aria-label={`Delete ${module.name}`}
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
+              );
+            })
+          ) : (
+            <p className="rounded-2xl bg-[#F6F8F4] px-4 py-4 text-sm text-[#5F675F]">
+              No modules connected yet.
+            </p>
+          )}
         </div>
-      ) : null}
 
-      <Button
-        fullWidth
-        variant="outline"
-        size="lg"
-        disabled={!careerTrackId}
-        className="mt-6 gap-2 border-dashed"
-        onClick={onAttachModule}
-      >
-        <Plus className="size-5" />
-        ATTACH NEW MODULE
-      </Button>
+        {totalItems > 0 ? (
+          <div className="mt-5 border-t border-[#E7ECE7] pt-4">
+            <p className="text-center text-xs text-[#66736B]">
+              Showing{" "}
+              <span className="font-semibold text-[#006B3F]">
+                {startItem}-{endItem}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-[#006B3F]">{totalItems}</span>{" "}
+              modules
+            </p>
 
-      {!careerTrackId ? (
-        <p className="mt-3 text-xs text-[#8A938A]">
-          Save the career track first to attach modules.
-        </p>
-      ) : null}
-    </aside>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                disabled={!canGoPrevious || isLoading}
+                onClick={handlePreviousPage}
+                className="flex size-10 items-center justify-center rounded-full border border-[#DCE5DA] text-[#202420] transition hover:bg-[#F4F7F4] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous modules page"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+
+              <span className="text-sm font-medium text-[#66736B]">
+                Page {page} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={!canGoNext || isLoading}
+                onClick={handleNextPage}
+                className="flex size-10 items-center justify-center rounded-full border border-[#DCE5DA] text-[#202420] transition hover:bg-[#F4F7F4] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next modules page"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        <Button
+          fullWidth
+          variant="outline"
+          size="lg"
+          disabled={!careerTrackId}
+          className="mt-6 gap-2 border-dashed"
+          onClick={onAttachModule}
+        >
+          <Plus className="size-5" />
+          ATTACH NEW MODULE
+        </Button>
+
+        {!careerTrackId ? (
+          <p className="mt-3 text-xs text-[#8A938A]">
+            Save the career track first to attach modules.
+          </p>
+        ) : null}
+      </aside>
+
+      <ConfirmActionDialog
+        open={Boolean(modulePendingDelete)}
+        title="Delete Module"
+        description={
+          modulePendingDelete
+            ? `Are you sure you want to delete "${modulePendingDelete.name}"? Its sentences and learner progress may also be removed.`
+            : ""
+        }
+        confirmLabel="Delete Module"
+        danger
+        isSubmitting={isDeletingModule}
+        onCancel={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+      />
+    </>
   );
 }
