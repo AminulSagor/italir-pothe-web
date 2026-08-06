@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -16,6 +16,7 @@ import type {
 
 import AddCareerTrackCard from "./add-career-track-card";
 import CareerTrackCard from "./career-track-card";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CareerTrackGridProps {
   refreshKey?: number;
@@ -52,6 +53,9 @@ export default function CareerTrackGrid({
   const searchParams = useSearchParams();
 
   const careerTrackSearch = searchParams.get("search") || "";
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const previousSearchRef = useRef(careerTrackSearch);
 
   const [listResponse, setListResponse] =
     useState<CareerTrackListResponse>(initialListResponse);
@@ -64,29 +68,60 @@ export default function CareerTrackGrid({
 
   const [isDeletingTrack, setIsDeletingTrack] = useState(false);
 
-  const loadCareerTracks = async () => {
-    try {
-      setIsLoading(true);
-      setError("");
+  const loadCareerTracks = useCallback(
+    async (requestedPage: number) => {
+      try {
+        setIsLoading(true);
+        setError("");
 
-      const response = await getCareerTracks({
-        page: 1,
-        limit: CAREER_TRACKS_PER_PAGE,
-        search: careerTrackSearch,
-      });
+        const response = await getCareerTracks({
+          page: requestedPage,
+          limit: CAREER_TRACKS_PER_PAGE,
+          search: careerTrackSearch,
+        });
 
-      setListResponse(response);
-    } catch (loadError) {
-      setError(getErrorMessage(loadError));
-      setListResponse(initialListResponse);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        const availablePages = Math.max(response.totalPages, 1);
+
+        /*
+         * When the last item on the last page is
+         * deleted, return to the previous page.
+         */
+        if (requestedPage > availablePages) {
+          setCurrentPage(availablePages);
+          return;
+        }
+
+        setListResponse({
+          ...response,
+          totalPages: availablePages,
+        });
+      } catch (loadError) {
+        setError(getErrorMessage(loadError));
+        setListResponse(initialListResponse);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [careerTrackSearch],
+  );
 
   useEffect(() => {
-    void loadCareerTracks();
-  }, [careerTrackSearch, refreshKey]);
+    const searchChanged = previousSearchRef.current !== careerTrackSearch;
+
+    if (searchChanged) {
+      previousSearchRef.current = careerTrackSearch;
+
+      /*
+       * Every new search starts from page one.
+       */
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+        return;
+      }
+    }
+
+    void loadCareerTracks(currentPage);
+  }, [careerTrackSearch, currentPage, refreshKey, loadCareerTracks]);
 
   const handleEditTrack = (track: SkillBuilderCareerTrack) => {
     router.push(
@@ -122,7 +157,7 @@ export default function CareerTrackGrid({
       if (onMutated) {
         onMutated();
       } else {
-        await loadCareerTracks();
+        await loadCareerTracks(currentPage);
       }
     } catch (deleteError) {
       toast.error(getErrorMessage(deleteError));
@@ -130,6 +165,20 @@ export default function CareerTrackGrid({
       setIsDeletingTrack(false);
     }
   };
+
+  const startItem =
+    listResponse.totalItems === 0
+      ? 0
+      : (listResponse.page - 1) * listResponse.limit + 1;
+
+  const endItem = Math.min(
+    listResponse.page * listResponse.limit,
+    listResponse.totalItems,
+  );
+
+  const canGoPrevious = currentPage > 1;
+
+  const canGoNext = currentPage < listResponse.totalPages;
 
   if (isLoading) {
     return (
@@ -171,6 +220,48 @@ export default function CareerTrackGrid({
         {!error && listResponse.items.length === 0 ? (
           <div className="rounded-3xl border border-[#E5ECE6] bg-white px-6 py-8 text-center text-sm text-[#5F675F]">
             No career tracks found.
+          </div>
+        ) : null}
+
+        {!error && listResponse.totalPages > 1 ? (
+          <div className="flex flex-col gap-4 rounded-3xl bg-white px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-[#66736B]">
+              Showing{" "}
+              <span className="font-semibold text-[#006B3F]">
+                {startItem}-{endItem}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-[#006B3F]">
+                {listResponse.totalItems}
+              </span>{" "}
+              career tracks
+            </p>
+
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                disabled={!canGoPrevious}
+                onClick={() => setCurrentPage((page) => page - 1)}
+                className="flex size-10 items-center justify-center rounded-full border border-[#DCE5DA] transition hover:bg-[#F4F7F4] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous career tracks page"
+              >
+                <ChevronLeft className="size-5" />
+              </button>
+
+              <span className="min-w-24 text-center text-sm font-medium text-[#66736B]">
+                Page {currentPage} of {listResponse.totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={!canGoNext}
+                onClick={() => setCurrentPage((page) => page + 1)}
+                className="flex size-10 items-center justify-center rounded-full border border-[#DCE5DA] transition hover:bg-[#F4F7F4] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next career tracks page"
+              >
+                <ChevronRight className="size-5" />
+              </button>
+            </div>
           </div>
         ) : null}
       </div>
