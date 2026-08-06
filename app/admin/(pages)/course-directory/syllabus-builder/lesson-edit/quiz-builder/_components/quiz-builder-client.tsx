@@ -46,6 +46,7 @@ import QuizFlowSidebar, { QuizFlowQuestionItem } from "./quiz-flow-sidebar";
 import FillBlanksQuestionConfig from "./question-types/fill-blanks-question-config";
 import WordTranslationQuestionConfig from "./question-types/word-translation-question-config";
 import ListeningQuestionConfig from "./question-types/listening-question-config";
+import QuestionMetaFields from "./question-types/question-meta-fields";
 import WritingWordTranslationQuestionConfig from "./question-types/writing-word-translation-question-config";
 
 type QuestionStatus = "draft" | "active" | "published" | "archived";
@@ -214,6 +215,12 @@ const optionQuestionTypes: QuizQuestionType[] = [
 const sequenceQuestionTypes: QuizQuestionType[] = [
   "sentence_translation",
   "listen_and_assemble",
+];
+
+const questionTypesWithInlineMetaFields: QuizQuestionType[] = [
+  "listening_mcq",
+  "sentence_translation",
+  "true_false",
 ];
 
 const createLocalId = () =>
@@ -1321,6 +1328,17 @@ export default function QuizBuilderClient() {
             />
 
             {renderQuestionConfiguration()}
+
+            {!questionTypesWithInlineMetaFields.includes(form.questionType) && (
+              <QuestionMetaFields
+                points={form.points}
+                sortOrder={form.sortOrder}
+                status={form.status}
+                onPointsChange={(value) => updateForm("points", value)}
+                onSortOrderChange={(value) => updateForm("sortOrder", value)}
+                onStatusChange={(value) => updateForm("status", value)}
+              />
+            )}
 
             <QuizActionPanel
               isSaving={isSavingQuestion}
