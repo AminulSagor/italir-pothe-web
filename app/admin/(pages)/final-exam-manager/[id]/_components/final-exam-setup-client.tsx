@@ -43,6 +43,7 @@ interface FinalExamSetupForm {
   overallPassingPercent: number;
   totalDurationMinutes: number;
   unlockCompletionPercent: number;
+  unlockRequirementEnabled: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;
@@ -94,6 +95,7 @@ const createFormFromExam = (exam: FinalExam): FinalExamSetupForm => {
     overallPassingPercent: exam.overallPassingPercent || 70,
     totalDurationMinutes: exam.totalDurationMinutes || 60,
     unlockCompletionPercent: exam.unlockCompletionPercent || 80,
+    unlockRequirementEnabled: Boolean(exam.unlockRequirementEnabled),
     plagiarismMonitorEnabled: Boolean(exam.plagiarismMonitorEnabled),
     copyPasteMonitorEnabled: Boolean(exam.copyPasteMonitorEnabled),
     resultNotice: exam.resultNotice || "",
@@ -179,7 +181,7 @@ export default function FinalExamSetupClient({
       Boolean(form.title.trim()) &&
       form.totalDurationMinutes > 0 &&
       form.overallPassingPercent > 0 &&
-      form.unlockCompletionPercent > 0;
+      (!form.unlockRequirementEnabled || form.unlockCompletionPercent > 0);
 
     const writingReady =
       Boolean(form.writingTitle.trim()) &&
@@ -336,6 +338,7 @@ export default function FinalExamSetupClient({
         overallPassingPercent: form.overallPassingPercent,
         totalDurationMinutes: form.totalDurationMinutes,
         unlockCompletionPercent: form.unlockCompletionPercent,
+        unlockRequirementEnabled: form.unlockRequirementEnabled,
         plagiarismMonitorEnabled: form.plagiarismMonitorEnabled,
         copyPasteMonitorEnabled: form.copyPasteMonitorEnabled,
         resultNotice: form.resultNotice,
@@ -492,6 +495,7 @@ export default function FinalExamSetupClient({
 
         <GlobalExamRules
           unlockCompletionPercent={form.unlockCompletionPercent}
+          unlockRequirementEnabled={form.unlockRequirementEnabled}
           plagiarismMonitorEnabled={form.plagiarismMonitorEnabled}
           copyPasteMonitorEnabled={form.copyPasteMonitorEnabled}
           resultNotice={form.resultNotice}
@@ -500,6 +504,9 @@ export default function FinalExamSetupClient({
           overallPassingPercent={form.overallPassingPercent}
           onUnlockCompletionPercentChange={(value) =>
             updateForm("unlockCompletionPercent", value)
+          }
+          onUnlockRequirementEnabledChange={(value) =>
+            updateForm("unlockRequirementEnabled", value)
           }
           onPlagiarismMonitorChange={(value) =>
             updateForm("plagiarismMonitorEnabled", value)

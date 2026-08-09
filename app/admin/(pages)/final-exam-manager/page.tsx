@@ -47,6 +47,7 @@ const createDefaultFinalExamPayload = () => ({
   overallPassingPercent: 70,
   totalDurationMinutes: 60,
   unlockCompletionPercent: 80,
+  unlockRequirementEnabled: false,
   plagiarismMonitorEnabled: true,
   copyPasteMonitorEnabled: true,
   resultNotice: "Your results will be processed within 24–48 hours.",

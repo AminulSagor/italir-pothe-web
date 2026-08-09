@@ -114,6 +114,7 @@ export interface FinalExam {
   overallPassingPercent: number;
   totalDurationMinutes: number;
   unlockCompletionPercent: number;
+  unlockRequirementEnabled: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;
@@ -169,6 +170,7 @@ export interface FinalExamPayload {
   overallPassingPercent: number;
   totalDurationMinutes: number;
   unlockCompletionPercent: number;
+  unlockRequirementEnabled: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;

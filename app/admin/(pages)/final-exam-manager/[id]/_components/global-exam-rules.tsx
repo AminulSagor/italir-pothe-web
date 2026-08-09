@@ -4,6 +4,7 @@ import Accordion from "@/components/UI/accordion/accordion";
 
 interface GlobalExamRulesProps {
   unlockCompletionPercent: number;
+  unlockRequirementEnabled: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;
@@ -11,6 +12,7 @@ interface GlobalExamRulesProps {
   totalDurationMinutes: number;
   overallPassingPercent: number;
   onUnlockCompletionPercentChange: (value: number) => void;
+  onUnlockRequirementEnabledChange: (value: boolean) => void;
   onPlagiarismMonitorChange: (value: boolean) => void;
   onCopyPasteMonitorChange: (value: boolean) => void;
   onResultNoticeChange: (value: string) => void;
@@ -21,6 +23,7 @@ interface GlobalExamRulesProps {
 
 const GlobalExamRules = ({
   unlockCompletionPercent,
+  unlockRequirementEnabled,
   plagiarismMonitorEnabled,
   copyPasteMonitorEnabled,
   resultNotice,
@@ -28,6 +31,7 @@ const GlobalExamRules = ({
   totalDurationMinutes,
   overallPassingPercent,
   onUnlockCompletionPercentChange,
+  onUnlockRequirementEnabledChange,
   onPlagiarismMonitorChange,
   onCopyPasteMonitorChange,
   onResultNoticeChange,
@@ -55,12 +59,22 @@ const GlobalExamRules = ({
     >
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <div className="space-y-4">
-          <NumberPill
-            label="Unlock condition: Video Course Completion"
-            value={unlockCompletionPercent}
-            suffix="%"
-            onChange={onUnlockCompletionPercentChange}
+          <TogglePill
+            label="Require course completion to unlock exam"
+            enabled={unlockRequirementEnabled}
+            onToggle={() =>
+              onUnlockRequirementEnabledChange(!unlockRequirementEnabled)
+            }
           />
+
+          {unlockRequirementEnabled && (
+            <NumberPill
+              label="Required Video Course Completion"
+              value={unlockCompletionPercent}
+              suffix="%"
+              onChange={onUnlockCompletionPercentChange}
+            />
+          )}
 
           <NumberPill
             label="Total Duration"
