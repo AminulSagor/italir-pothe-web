@@ -86,6 +86,9 @@ export interface Quiz {
   description: string | null;
   totalQuestions: number;
   sortOrder: number;
+  unlockRequirementEnabled: boolean;
+  unlockVideoWatchPercent: number;
+
   status: QuizStatus;
   createdAt: string;
   updatedAt: string;
@@ -96,6 +99,8 @@ export interface CreateQuizPayload {
   title?: string;
   description?: string | null;
   sortOrder?: number;
+  unlockRequirementEnabled?: boolean;
+  unlockVideoWatchPercent?: number;
   status?: QuizStatus;
 }
 

@@ -1309,6 +1309,84 @@ export default function QuizBuilderClient() {
           onPublish={handlePublishQuiz}
         />
 
+        {quiz && (
+          <div className="rounded-2xl border border-[#E2E8E1] bg-white p-5">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-[#202420]">
+                  Require video completion to unlock quiz
+                </p>
+
+                <p className="mt-1 text-xs text-[#7A8580]">
+                  Require students to watch the lesson video before starting
+                  this quiz.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setQuiz((current) =>
+                    current
+                      ? {
+                          ...current,
+                          unlockRequirementEnabled:
+                            !current.unlockRequirementEnabled,
+                        }
+                      : current,
+                  )
+                }
+                className={`relative h-7 w-12 shrink-0 rounded-full transition ${
+                  quiz.unlockRequirementEnabled
+                    ? "bg-[#007A4A]"
+                    : "bg-[#DDE4DF]"
+                }`}
+              >
+                <span
+                  className={`absolute top-1 size-5 rounded-full bg-white shadow transition-all ${
+                    quiz.unlockRequirementEnabled ? "left-6" : "left-1"
+                  }`}
+                />
+              </button>
+            </div>
+
+            {quiz.unlockRequirementEnabled && (
+              <div className="mt-4 flex items-center gap-3">
+                <label className="text-sm font-medium text-[#202420]">
+                  Required video completion
+                </label>
+
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={quiz.unlockVideoWatchPercent}
+                    onChange={(event) => {
+                      const value = Math.min(
+                        100,
+                        Math.max(1, Number(event.target.value) || 80),
+                      );
+
+                      setQuiz((current) =>
+                        current
+                          ? {
+                              ...current,
+                              unlockVideoWatchPercent: value,
+                            }
+                          : current,
+                      );
+                    }}
+                    className="w-20 rounded-xl border border-[#DDE5DF] px-3 py-2 text-sm outline-none"
+                  />
+
+                  <span className="text-sm font-semibold">%</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)] xl:items-start">
           <QuizFlowSidebar
             questions={flowQuestions}
