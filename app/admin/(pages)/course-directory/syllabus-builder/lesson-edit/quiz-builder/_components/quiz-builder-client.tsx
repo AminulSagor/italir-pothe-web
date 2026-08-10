@@ -48,6 +48,7 @@ import WordTranslationQuestionConfig from "./question-types/word-translation-que
 import ListeningQuestionConfig from "./question-types/listening-question-config";
 import QuestionMetaFields from "./question-types/question-meta-fields";
 import WritingWordTranslationQuestionConfig from "./question-types/writing-word-translation-question-config";
+import { generateQuizAudio } from "@/service/local-tts.service";
 
 type QuestionStatus = "draft" | "active" | "published" | "archived";
 
@@ -616,6 +617,7 @@ export default function QuizBuilderClient() {
   const [isDeletingQuestion, setIsDeletingQuestion] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [mediaUrl, setMediaUrl] = useState("");
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<
@@ -726,7 +728,7 @@ export default function QuizBuilderClient() {
   }, [courseId, lessonId, quizIdFromUrl]);
 
   useEffect(() => {
-    let isMounted = true;
+    let cancelled = false;
 
     const loadMediaUrl = async () => {
       if (!form.mediaFileId) {
@@ -737,20 +739,20 @@ export default function QuizBuilderClient() {
       try {
         const response = await createSignedReadUrl(form.mediaFileId);
 
-        if (!isMounted) return;
-
-        setMediaUrl(response.signedReadUrl || response.publicUrl || "");
+        if (!cancelled) {
+          setMediaUrl(response.signedReadUrl || response.publicUrl || "");
+        }
       } catch {
-        if (!isMounted) return;
-
-        setMediaUrl("");
+        if (!cancelled) {
+          setMediaUrl("");
+        }
       }
     };
 
     void loadMediaUrl();
 
     return () => {
-      isMounted = false;
+      cancelled = true;
     };
   }, [form.mediaFileId]);
 
@@ -856,7 +858,10 @@ export default function QuizBuilderClient() {
 
   const handleAddQuestion = () => {
     guardedAction(() => {
-      const nextForm = createEmptyQuestionForm(questions.length + 1);
+      const nextForm = createEmptyQuestionForm(
+        questions.length + 1,
+        form.questionType,
+      );
 
       setQuestions((currentQuestions) => [...currentQuestions, nextForm]);
       setActiveQuestionKey(nextForm.localId);
@@ -888,6 +893,29 @@ export default function QuizBuilderClient() {
       toast.error(getErrorMessage(error));
     } finally {
       setIsUploadingMedia(false);
+    }
+  };
+
+  const handleGenerateAudio = async () => {
+    const text = form.generatedAudioText.trim();
+
+    if (!text) {
+      toast.error("Enter text to generate audio.");
+      return;
+    }
+
+    try {
+      setIsGeneratingAudio(true);
+
+      const result = await generateQuizAudio(text);
+
+      updateForm("mediaFileId", result.mediaFileId);
+
+      toast.success("Audio generated successfully.");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsGeneratingAudio(false);
     }
   };
 
@@ -1122,6 +1150,7 @@ export default function QuizBuilderClient() {
           generatedAudioText={form.generatedAudioText}
           options={form.options}
           isUploading={isUploadingMedia}
+          isGenerating={isGeneratingAudio}
           onTitleChange={(value) => updateForm("title", value)}
           onPointsChange={(value) => updateForm("points", value)}
           onSortOrderChange={(value) => updateForm("sortOrder", value)}
@@ -1129,6 +1158,7 @@ export default function QuizBuilderClient() {
           onGeneratedAudioTextChange={(value) =>
             updateForm("generatedAudioText", value)
           }
+          onGenerateAudio={handleGenerateAudio}
           onFileSelect={handleMediaUpload}
           onRemoveMedia={() => updateForm("mediaFileId", "")}
           onOptionsChange={(options) => updateForm("options", options)}
@@ -1212,9 +1242,11 @@ export default function QuizBuilderClient() {
             mediaUrl={mediaUrl}
             generatedAudioText={form.generatedAudioText}
             isUploading={isUploadingMedia}
+            isGenerating={isGeneratingAudio}
             onGeneratedAudioTextChange={(value) =>
               updateForm("generatedAudioText", value)
             }
+            onGenerateAudio={handleGenerateAudio}
             onFileSelect={handleMediaUpload}
             onRemoveMedia={() => updateForm("mediaFileId", "")}
           />
