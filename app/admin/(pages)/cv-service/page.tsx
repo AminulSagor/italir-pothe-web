@@ -1,15 +1,5 @@
+import CVTemplateManagerClient from "./templates/_components/cv-template-manager-client";
 
-import CVServiceHeader from "./_components/cv-service-header";
-import CVStatsGrid from "./_components/cv-stats-grid";
-import RecentCVTransactions from "./_components/recent-cv-transactions";
-
-export default function CVServiceDashboardPage() {
-  return (
-    <div className="space-y-6">
-      <CVServiceHeader />
-
-      <CVStatsGrid />
-      <RecentCVTransactions />
-    </div>
-  );
+export default function CVServicePage() {
+  return <CVTemplateManagerClient />;
 }

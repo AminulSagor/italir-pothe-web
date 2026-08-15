@@ -1,41 +1,27 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from "react";
-import {
-  FileImage,
-  Loader2,
-  Search,
-  X,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
 import Button from "@/components/UI/buttons/button";
+import ConfirmActionDialog from "@/components/UI/dialogs/confirm-action-dialog";
 import {
-  deleteCvTemplate,
-  getCvTemplates,
-} from "@/service/cv-template/cv_template";
+  archiveResumeTemplate,
+  getResumeTemplates,
+} from "@/service/resume-studio/resume-template.service";
 import type {
-  CvPagination,
-  CvTemplateItem,
-} from "@/types/cv-template/cv_template_type";
+  ResumeTemplate,
+  ResumeTemplateStatus,
+} from "@/types/resume-studio/resume-template.types";
 
 import CVTemplateCard from "./cv-template-card";
 import CVTemplateHeader from "./cv-template-header";
 import CVTemplatePagination from "./cv-template-pagination";
-import DeleteCVTemplateDialog from "./delete-cv-template-dialog";
-import UploadCVTemplateDialog from "./upload-cv-template-dialog";
+import ResumeTemplateFilters from "./resume-template-filters";
 
-const PAGE_SIZE = 6;
-
-const emptyPagination: CvPagination = {
-  page: 1,
-  limit: PAGE_SIZE,
-  totalPages: 0,
-  totalItems: 0,
-};
+const PAGE_SIZE = 9;
 
 const getErrorMessage = (error: unknown) =>
   error instanceof Error
@@ -43,40 +29,36 @@ const getErrorMessage = (error: unknown) =>
     : "Something went wrong. Please try again.";
 
 export default function CVTemplateManagerClient() {
-  const [templates, setTemplates] = useState<
-    CvTemplateItem[]
-  >([]);
-
-  const [pagination, setPagination] =
-    useState<CvPagination>(emptyPagination);
-
+  const router = useRouter();
+  const [templates, setTemplates] = useState<ResumeTemplate[]>([]);
+  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] =
-    useState("");
-
+  const [category, setCategory] = useState("");
+  const [status, setStatus] = useState<ResumeTemplateStatus | "">("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [debouncedCategory, setDebouncedCategory] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [templateToArchive, setTemplateToArchive] =
+    useState<ResumeTemplate | null>(null);
+  const [isArchiving, setIsArchiving] = useState(false);
 
-  const [uploadDialogOpen, setUploadDialogOpen] =
-    useState(false);
-
-  const [templateToDelete, setTemplateToDelete] =
-    useState<CvTemplateItem | null>(null);
-
-  const [isDeleting, setIsDeleting] = useState(false);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(total / PAGE_SIZE)),
+    [total],
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
-      setPage(1);
       setDebouncedSearch(search.trim());
-    }, 400);
+      setDebouncedCategory(category.trim());
+      setPage(1);
+    }, 350);
 
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [search]);
+    return () => window.clearTimeout(timeout);
+  }, [category, search]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,42 +68,35 @@ export default function CVTemplateManagerClient() {
       setLoadError("");
 
       try {
-        const response = await getCvTemplates(
+        const response = await getResumeTemplates({
           page,
-          PAGE_SIZE,
-          debouncedSearch,
-        );
-
-        if (cancelled) {
-          return;
-        }
-
-        const totalPages =
-          response.pagination.totalPages;
-
-        if (totalPages > 0 && page > totalPages) {
-          setPage(totalPages);
-          return;
-        }
-
-        setTemplates(response.templates);
-        setPagination(response.pagination);
-      } catch (error) {
-        if (cancelled) {
-          return;
-        }
-
-        setTemplates([]);
-        setPagination({
-          ...emptyPagination,
-          page,
+          limit: PAGE_SIZE,
+          search: debouncedSearch,
+          category: debouncedCategory,
+          status,
         });
 
+        if (cancelled) return;
+
+        const computedPages = Math.max(
+          1,
+          Math.ceil(response.total / response.limit),
+        );
+
+        if (page > computedPages) {
+          setPage(computedPages);
+          return;
+        }
+
+        setTemplates(response.items);
+        setTotal(response.total);
+      } catch (error) {
+        if (cancelled) return;
+        setTemplates([]);
+        setTotal(0);
         setLoadError(getErrorMessage(error));
       } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
+        if (!cancelled) setIsLoading(false);
       }
     };
 
@@ -130,222 +105,139 @@ export default function CVTemplateManagerClient() {
     return () => {
       cancelled = true;
     };
-  }, [page, debouncedSearch, reloadKey]);
+  }, [debouncedCategory, debouncedSearch, page, reloadKey, status]);
 
-  const clearSearch = () => {
-    setSearch("");
-    setDebouncedSearch("");
-    setPage(1);
-  };
-
-  const handleTemplateCreated = () => {
-    setSearch("");
-    setDebouncedSearch("");
-    setPage(1);
-    setReloadKey((current) => current + 1);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!templateToDelete) {
+  const handlePreview = (template: ResumeTemplate) => {
+    if (!template.previewPdfUrl) {
+      toast.error("This template does not have a published PDF preview yet.");
       return;
     }
 
-    const toastId = toast.loading(
-      "Deleting CV template...",
-    );
+    window.open(template.previewPdfUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleArchive = async () => {
+    if (!templateToArchive) return;
+
+    const toastId = toast.loading("Archiving CV template...");
 
     try {
-      setIsDeleting(true);
-
-      await deleteCvTemplate(templateToDelete.id);
-
-      toast.success("CV template deleted.", {
-        id: toastId,
-      });
-
-      const shouldMoveToPreviousPage =
-        templates.length === 1 && page > 1;
-
-      setTemplateToDelete(null);
-
-      if (shouldMoveToPreviousPage) {
-        setPage((current) => current - 1);
-      } else {
-        setReloadKey((current) => current + 1);
-      }
+      setIsArchiving(true);
+      await archiveResumeTemplate(templateToArchive.id);
+      toast.success("CV template archived.", { id: toastId });
+      setTemplateToArchive(null);
+      setReloadKey((current) => current + 1);
     } catch (error) {
-      toast.error(getErrorMessage(error), {
-        id: toastId,
-      });
+      toast.error(getErrorMessage(error), { id: toastId });
     } finally {
-      setIsDeleting(false);
+      setIsArchiving(false);
     }
   };
 
   return (
     <>
-      <div className="space-y-8">
+      <div className="space-y-7">
         <CVTemplateHeader
-          onUpload={() => setUploadDialogOpen(true)}
+          onCreate={() => router.push("/admin/cv-service/templates/new")}
         />
 
-        <div className="flex flex-col gap-4 rounded-3xl bg-white p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full max-w-[480px]">
-            <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-black/35" />
-
-            <input
-              type="search"
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Search templates by name..."
-              className="h-12 w-full rounded-full bg-[#EEF3EB] pl-11 pr-12 text-sm outline-none placeholder:text-black/30"
-            />
-
-            {search && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="absolute right-4 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full text-black/40 transition hover:bg-black/5"
-                aria-label="Clear search"
-              >
-                <X className="size-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3">
-            {isLoading && (
-              <Loader2 className="size-4 animate-spin text-[#006B3F]" />
-            )}
-
-            <p className="text-sm text-black/50">
-              {pagination.totalItems}{" "}
-              {pagination.totalItems === 1
-                ? "template"
-                : "templates"}
-            </p>
-          </div>
-        </div>
+        <ResumeTemplateFilters
+          search={search}
+          category={category}
+          status={status}
+          total={total}
+          isLoading={isLoading}
+          onSearchChange={setSearch}
+          onCategoryChange={setCategory}
+          onStatusChange={(value) => {
+            setStatus(value);
+            setPage(1);
+          }}
+          onClear={() => {
+            setSearch("");
+            setCategory("");
+            setStatus("");
+            setPage(1);
+          }}
+        />
 
         {loadError ? (
-          <div className="rounded-3xl bg-white px-6 py-14 text-center">
+          <div className="rounded-3xl bg-white px-6 py-14 text-center shadow-sm">
             <p className="font-semibold text-[#D92D20]">
               Templates could not be loaded
             </p>
-
-            <p className="mx-auto mt-2 max-w-[440px] text-sm text-black/50">
+            <p className="mx-auto mt-2 max-w-[500px] text-sm text-black/50">
               {loadError}
             </p>
-
             <Button
               variant="outline"
               className="mt-6"
-              onClick={() =>
-                setReloadKey((current) => current + 1)
-              }
+              onClick={() => setReloadKey((current) => current + 1)}
             >
               Try Again
             </Button>
           </div>
         ) : isLoading ? (
           <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: PAGE_SIZE }).map(
-              (_, index) => (
-                <div
-                  key={index}
-                  className="animate-pulse rounded-3xl bg-white p-5"
-                >
-                  <div className="h-[390px] rounded-2xl bg-[#EEF3EB]" />
-
-                  <div className="mt-5 h-5 w-2/3 rounded-full bg-[#EEF3EB]" />
-
-                  <div className="mt-3 h-3 w-1/3 rounded-full bg-[#EEF3EB]" />
-                </div>
-              ),
-            )}
-          </div>
-        ) : templates.length === 0 ? (
-          <div className="rounded-3xl bg-white px-6 py-16 text-center">
-            <span className="mx-auto flex size-20 items-center justify-center rounded-3xl bg-[#E6F6F0] text-[#007A4D]">
-              <FileImage className="size-9" />
-            </span>
-
-            <h2 className="mt-6 text-xl font-bold text-[#202420]">
-              {debouncedSearch
-                ? "No matching templates"
-                : "No CV templates uploaded"}
-            </h2>
-
-            <p className="mx-auto mt-2 max-w-[420px] text-sm leading-6 text-black/50">
-              {debouncedSearch
-                ? `No templates were found for "${debouncedSearch}".`
-                : "Upload your first CV template image to make it available in the application."}
-            </p>
-
-            {debouncedSearch ? (
-              <Button
-                variant="outline"
-                className="mt-6"
-                onClick={clearSearch}
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-[430px] animate-pulse rounded-3xl bg-white p-5 shadow-sm"
               >
-                Clear Search
-              </Button>
-            ) : (
-              <Button
-                className="mt-6"
-                onClick={() =>
-                  setUploadDialogOpen(true)
-                }
-              >
-                Upload First Template
-              </Button>
-            )}
+                <div className="h-[185px] rounded-2xl bg-[#EEF3EB]" />
+                <div className="mt-5 h-5 w-2/3 rounded bg-[#EEF3EB]" />
+                <div className="mt-3 h-4 w-full rounded bg-[#F2F5F1]" />
+                <div className="mt-2 h-4 w-4/5 rounded bg-[#F2F5F1]" />
+              </div>
+            ))}
           </div>
-        ) : (
+        ) : templates.length ? (
           <>
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {templates.map((template) => (
                 <CVTemplateCard
                   key={template.id}
                   template={template}
-                  isDeleting={
-                    isDeleting &&
-                    templateToDelete?.id === template.id
+                  onEdit={(item) =>
+                    router.push(`/admin/cv-service/templates/${item.id}`)
                   }
-                  onDelete={setTemplateToDelete}
+                  onPreview={handlePreview}
+                  onArchive={setTemplateToArchive}
                 />
               ))}
             </div>
 
             <CVTemplatePagination
-              page={pagination.page}
-              totalPages={pagination.totalPages}
-              total={pagination.totalItems}
-              limit={pagination.limit}
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={PAGE_SIZE}
               onPageChange={setPage}
             />
           </>
+        ) : (
+          <div className="rounded-3xl bg-white px-6 py-16 text-center shadow-sm">
+            <Loader2 className="mx-auto size-8 text-[#B8C4BA]" />
+            <h2 className="mt-4 text-lg font-bold text-[#202420]">
+              No CV templates found
+            </h2>
+            <p className="mx-auto mt-2 max-w-[460px] text-sm text-black/50">
+              Create a backend-rendered HTML/CSS template or clear the current
+              filters.
+            </p>
+          </div>
         )}
       </div>
 
-      <UploadCVTemplateDialog
-        open={uploadDialogOpen}
-        onClose={() => setUploadDialogOpen(false)}
-        onCreated={handleTemplateCreated}
-      />
-
-      <DeleteCVTemplateDialog
-        open={Boolean(templateToDelete)}
-        templateName={templateToDelete?.name ?? ""}
-        isDeleting={isDeleting}
-        onCancel={() => {
-          if (!isDeleting) {
-            setTemplateToDelete(null);
-          }
-        }}
-        onConfirm={handleConfirmDelete}
+      <ConfirmActionDialog
+        open={Boolean(templateToArchive)}
+        title="Archive CV Template"
+        description={`Archive “${templateToArchive?.name ?? "this template"}”? It will no longer be available to Flutter until a new version is published.`}
+        confirmLabel="Archive Template"
+        danger
+        isSubmitting={isArchiving}
+        onCancel={() => !isArchiving && setTemplateToArchive(null)}
+        onConfirm={handleArchive}
       />
     </>
   );

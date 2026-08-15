@@ -47,6 +47,33 @@ const createServiceError = (
   return error;
 };
 
+const normalizeApiErrorPayload = async (
+  data: ApiErrorPayload | Blob | undefined,
+  fallbackMessage: string,
+): Promise<ApiErrorPayload> => {
+  if (typeof Blob !== "undefined" && data instanceof Blob) {
+    try {
+      const text = await data.text();
+
+      if (text) {
+        try {
+          return JSON.parse(text) as ApiErrorPayload;
+        } catch {
+          return { message: text };
+        }
+      }
+    } catch {
+      // Fall through to the generic payload below.
+    }
+  }
+
+  if (data && !(typeof Blob !== "undefined" && data instanceof Blob)) {
+    return data as ApiErrorPayload;
+  }
+
+  return { message: fallbackMessage };
+};
+
 const getFileNameFromContentDisposition = (contentDisposition?: string) => {
   if (!contentDisposition) {
     return "";
@@ -82,13 +109,14 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiErrorPayload>) => {
+  async (error: AxiosError<ApiErrorPayload | Blob>) => {
     const status = error.response?.status || 500;
+    const data = await normalizeApiErrorPayload(
+      error.response?.data,
+      error.message || "Request failed",
+    );
 
-    const data = error.response?.data || {
-      message: error.message || "Request failed",
-      statusCode: status,
-    };
+    data.statusCode ??= status;
 
     if (status === 401) {
       removeToken();
@@ -143,6 +171,33 @@ export const serviceClient = {
     const response = await apiClient.post<T>(path, body);
 
     return response.data;
+  },
+
+  postFile: async (
+    path: string,
+    body: unknown,
+    fallbackFileName: string,
+  ): Promise<ServiceFileDownload> => {
+    const response = await apiClient.post<Blob>(path, body, {
+      responseType: "blob",
+    });
+
+    const headers = response.headers as Record<string, string | undefined>;
+
+    const contentType =
+      headers["content-type"] ||
+      response.data.type ||
+      "application/octet-stream";
+
+    const fileName =
+      getFileNameFromContentDisposition(headers["content-disposition"]) ||
+      fallbackFileName;
+
+    return {
+      blob: response.data,
+      fileName,
+      contentType,
+    };
   },
 
   patch: async <T>(path: string, body?: unknown) => {
