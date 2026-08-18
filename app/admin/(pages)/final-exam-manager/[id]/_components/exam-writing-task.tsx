@@ -9,7 +9,9 @@ interface ExamWritingTaskProps {
   instruction: string;
   minWords: number;
   maxWords: number;
+  enabled: boolean;
   accentBarEnabled: boolean;
+  onEnabledChange: (value: boolean) => void;
   onTitleChange: (value: string) => void;
   onTitleBnChange: (value: string) => void;
   onInstructionChange: (value: string) => void;
@@ -25,7 +27,9 @@ const ExamWritingTask = ({
   instruction,
   minWords,
   maxWords,
+  enabled,
   accentBarEnabled,
+  onEnabledChange,
   onTitleChange,
   onTitleBnChange,
   onInstructionChange,
@@ -42,10 +46,12 @@ const ExamWritingTask = ({
       headerClassName="px-7 py-7"
       contentClassName="px-7 pb-8 pt-0 border-t-0"
       rightContent={
-        <AccentToggle
-          enabled={accentBarEnabled}
-          onToggle={() => onAccentBarChange(!accentBarEnabled)}
-        />
+        enabled ? (
+          <AccentToggle
+            enabled={accentBarEnabled}
+            onToggle={() => onAccentBarChange(!accentBarEnabled)}
+          />
+        ) : null
       }
       title={
         <div className="flex items-center gap-5">
@@ -62,7 +68,35 @@ const ExamWritingTask = ({
         </div>
       }
     >
-      <div className="space-y-5">
+      <div className="mb-5 flex flex-col gap-4 rounded-3xl border border-[#DCE7DE] bg-[#F6FBF4] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold text-[#202420]">Include writing section</p>
+          <p className="mt-1 text-sm text-[#64706A]">
+            When disabled, this section is skipped in the mobile final exam.
+            Its saved content is kept.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          role="switch"
+          aria-checked={enabled}
+          aria-label="Include writing section"
+          onClick={() => onEnabledChange(!enabled)}
+          className={`flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors ${
+            enabled ? "justify-end bg-[#12794C]" : "justify-start bg-[#AAB5AF]"
+          }`}
+        >
+          <span className="size-5 rounded-full bg-white shadow-sm" />
+        </button>
+      </div>
+
+      <fieldset
+        disabled={!enabled}
+        className={`space-y-5 transition-opacity ${
+          enabled ? "opacity-100" : "opacity-45"
+        }`}
+      >
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <FieldInput
             value={title}
@@ -97,7 +131,7 @@ const ExamWritingTask = ({
             onChange={onMaxWordsChange}
           />
         </div>
-      </div>
+      </fieldset>
     </Accordion>
   );
 };

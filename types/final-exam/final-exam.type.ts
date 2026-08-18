@@ -115,6 +115,7 @@ export interface FinalExam {
   totalDurationMinutes: number;
   unlockCompletionPercent: number;
   unlockRequirementEnabled: boolean;
+  writingTaskEnabled: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;
@@ -171,6 +172,7 @@ export interface FinalExamPayload {
   totalDurationMinutes: number;
   unlockCompletionPercent: number;
   unlockRequirementEnabled: boolean;
+  writingTaskEnabled?: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;

@@ -44,6 +44,7 @@ interface FinalExamSetupForm {
   totalDurationMinutes: number;
   unlockCompletionPercent: number;
   unlockRequirementEnabled: boolean;
+  writingTaskEnabled: boolean;
   plagiarismMonitorEnabled: boolean;
   copyPasteMonitorEnabled: boolean;
   resultNotice: string;
@@ -96,6 +97,7 @@ const createFormFromExam = (exam: FinalExam): FinalExamSetupForm => {
     totalDurationMinutes: exam.totalDurationMinutes || 60,
     unlockCompletionPercent: exam.unlockCompletionPercent || 80,
     unlockRequirementEnabled: Boolean(exam.unlockRequirementEnabled),
+    writingTaskEnabled: exam.writingTaskEnabled !== false,
     plagiarismMonitorEnabled: Boolean(exam.plagiarismMonitorEnabled),
     copyPasteMonitorEnabled: Boolean(exam.copyPasteMonitorEnabled),
     resultNotice: exam.resultNotice || "",
@@ -184,10 +186,11 @@ export default function FinalExamSetupClient({
       (!form.unlockRequirementEnabled || form.unlockCompletionPercent > 0);
 
     const writingReady =
-      Boolean(form.writingTitle.trim()) &&
-      Boolean(form.writingInstruction.trim()) &&
-      form.writingMinWords > 0 &&
-      form.writingMaxWords >= form.writingMinWords;
+      !form.writingTaskEnabled ||
+      (Boolean(form.writingTitle.trim()) &&
+        Boolean(form.writingInstruction.trim()) &&
+        form.writingMinWords > 0 &&
+        form.writingMaxWords >= form.writingMinWords);
 
     const speakingReady =
       Boolean(form.speakingTitle.trim()) &&
@@ -339,13 +342,17 @@ export default function FinalExamSetupClient({
         totalDurationMinutes: form.totalDurationMinutes,
         unlockCompletionPercent: form.unlockCompletionPercent,
         unlockRequirementEnabled: form.unlockRequirementEnabled,
+        writingTaskEnabled: form.writingTaskEnabled,
         plagiarismMonitorEnabled: form.plagiarismMonitorEnabled,
         copyPasteMonitorEnabled: form.copyPasteMonitorEnabled,
         resultNotice: form.resultNotice,
         resultNoticeBn: form.resultNoticeBn,
       });
 
-      if (form.writingTitle.trim() || form.writingInstruction.trim()) {
+      if (
+        form.writingTaskEnabled &&
+        (form.writingTitle.trim() || form.writingInstruction.trim())
+      ) {
         await upsertWritingTask(finalExamId, {
           title: form.writingTitle.trim() || "Writing Task",
           titleBn: form.writingTitleBn.trim(),
@@ -541,7 +548,9 @@ export default function FinalExamSetupClient({
           instruction={form.writingInstruction}
           minWords={form.writingMinWords}
           maxWords={form.writingMaxWords}
+          enabled={form.writingTaskEnabled}
           accentBarEnabled={form.writingAccentBarEnabled}
+          onEnabledChange={(value) => updateForm("writingTaskEnabled", value)}
           onTitleChange={(value) => updateForm("writingTitle", value)}
           onTitleBnChange={(value) => updateForm("writingTitleBn", value)}
           onInstructionChange={(value) =>
