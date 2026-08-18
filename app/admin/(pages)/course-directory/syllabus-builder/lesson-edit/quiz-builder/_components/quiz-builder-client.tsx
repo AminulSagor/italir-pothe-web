@@ -13,6 +13,7 @@ import {
   getQuizQuestionDetails,
   getQuizzesByLesson,
   publishQuiz,
+  reorderQuizQuestions,
   updateQuiz,
   updateQuizQuestion,
   uploadQuizAudio,
@@ -626,6 +627,7 @@ export default function QuizBuilderClient() {
   const [isSavingQuestion, setIsSavingQuestion] = useState(false);
   const [isDeletingQuestion, setIsDeletingQuestion] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isReordering, setIsReordering] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [mediaUrl, setMediaUrl] = useState("");
@@ -887,6 +889,108 @@ export default function QuizBuilderClient() {
       setSavedForm(nextForm);
       setSavedSnapshot(createSnapshot(nextForm));
     });
+  };
+
+  const handleReorderQuestions = async (
+    draggedQuestionKey: string,
+    targetQuestionKey: string,
+  ) => {
+    if (!quiz || isReordering || draggedQuestionKey === targetQuestionKey) {
+      return;
+    }
+
+    if (hasUnsavedChanges) {
+      toast.error("Save the current question before changing the quiz order.");
+      return;
+    }
+
+    const previousQuestions = sortQuestionForms(questions);
+
+    if (previousQuestions.some((question) => !question.id)) {
+      toast.error("Save every question before changing the quiz order.");
+      return;
+    }
+
+    const draggedIndex = previousQuestions.findIndex(
+      (question) => question.localId === draggedQuestionKey,
+    );
+    const targetIndex = previousQuestions.findIndex(
+      (question) => question.localId === targetQuestionKey,
+    );
+
+    if (draggedIndex < 0 || targetIndex < 0) {
+      return;
+    }
+
+    const reorderedQuestions = [...previousQuestions];
+    const [draggedQuestion] = reorderedQuestions.splice(draggedIndex, 1);
+    reorderedQuestions.splice(targetIndex, 0, draggedQuestion);
+
+    const reindexedQuestions = reorderedQuestions.map((question, index) => ({
+      ...question,
+      sortOrder: index + 1,
+    }));
+    const previousActiveQuestion = previousQuestions.find(
+      (question) => question.localId === activeQuestionKey,
+    );
+    const nextActiveQuestion = reindexedQuestions.find(
+      (question) => question.localId === activeQuestionKey,
+    );
+
+    setQuestions(reindexedQuestions);
+
+    if (nextActiveQuestion) {
+      setForm(nextActiveQuestion);
+      setSavedForm(nextActiveQuestion);
+      setSavedSnapshot(createSnapshot(nextActiveQuestion));
+    }
+
+    const toastId = toast.loading("Updating quiz order...");
+
+    try {
+      setIsReordering(true);
+
+      const savedQuestions = await reorderQuizQuestions(
+        quiz.id,
+        reindexedQuestions.map((question) => question.id as string),
+      );
+      const savedSortOrders = new Map(
+        savedQuestions.map((question) => [question.id, question.sortOrder]),
+      );
+      const confirmedQuestions = sortQuestionForms(
+        reindexedQuestions.map((question) => ({
+          ...question,
+          sortOrder: question.id
+            ? savedSortOrders.get(question.id) ?? question.sortOrder
+            : question.sortOrder,
+        })),
+      );
+      const confirmedActiveQuestion = confirmedQuestions.find(
+        (question) => question.localId === activeQuestionKey,
+      );
+
+      setQuestions(confirmedQuestions);
+
+      if (confirmedActiveQuestion) {
+        setForm(confirmedActiveQuestion);
+        setSavedForm(confirmedActiveQuestion);
+        setSavedSnapshot(createSnapshot(confirmedActiveQuestion));
+      }
+
+      toast.success("Quiz order updated.", { id: toastId });
+    } catch (error) {
+      setQuestions(previousQuestions);
+
+      if (previousActiveQuestion) {
+        setForm(previousActiveQuestion);
+        setSavedForm(previousActiveQuestion);
+        setSavedSnapshot(createSnapshot(previousActiveQuestion));
+      }
+
+      toast.error(getErrorMessage(error), { id: toastId });
+    } finally {
+      setIsReordering(false);
+    }
   };
 
   const handleMediaUpload = async (file: File) => {
@@ -1457,6 +1561,8 @@ export default function QuizBuilderClient() {
             lessonTitle={lesson?.title}
             onQuestionSelect={handleSelectQuestion}
             onAddQuestion={handleAddQuestion}
+            onQuestionReorder={handleReorderQuestions}
+            isReordering={isReordering}
           />
 
           <div className="space-y-6">

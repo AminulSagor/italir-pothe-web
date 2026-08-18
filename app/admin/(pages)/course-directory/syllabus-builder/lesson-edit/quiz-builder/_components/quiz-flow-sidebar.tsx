@@ -1,4 +1,7 @@
-import { Check, Pencil, Plus } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Check, GripVertical, Pencil, Plus } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
 import type { QuizQuestionType } from "@/types/course-directory/quiz.type";
@@ -18,6 +21,8 @@ interface QuizFlowSidebarProps {
   lessonTitle?: string;
   onQuestionSelect: (key: string) => void;
   onAddQuestion: () => void;
+  onQuestionReorder?: (draggedKey: string, targetKey: string) => void;
+  isReordering?: boolean;
 }
 
 export default function QuizFlowSidebar({
@@ -26,7 +31,21 @@ export default function QuizFlowSidebar({
   lessonTitle,
   onQuestionSelect,
   onAddQuestion,
+  onQuestionReorder,
+  isReordering,
 }: QuizFlowSidebarProps) {
+  const [draggedQuestionKey, setDraggedQuestionKey] = useState<string | null>(
+    null,
+  );
+  const [dragOverQuestionKey, setDragOverQuestionKey] = useState<string | null>(
+    null,
+  );
+
+  const clearDragState = () => {
+    setDraggedQuestionKey(null);
+    setDragOverQuestionKey(null);
+  };
+
   return (
     <Card
       padding="lg"
@@ -49,7 +68,8 @@ export default function QuizFlowSidebar({
         <button
           type="button"
           onClick={onAddQuestion}
-          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#62F25A] text-[#007A4A]"
+          disabled={isReordering}
+          className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#62F25A] text-[#007A4A] disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Add quiz question"
         >
           <Plus className="size-5" />
@@ -64,11 +84,66 @@ export default function QuizFlowSidebar({
             <button
               key={`${question.localId}-${question.questionType}`}
               type="button"
+              disabled={isReordering}
               onClick={() => onQuestionSelect(question.localId)}
+              draggable={
+                Boolean(question.id) &&
+                Boolean(onQuestionReorder) &&
+                !isReordering
+              }
+              onDragStart={(event) => {
+                setDraggedQuestionKey(question.localId);
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", question.localId);
+              }}
+              onDragOver={(event) => {
+                if (
+                  !draggedQuestionKey ||
+                  draggedQuestionKey === question.localId
+                ) {
+                  return;
+                }
+
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+                setDragOverQuestionKey(question.localId);
+              }}
+              onDragLeave={() => {
+                if (dragOverQuestionKey === question.localId) {
+                  setDragOverQuestionKey(null);
+                }
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const sourceKey =
+                  draggedQuestionKey || event.dataTransfer.getData("text/plain");
+
+                if (sourceKey && sourceKey !== question.localId) {
+                  onQuestionReorder?.(sourceKey, question.localId);
+                }
+
+                clearDragState();
+              }}
+              onDragEnd={clearDragState}
+              aria-label={
+                onQuestionReorder
+                  ? `Question ${question.sortOrder ?? index + 1}. Drag to reorder.`
+                  : undefined
+              }
               className={`flex w-full items-center justify-between gap-3 rounded-full px-4 py-3 text-left transition ${
                 isActive
                   ? "bg-[#007A4A] text-white"
                   : "bg-[#EEF3EC] text-[#202420] hover:bg-[#E5ECE3]"
+              } ${
+                dragOverQuestionKey === question.localId
+                  ? "ring-2 ring-[#62F25A] ring-offset-2"
+                  : ""
+              } ${
+                draggedQuestionKey === question.localId ? "opacity-60" : ""
+              } ${
+                question.id && onQuestionReorder && !isReordering
+                  ? "cursor-grab active:cursor-grabbing"
+                  : "cursor-default"
               }`}
             >
               <span className="flex min-w-0 items-center gap-3">
@@ -93,11 +168,24 @@ export default function QuizFlowSidebar({
                 </span>
               </span>
 
-              {isActive ? (
-                <Pencil className="size-4 shrink-0" />
-              ) : (
-                <Check className="size-4 shrink-0 text-[#007A4A]" />
-              )}
+              <span className="flex shrink-0 items-center gap-2">
+                {isActive ? (
+                  <Pencil className="size-4" />
+                ) : (
+                  <Check className="size-4 text-[#007A4A]" />
+                )}
+
+                {onQuestionReorder ? (
+                  <GripVertical
+                    className={`size-5 ${
+                      question.id && !isReordering
+                        ? "opacity-70"
+                        : "opacity-25"
+                    }`}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </span>
             </button>
           );
         })}

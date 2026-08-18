@@ -17,6 +17,8 @@ const QUIZ_ENDPOINTS = {
   quiz: (quizId: string) => `/admin/quizzes/${quizId}`,
   publishQuiz: (quizId: string) => `/admin/quizzes/${quizId}/publish`,
   quizQuestions: (quizId: string) => `/admin/quizzes/${quizId}/questions`,
+  reorderQuizQuestions: (quizId: string) =>
+    `/admin/quizzes/${quizId}/questions/reorder`,
   quizQuestion: (questionId: string) => `/admin/quiz-questions/${questionId}`,
 } as const;
 
@@ -43,6 +45,15 @@ export const createQuizQuestion = (
 
 export const getQuizQuestionDetails = (questionId: string) =>
   serviceClient.get<QuizQuestion>(QUIZ_ENDPOINTS.quizQuestion(questionId));
+
+export const reorderQuizQuestions = (
+  quizId: string,
+  questionIds: string[],
+) =>
+  serviceClient.patch<QuizQuestion[]>(
+    QUIZ_ENDPOINTS.reorderQuizQuestions(quizId),
+    { questionIds },
+  );
 
 export const updateQuizQuestion = (
   questionId: string,
