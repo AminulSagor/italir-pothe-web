@@ -7,6 +7,39 @@ interface TemplateRendererSectionProps {
   onChange: (value: ResumeRendererConfig) => void;
 }
 
+type TemplateLanguage = "en" | "it" | "bn";
+
+const templateLanguages: Array<{
+  value: TemplateLanguage;
+  label: string;
+}> = [
+  { value: "en", label: "English" },
+  { value: "it", label: "Italian" },
+  { value: "bn", label: "Bengali" },
+];
+
+const languageFromLocale = (locale?: string): TemplateLanguage => {
+  const normalized = locale?.trim().toLowerCase() ?? "";
+  if (
+    normalized === "it" ||
+    normalized.startsWith("it-") ||
+    normalized.startsWith("it_") ||
+    normalized.includes("ital")
+  ) {
+    return "it";
+  }
+  if (
+    normalized === "bn" ||
+    normalized.startsWith("bn-") ||
+    normalized.startsWith("bn_") ||
+    normalized.includes("bengal") ||
+    normalized.includes("bangla")
+  ) {
+    return "bn";
+  }
+  return "en";
+};
+
 export default function TemplateRendererSection({
   value,
   onChange,
@@ -118,15 +151,24 @@ export default function TemplateRendererSection({
 
       <label className="mt-4 block max-w-xs">
         <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-black/50">
-          Locale
+          Template language
         </span>
-        <input
-          value={value.locale ?? "en"}
-          maxLength={20}
-          onChange={(event) => update("locale", event.target.value)}
-          placeholder="en"
+        <select
+          value={languageFromLocale(value.locale)}
+          onChange={(event) =>
+            update("locale", event.target.value as TemplateLanguage)
+          }
           className="h-11 w-full rounded-xl bg-[#F1F5EF] px-3 text-sm outline-none"
-        />
+        >
+          {templateLanguages.map((language) => (
+            <option key={language.value} value={language.value}>
+              {language.label}
+            </option>
+          ))}
+        </select>
+        <span className="mt-1.5 block text-xs text-black/40">
+          Used for AI-generated CV suggestions.
+        </span>
       </label>
     </section>
   );

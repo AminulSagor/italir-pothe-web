@@ -1,7 +1,5 @@
 "use client";
 
-import { Crown } from "lucide-react";
-
 import type { ResumeTemplateEditorMetadata } from "@/types/resume-studio/resume-template.types";
 
 interface TemplateMetadataSectionProps {
@@ -108,23 +106,6 @@ export default function TemplateMetadataSection({
           />
         </label>
       </div>
-
-      <label className="mt-5 flex cursor-pointer items-center justify-between rounded-2xl border border-[#E2E9E2] p-4">
-        <span>
-          <span className="flex items-center gap-2 text-sm font-bold text-[#29312B]">
-            <Crown className="size-4 text-[#9A6B00]" /> Premium template
-          </span>
-          <span className="mt-1 block text-xs text-black/45">
-            Flutter can use this flag to gate premium templates.
-          </span>
-        </span>
-        <input
-          type="checkbox"
-          checked={value.isPremium}
-          onChange={(event) => update("isPremium", event.target.checked)}
-          className="size-5 accent-[#006B3F]"
-        />
-      </label>
     </section>
   );
 }
