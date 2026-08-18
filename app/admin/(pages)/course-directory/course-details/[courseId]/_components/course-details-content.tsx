@@ -11,6 +11,7 @@ import {
   getCourseEnrollments,
   getCourseEnrollmentSummary,
   refundCoursePurchase,
+  revokeExternalCourseAccess,
 } from "@/service/course-directory/course-commerce.service";
 import { getCourseById } from "@/service/course-directory/course.service";
 import type {
@@ -31,6 +32,7 @@ import CourseDetailsHeader from "./course-details-header";
 import CourseDetailsStats from "./course-details-stats";
 import EnrollmentDetailsDialog from "./enrollment-details-dialog";
 import EnrollmentListTable from "./enrollment-list-table";
+import ExternalCourseAccessDialog from "./external-course-access-dialog";
 
 const ENROLLMENT_PAGE_LIMIT = 10;
 
@@ -97,6 +99,10 @@ const CourseDetailsContent = ({
   const [isExportingAll, setIsExportingAll] = useState(false);
 
   const [isRefunding, setIsRefunding] = useState(false);
+
+  const [isRevokingExternal, setIsRevokingExternal] = useState(false);
+
+  const [isExternalAccessOpen, setIsExternalAccessOpen] = useState(false);
 
   const enrollmentQuery = useMemo(
     () => ({
@@ -252,9 +258,43 @@ const CourseDetailsContent = ({
   };
 
   const handleCloseDetails = () => {
-    if (isRefunding) return;
+    if (isRefunding || isRevokingExternal) return;
 
     setSelectedEnrollment(null);
+  };
+
+  const refreshCommerceData = async () => {
+    await Promise.all([loadSummary(), loadEnrollments(), loadFilterOptions()]);
+  };
+
+  const handleExternalAccessGranted = async (enrollmentId: string) => {
+    await refreshCommerceData();
+    await handleViewEnrollment(enrollmentId);
+  };
+
+  const handleRevokeExternalAccess = async (reason: string) => {
+    const grantId = selectedEnrollment?.externalGrant?.id;
+    if (!grantId) {
+      toast.error("No external access grant is connected to this enrollment.");
+      return;
+    }
+
+    const toastId = toast.loading("Revoking external course access...");
+    setIsRevokingExternal(true);
+
+    try {
+      const response = await revokeExternalCourseAccess(grantId, reason);
+      toast.success(response.message, { id: toastId });
+      const refreshedDetails = await getCourseEnrollmentById(
+        selectedEnrollment.id,
+      );
+      setSelectedEnrollment(refreshedDetails);
+      await refreshCommerceData();
+    } catch (error) {
+      toast.error(getErrorMessage(error), { id: toastId });
+    } finally {
+      setIsRevokingExternal(false);
+    }
   };
 
   const handleRefund = async () => {
@@ -406,6 +446,7 @@ const CourseDetailsContent = ({
         onViewEnrollment={handleViewEnrollment}
         onExportCurrentPage={handleExportCurrentPage}
         onExportAll={handleExportAll}
+        onGrantExternalAccess={() => setIsExternalAccessOpen(true)}
       />
 
       <EnrollmentDetailsDialog
@@ -413,8 +454,18 @@ const CourseDetailsContent = ({
         enrollment={selectedEnrollment}
         isLoading={isDetailsLoading}
         isRefunding={isRefunding}
+        isRevokingExternal={isRevokingExternal}
         onClose={handleCloseDetails}
         onRefund={handleRefund}
+        onRevokeExternal={handleRevokeExternalAccess}
+      />
+
+      <ExternalCourseAccessDialog
+        open={isExternalAccessOpen}
+        courseId={courseId}
+        courseTitle={course.title}
+        onClose={() => setIsExternalAccessOpen(false)}
+        onGranted={handleExternalAccessGranted}
       />
     </section>
   );

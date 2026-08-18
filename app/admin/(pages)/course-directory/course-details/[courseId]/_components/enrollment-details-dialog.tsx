@@ -1,6 +1,7 @@
 "use client";
 
-import { Loader2, RotateCcw, X } from "lucide-react";
+import { useState } from "react";
+import { Loader2, RotateCcw, ShieldX, X } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 import Dialog from "@/components/UI/dialogs/dialog";
@@ -13,8 +14,10 @@ interface EnrollmentDetailsDialogProps {
   enrollment: CourseEnrollmentDetails | null;
   isLoading: boolean;
   isRefunding: boolean;
+  isRevokingExternal: boolean;
   onClose: () => void;
   onRefund: () => void;
+  onRevokeExternal: (reason: string) => Promise<void> | void;
 }
 
 const formatLabel = (value?: string | null) => {
@@ -53,20 +56,33 @@ const EnrollmentDetailsDialog = ({
   enrollment,
   isLoading,
   isRefunding,
+  isRevokingExternal,
   onClose,
   onRefund,
+  onRevokeExternal,
 }: EnrollmentDetailsDialogProps) => {
+  const [revokeReason, setRevokeReason] = useState("");
   const normalizedStatus = enrollment?.status?.toLowerCase() || "";
+  const isBusy = isRefunding || isRevokingExternal;
 
   const canRefund =
     Boolean(enrollment?.orderId) &&
     normalizedStatus !== "refunded" &&
     normalizedStatus !== "cancelled";
 
+  const canRevokeExternal =
+    enrollment?.externalGrant?.status === "active" &&
+    normalizedStatus === "active";
+
+  const requestClose = () => {
+    setRevokeReason("");
+    onClose();
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={isRefunding ? () => undefined : onClose}
+      onClose={isBusy ? () => undefined : requestClose}
       size="lg"
       className="!max-w-[1180px] !p-0"
     >
@@ -83,8 +99,8 @@ const EnrollmentDetailsDialog = ({
 
         <button
           type="button"
-          disabled={isRefunding}
-          onClick={onClose}
+          disabled={isBusy}
+          onClick={requestClose}
           aria-label="Close enrollment details"
           className="flex size-9 items-center justify-center rounded-full text-black/55 hover:bg-[#F4F7F4] disabled:opacity-50"
         >
@@ -144,20 +160,43 @@ const EnrollmentDetailsDialog = ({
             />
           </div>
 
-          <div className="my-6 rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
-            This action requests or records provider refund/revocation and
-            revokes the course entitlement when applicable. The frontend does
-            not verify purchases, grant course access, or revoke access locally.
-          </div>
+          {enrollment.externalGrant ? (
+            <div className="my-6 rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
+              This access was granted from an externally received payment. Its
+              revocation is separate from Google Play and App Store billing.
+            </div>
+          ) : (
+            <div className="my-6 rounded-2xl bg-[#FFF7E6] px-4 py-3 text-xs leading-5 text-[#8A5A00]">
+              This action requests or records provider refund/revocation and
+              revokes the course entitlement when applicable. The frontend does
+              not verify purchases, grant course access, or revoke access
+              locally.
+            </div>
+          )}
 
           <CoursePurchaseBillingDetailsCard
             enrollment={enrollment}
             footerActions={
               <div className="flex flex-col-reverse justify-end gap-3 border-t border-black/10 pt-5 sm:flex-row">
+                {canRevokeExternal && (
+                  <label className="mr-auto w-full text-sm font-semibold text-[#202420] sm:max-w-md">
+                    Revocation reason
+                    <textarea
+                      rows={2}
+                      maxLength={500}
+                      value={revokeReason}
+                      disabled={isBusy}
+                      onChange={(event) => setRevokeReason(event.target.value)}
+                      placeholder="Required for the audit history"
+                      className="mt-2 w-full resize-y rounded-xl border border-[#DDE5DE] px-3 py-2 text-sm font-normal outline-none focus:border-[#B42318]"
+                    />
+                  </label>
+                )}
+
                 <Button
                   variant="outline"
-                  disabled={isRefunding}
-                  onClick={onClose}
+                  disabled={isBusy}
+                  onClick={requestClose}
                 >
                   Close
                 </Button>
@@ -175,6 +214,26 @@ const EnrollmentDetailsDialog = ({
                     )}
 
                     {isRefunding ? "Processing..." : "Refund / Revoke Access"}
+                  </Button>
+                )}
+
+                {canRevokeExternal && (
+                  <Button
+                    disabled={isBusy || !revokeReason.trim()}
+                    onClick={async () => {
+                      await onRevokeExternal(revokeReason.trim());
+                      setRevokeReason("");
+                    }}
+                    className="gap-2 !bg-[#D34A3A] hover:!bg-[#B83B2E]"
+                  >
+                    {isRevokingExternal ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <ShieldX className="size-4" />
+                    )}
+                    {isRevokingExternal
+                      ? "Revoking..."
+                      : "Revoke External Access"}
                   </Button>
                 )}
               </div>

@@ -14,6 +14,9 @@ import type {
   CourseProviderProductListResponse,
   CreateCourseProviderProductPayload,
   DeleteCourseProviderProductResponse,
+  ExternalCourseAccessGrant,
+  GrantExternalCourseAccessPayload,
+  GrantExternalCourseAccessResponse,
   UpdateCourseProviderProductPayload,
 } from "@/types/course-directory/course-commerce.type";
 import { assertValidUuid } from "@/utils/uuid";
@@ -291,6 +294,34 @@ const normalizeOrder = (
   };
 };
 
+const normalizeExternalGrant = (
+  value: unknown,
+): ExternalCourseAccessGrant | null => {
+  if (!isRecord(value)) return null;
+
+  const paymentCurrency = readString(value, ["paymentCurrency"]);
+  const status = readString(value, ["status"]);
+
+  return {
+    id: readString(value, ["id"]) || "",
+    paymentAmount: readString(value, ["paymentAmount"]) || "0.00",
+    paymentCurrency: paymentCurrency === "BDT" ? "BDT" : "EUR",
+    amountEur: readString(value, ["amountEur"]) || "0.00",
+    paymentMethod: (readString(value, ["paymentMethod"]) ||
+      "other") as ExternalCourseAccessGrant["paymentMethod"],
+    externalReference: readString(value, ["externalReference"]) || "",
+    paidAt: readString(value, ["paidAt"]) || "",
+    notes: readString(value, ["notes"]) || null,
+    status: status === "revoked" ? "revoked" : "active",
+    grantedByAdminId: readString(value, ["grantedByAdminId"]) || "",
+    revokedAt: readString(value, ["revokedAt"]) || null,
+    revokedByAdminId: readString(value, ["revokedByAdminId"]) || null,
+    revokeReason: readString(value, ["revokeReason"]) || null,
+    createdAt: readString(value, ["createdAt"]) || "",
+    updatedAt: readString(value, ["updatedAt"]) || "",
+  };
+};
+
 const normalizeEnrollment = (value: unknown): CourseEnrollment => {
   const enrollment = isRecord(value) ? value : {};
   const student = readRecord(enrollment, ["student", "user", "learner"]) || {};
@@ -299,6 +330,9 @@ const normalizeEnrollment = (value: unknown): CourseEnrollment => {
 
   const normalizedOrder = normalizeOrder(order, enrollment);
   const billing = normalizeBilling(order, enrollment);
+  const externalGrant = normalizeExternalGrant(
+    readValue(enrollment, ["externalGrant"]),
+  );
 
   const studentId =
     readString(student, ["id", "userId"]) ||
@@ -363,6 +397,11 @@ const normalizeEnrollment = (value: unknown): CourseEnrollment => {
       "unknown",
     billing,
     order: normalizedOrder,
+    externalGrant,
+    paymentReference:
+      readString(enrollment, ["paymentReference"]) ||
+      externalGrant?.externalReference ||
+      null,
     storeProduct: (readRecord(enrollment, ["storeProduct"]) ||
       readRecord(order, ["providerSnapshot"])) as never,
     verification: (readRecord(enrollment, ["verification"]) ||
@@ -602,6 +641,37 @@ export const refundCoursePurchase = async (
     refundOperation?: unknown;
   }>(`/admin/course-purchases/${safeOrderId}/refund`, {
     reason: reason?.trim() || undefined,
+  });
+};
+
+export const grantExternalCourseAccess = async (
+  courseId: string,
+  payload: GrantExternalCourseAccessPayload,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+  const safeUserId = assertValidUuid(payload.userId, "User ID");
+
+  return serviceClient.post<GrantExternalCourseAccessResponse>(
+    `/admin/courses/${safeCourseId}/external-access`,
+    {
+      ...payload,
+      userId: safeUserId,
+    },
+  );
+};
+
+export const revokeExternalCourseAccess = async (
+  grantId: string,
+  reason: string,
+) => {
+  const safeGrantId = assertValidUuid(grantId, "External access grant ID");
+
+  return serviceClient.post<{
+    message: string;
+    enrollmentRevoked: boolean;
+    grant: ExternalCourseAccessGrant;
+  }>(`/admin/course-external-access/${safeGrantId}/revoke`, {
+    reason: reason.trim(),
   });
 };
 

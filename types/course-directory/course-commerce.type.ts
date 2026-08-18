@@ -12,6 +12,48 @@ export type CommerceSortOrder = "ASC" | "DESC";
 
 export type CoursePaymentProvider = "google_play" | "app_store";
 
+export type AdminExternalPaymentMethod =
+  | "cash"
+  | "bank_transfer"
+  | "mobile_banking"
+  | "card"
+  | "other";
+
+export interface ExternalCourseAccessGrant {
+  id: string;
+  paymentAmount: string;
+  paymentCurrency: "EUR" | "BDT";
+  amountEur: string;
+  paymentMethod: AdminExternalPaymentMethod;
+  externalReference: string;
+  paidAt: string;
+  notes: string | null;
+  status: "active" | "revoked";
+  grantedByAdminId: string;
+  revokedAt: string | null;
+  revokedByAdminId: string | null;
+  revokeReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GrantExternalCourseAccessPayload {
+  userId: string;
+  paymentAmount: string;
+  paymentCurrency: "EUR" | "BDT";
+  amountEur: string;
+  paymentMethod: AdminExternalPaymentMethod;
+  externalReference: string;
+  paidAt?: string;
+  notes?: string;
+}
+
+export interface GrantExternalCourseAccessResponse {
+  message: string;
+  enrollmentId: string;
+  grant: ExternalCourseAccessGrant;
+}
+
 export type CourseProviderProductType = "non_consumable";
 
 export interface CourseProviderProduct {
@@ -189,6 +231,8 @@ export interface CourseEnrollment {
   paymentProvider: string;
   billing: CourseEnrollmentBilling | null;
   order: CourseEnrollmentOrder | null;
+  externalGrant: ExternalCourseAccessGrant | null;
+  paymentReference: string | null;
 
   storeProduct?: CoursePurchaseStoreProductSnapshot | null;
   verification?: CoursePurchaseVerificationSnapshot | null;
@@ -201,7 +245,6 @@ export interface CourseEnrollment {
 
 export interface CourseEnrollmentDetails extends CourseEnrollment {
   courseTitle: string | null;
-  paymentReference: string | null;
   paymentStatus: string | null;
 }
 

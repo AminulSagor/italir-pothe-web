@@ -3,6 +3,7 @@ import {
   CheckCircle2,
   Clock3,
   CreditCard,
+  HandCoins,
   RotateCcw,
   ShieldAlert,
   Store,
@@ -91,6 +92,75 @@ export default function CoursePurchaseBillingDetailsCard({
   enrollment,
   footerActions,
 }: CoursePurchaseBillingDetailsCardProps) {
+  if (enrollment.externalGrant) {
+    const grant = enrollment.externalGrant;
+
+    return (
+      <Card padding="lg" rounded="3xl" shadow="sm" className="space-y-7">
+        <div className="flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-full bg-[#E9FBEF] text-[#006B3F]">
+            <HandCoins className="size-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-[#202420]">
+              External Payment Details
+            </h3>
+            <p className="text-xs leading-5 text-[#7A847B]">
+              Admin-recorded payment and course-access audit information. Mobile
+              store billing is not involved.
+            </p>
+          </div>
+        </div>
+
+        <section className="rounded-3xl border border-[#E3EAE4] p-5">
+          <div className="grid gap-4 md:grid-cols-2">
+            <DetailBox
+              label="Amount Received"
+              value={`${grant.paymentCurrency} ${grant.paymentAmount}`}
+            />
+            <DetailBox
+              label="EUR Equivalent"
+              value={`EUR ${grant.amountEur}`}
+            />
+            <DetailBox
+              label="Payment Method"
+              value={formatLabel(grant.paymentMethod)}
+            />
+            <DetailBox
+              label="Payment Reference"
+              value={grant.externalReference}
+            />
+            <DetailBox label="Paid At" value={formatDateTime(grant.paidAt)} />
+            <DetailBox label="Grant Status" value={formatLabel(grant.status)} />
+            <DetailBox
+              label="Granted By Admin"
+              value={grant.grantedByAdminId}
+            />
+            <DetailBox
+              label="Recorded At"
+              value={formatDateTime(grant.createdAt)}
+            />
+            <DetailBox label="Notes" value={grant.notes || "—"} />
+            <DetailBox
+              label="Revoked At"
+              value={formatDateTime(grant.revokedAt)}
+            />
+            <DetailBox
+              label="Revoked By Admin"
+              value={grant.revokedByAdminId || "—"}
+            />
+            <DetailBox
+              label="Revocation Reason"
+              value={grant.revokeReason || "—"}
+            />
+          </div>
+        </section>
+
+        {footerActions}
+      </Card>
+    );
+  }
+
   const enrollmentRecord = enrollment as unknown as UnknownRecord;
 
   const order = getRecord(enrollmentRecord, "order");

@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Eye,
   MoreHorizontal,
+  UserPlus,
   UsersRound,
 } from "lucide-react";
 
@@ -36,6 +37,7 @@ interface EnrollmentListTableProps {
   onViewEnrollment: (enrollmentId: string) => void;
   onExportCurrentPage: () => void;
   onExportAll: () => void;
+  onGrantExternalAccess: () => void;
 }
 
 const getInitials = (name: string) => {
@@ -100,6 +102,8 @@ const getProvider = (enrollment: CourseEnrollment) => {
 };
 
 const getVerificationStatus = (enrollment: CourseEnrollment) => {
+  if (enrollment.externalGrant) return "admin recorded";
+
   const billing = getBilling(enrollment);
 
   return (
@@ -116,6 +120,7 @@ const getTransactionId = (enrollment: CourseEnrollment) => {
   return (
     billing?.providerTransactionId ||
     enrollment.verification?.providerTransactionId ||
+    enrollment.paymentReference ||
     "—"
   );
 };
@@ -156,6 +161,7 @@ const EnrollmentListTable = ({
   onViewEnrollment,
   onExportCurrentPage,
   onExportAll,
+  onGrantExternalAccess,
 }: EnrollmentListTableProps) => {
   const startItem =
     enrollmentList.totalItems === 0
@@ -194,7 +200,16 @@ const EnrollmentListTable = ({
           <h2 className="text-lg font-bold text-[#202420]">Enrollment List</h2>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onGrantExternalAccess}
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-[#006B3F] px-4 text-sm font-semibold text-white transition hover:bg-[#00552E]"
+          >
+            <UserPlus className="size-4" />
+            Grant External Access
+          </button>
+
           <EnrollmentFilterMenu
             status={status}
             paymentProvider={paymentProvider}
