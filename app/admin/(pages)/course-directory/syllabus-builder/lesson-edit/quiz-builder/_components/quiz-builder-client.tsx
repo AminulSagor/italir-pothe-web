@@ -435,12 +435,22 @@ const createFormFromQuestion = (question: QuizQuestion): QuestionForm => {
   };
 };
 
+const sortQuestionForms = (items: QuestionForm[]) =>
+  [...items].sort((first, second) => {
+    if (first.sortOrder !== second.sortOrder) {
+      return first.sortOrder - second.sortOrder;
+    }
+
+    return first.localId.localeCompare(second.localId);
+  });
+
 const createFlowItem = (question: QuestionForm): QuizFlowQuestionItem => ({
   id: question.id,
   localId: question.localId,
   title: question.title || getQuestionLabel(question.questionType),
   type: getQuestionMeta(question.questionType).type,
   questionType: question.questionType,
+  sortOrder: question.sortOrder,
 });
 
 const cleanOptions = (options: QuizQuestionOption[]) =>
@@ -627,7 +637,7 @@ export default function QuizBuilderClient() {
   const currentSnapshot = useMemo(() => createSnapshot(form), [form]);
   const hasUnsavedChanges = currentSnapshot !== savedSnapshot;
   const flowQuestions = useMemo(
-    () => questions.map(createFlowItem),
+    () => sortQuestionForms(questions).map(createFlowItem),
     [questions],
   );
 
@@ -858,12 +868,20 @@ export default function QuizBuilderClient() {
 
   const handleAddQuestion = () => {
     guardedAction(() => {
+      const nextSortOrder =
+        questions.reduce(
+          (highestOrder, question) =>
+            Math.max(highestOrder, question.sortOrder),
+          0,
+        ) + 1;
       const nextForm = createEmptyQuestionForm(
-        questions.length + 1,
+        nextSortOrder,
         form.questionType,
       );
 
-      setQuestions((currentQuestions) => [...currentQuestions, nextForm]);
+      setQuestions((currentQuestions) =>
+        sortQuestionForms([...currentQuestions, nextForm]),
+      );
       setActiveQuestionKey(nextForm.localId);
       setForm(nextForm);
       setSavedForm(nextForm);
@@ -920,6 +938,17 @@ export default function QuizBuilderClient() {
   };
 
   const validateQuestion = () => {
+    const hasDuplicateSortOrder = questions.some(
+      (question) =>
+        question.localId !== form.localId &&
+        question.sortOrder === form.sortOrder,
+    );
+
+    if (hasDuplicateSortOrder) {
+      toast.error(`Sort order ${form.sortOrder} is already in use.`);
+      return false;
+    }
+
     if (!form.title.trim()) {
       toast.error("Question title is required.");
       return false;
@@ -1037,8 +1066,10 @@ export default function QuizBuilderClient() {
           : createFormFromQuestion(savedQuestionDetails);
 
       setQuestions((currentQuestions) =>
-        currentQuestions.map((question) =>
-          question.localId === form.localId ? detailedQuestion : question,
+        sortQuestionForms(
+          currentQuestions.map((question) =>
+            question.localId === form.localId ? detailedQuestion : question,
+          ),
         ),
       );
 

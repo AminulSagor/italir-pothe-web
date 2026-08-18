@@ -9,6 +9,7 @@ export interface QuizFlowQuestionItem {
   title: string;
   type: string;
   questionType: QuizQuestionType;
+  sortOrder?: number;
 }
 
 interface QuizFlowSidebarProps {
@@ -78,7 +79,7 @@ export default function QuizFlowSidebar({
                       : "bg-[#DDF3E8] text-[#007A4A]"
                   }`}
                 >
-                  {index + 1}
+                  {question.sortOrder ?? index + 1}
                 </span>
 
                 <span className="min-w-0">
