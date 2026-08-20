@@ -33,7 +33,6 @@ import PricingAccessCard from "./pricing-access-card";
 import SyllabusBuilderCard from "./syllabus-builder-card";
 import RestoreCourseDialog from "./restore-course-dialog";
 import CourseStoreProductsCard from "./course-store-products-card";
-import CourseManualAccessOptionsCard from "./course-manual-access-options-card";
 
 const COURSE_DIRECTORY_PATH = "/admin/course-directory";
 
@@ -490,10 +489,6 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
           <CourseStoreProductsCard
             courseId={activeCourseId || undefined}
             courseTitle={title}
-          />
-
-          <CourseManualAccessOptionsCard
-            courseId={activeCourseId || undefined}
           />
 
           <CourseStatusCard
