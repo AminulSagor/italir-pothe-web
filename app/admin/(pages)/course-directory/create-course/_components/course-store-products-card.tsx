@@ -39,6 +39,10 @@ const formatProvider = (provider: CourseProviderProduct["provider"]) => {
   return provider === "google_play" ? "Google Play" : "App Store";
 };
 
+const isCouponMapping = (product: CourseProviderProduct) =>
+  product.productId.toLowerCase().startsWith("coupon_") ||
+  Boolean(product.basePlanId?.toLowerCase().startsWith("coupon_"));
+
 export default function CourseStoreProductsCard({
   courseId,
   courseTitle,
@@ -187,8 +191,8 @@ export default function CourseStoreProductsCard({
               </h2>
 
               <p className="mt-1 max-w-xl text-sm leading-6 text-[#66736A]">
-                Connect this course to its regular and coupon_ Google Play / App
-                Store non-consumable products.
+                Configure lifetime and time-limited Google Play / App Store
+                purchase options independently.
               </p>
             </div>
           </div>
@@ -248,8 +252,16 @@ export default function CourseStoreProductsCard({
                       </span>
 
                       <span className="rounded-full bg-[#FFF3D6] px-3 py-1 text-xs font-bold text-[#A86500]">
-                        Non Consumable
+                        {item.accessType === "time_limited"
+                          ? `${item.durationDays} days`
+                          : "Lifetime"}
                       </span>
+
+                      {isCouponMapping(item) && (
+                        <span className="rounded-full bg-[#FCE7F3] px-3 py-1 text-xs font-bold text-[#A63A76]">
+                          Coupon price
+                        </span>
+                      )}
 
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold ${
@@ -269,6 +281,11 @@ export default function CourseStoreProductsCard({
                     <p className="mt-1 text-xs text-[#8A948D]">
                       Product type: {item.productType}
                     </p>
+                    {item.basePlanId && (
+                      <p className="mt-1 break-all text-xs text-[#8A948D]">
+                        Base plan: {item.basePlanId}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex shrink-0 items-center gap-2">

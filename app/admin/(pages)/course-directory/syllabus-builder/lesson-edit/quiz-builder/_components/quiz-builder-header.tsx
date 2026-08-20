@@ -1,4 +1,4 @@
-import { ArrowLeft, Save } from "lucide-react";
+import { Archive, ArrowLeft, Save, Trash2 } from "lucide-react";
 
 import Button from "@/components/UI/buttons/button";
 
@@ -8,8 +8,12 @@ interface QuizBuilderHeaderProps {
   lessonTitle?: string;
   quizTitle?: string;
   isPublishing?: boolean;
+  isArchiving?: boolean;
+  isDeleting?: boolean;
   onBack: () => void;
   onPublish: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
 }
 
 export default function QuizBuilderHeader({
@@ -18,8 +22,12 @@ export default function QuizBuilderHeader({
   lessonTitle,
   quizTitle,
   isPublishing = false,
+  isArchiving = false,
+  isDeleting = false,
   onBack,
   onPublish,
+  onArchive,
+  onDelete,
 }: QuizBuilderHeaderProps) {
   return (
     <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -55,15 +63,39 @@ export default function QuizBuilderHeader({
         </p>
       </div>
 
-      <Button
-        size="md"
-        disabled={isPublishing}
-        className="w-full gap-2 sm:w-fit"
-        onClick={onPublish}
-      >
-        <Save className="size-4" />
-        {isPublishing ? "Publishing..." : "Save & Publish Quiz"}
-      </Button>
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <Button
+          size="md"
+          variant="ghost"
+          disabled={isPublishing || isArchiving || isDeleting}
+          className="gap-2 text-[#8A5A00] !bg-[#FFF2CC] hover:!bg-[#FFE7A3]"
+          onClick={onArchive}
+        >
+          <Archive className="size-4" />
+          {isArchiving ? "Archiving..." : "Archive"}
+        </Button>
+
+        <Button
+          size="md"
+          variant="ghost"
+          disabled={isPublishing || isArchiving || isDeleting}
+          className="gap-2 text-[#C40000] !bg-[#FFE1E1] hover:!bg-[#FFD1D1]"
+          onClick={onDelete}
+        >
+          <Trash2 className="size-4" />
+          {isDeleting ? "Deleting..." : "Delete"}
+        </Button>
+
+        <Button
+          size="md"
+          disabled={isPublishing || isArchiving || isDeleting}
+          className="gap-2"
+          onClick={onPublish}
+        >
+          <Save className="size-4" />
+          {isPublishing ? "Publishing..." : "Save & Publish Quiz"}
+        </Button>
+      </div>
     </div>
   );
 }

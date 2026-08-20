@@ -7,6 +7,7 @@ import {
 import type {
   CreateQuizPayload,
   Quiz,
+  QuizDeleteSafety,
   QuizQuestion,
   QuizQuestionPayload,
   UpdateQuizPayload,
@@ -15,6 +16,9 @@ import type {
 const QUIZ_ENDPOINTS = {
   lessonQuizzes: (lessonId: string) => `/admin/lessons/${lessonId}/quizzes`,
   quiz: (quizId: string) => `/admin/quizzes/${quizId}`,
+  permanentDeleteCheck: (quizId: string) =>
+    `/admin/quizzes/${quizId}/permanent-delete-check`,
+  permanentDelete: (quizId: string) => `/admin/quizzes/${quizId}/permanent`,
   publishQuiz: (quizId: string) => `/admin/quizzes/${quizId}/publish`,
   quizQuestions: (quizId: string) => `/admin/quizzes/${quizId}/questions`,
   reorderQuizQuestions: (quizId: string) =>
@@ -30,6 +34,17 @@ export const createQuiz = (lessonId: string, payload: CreateQuizPayload) =>
 
 export const updateQuiz = (quizId: string, payload: UpdateQuizPayload) =>
   serviceClient.patch<Quiz>(QUIZ_ENDPOINTS.quiz(quizId), payload);
+
+export const archiveQuiz = (quizId: string) =>
+  serviceClient.delete<{ message: string }>(QUIZ_ENDPOINTS.quiz(quizId));
+
+export const checkPermanentDeleteQuiz = (quizId: string) =>
+  serviceClient.get<QuizDeleteSafety>(QUIZ_ENDPOINTS.permanentDeleteCheck(quizId));
+
+export const permanentlyDeleteQuiz = (quizId: string) =>
+  serviceClient.delete<{ message: string; id: string }>(
+    QUIZ_ENDPOINTS.permanentDelete(quizId),
+  );
 
 export const publishQuiz = (quizId: string) =>
   serviceClient.patch<Quiz>(QUIZ_ENDPOINTS.publishQuiz(quizId));

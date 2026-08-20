@@ -11,11 +11,13 @@ interface PricingAccessCardProps {
   isFree: boolean;
   price: string;
   couponCode: string;
+  timeLimitedCouponCode: string;
   disabled?: boolean;
   courseTitle?: string;
   onIsFreeChange: (value: boolean) => void;
   onPriceChange: (value: string) => void;
   onCouponCodeChange: (value: string) => void;
+  onTimeLimitedCouponCodeChange: (value: string) => void;
 }
 
 const normalizePrice = (value: string) => {
@@ -30,11 +32,13 @@ const PricingAccessCard = ({
   isFree,
   price,
   couponCode,
+  timeLimitedCouponCode,
   disabled = false,
   courseTitle,
   onIsFreeChange,
   onPriceChange,
   onCouponCodeChange,
+  onTimeLimitedCouponCodeChange,
 }: PricingAccessCardProps) => {
   const [previousPrice, setPreviousPrice] = useState(normalizePrice(price));
   const [pendingPrice, setPendingPrice] = useState(normalizePrice(price));
@@ -149,16 +153,41 @@ const PricingAccessCard = ({
 
           <div>
             <label className="mb-2 block text-xs font-bold text-[#202420]">
-              Coupon Code
+              LIFETIME COUPON CODE
             </label>
 
             <input
               value={couponCode}
               disabled={disabled || isFree}
               placeholder="WELCOME20"
-              onChange={(event) => onCouponCodeChange(event.target.value)}
+              onChange={(event) =>
+                onCouponCodeChange(event.target.value.toUpperCase())
+              }
               className="w-full rounded-full bg-[#EEF3EC] px-5 py-3 text-sm font-bold text-[#202420] outline-none placeholder:text-black/35 disabled:cursor-not-allowed disabled:opacity-60"
             />
+            <p className="mt-2 text-xs leading-5 text-[#8A948D]">
+              Applies only to lifetime one-time purchase mappings.
+            </p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs font-bold text-[#202420]">
+              TIME-LIMITED COUPON CODE
+            </label>
+
+            <input
+              value={timeLimitedCouponCode}
+              disabled={disabled || isFree}
+              placeholder="PERIOD20"
+              onChange={(event) =>
+                onTimeLimitedCouponCodeChange(event.target.value.toUpperCase())
+              }
+              className="w-full rounded-full bg-[#EEF3EC] px-5 py-3 text-sm font-bold text-[#202420] outline-none placeholder:text-black/35 disabled:cursor-not-allowed disabled:opacity-60"
+            />
+            <p className="mt-2 text-xs leading-5 text-[#8A948D]">
+              Applies only to configured duration purchase mappings. Use a
+              different code from the lifetime coupon.
+            </p>
           </div>
         </div>
       </Card>

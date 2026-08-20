@@ -39,7 +39,11 @@ export interface ResumeFieldDefinition {
   maxLength?: number;
   maxItems?: number;
   options?: string[];
-  aiAssist?: "summary-suggestions";
+  aiAssist?:
+    | "summary-suggestions"
+    | "description-suggestions"
+    | "highlight-suggestions"
+    | "technical-skill-suggestions";
 }
 
 export interface ResumeSectionDefinition {
@@ -136,6 +140,8 @@ export interface ResumeTemplateContract {
   security: string;
   aiAssist: {
     summary: string;
+    fieldSuggestions: string;
+    supported: string[];
   };
   fieldInference: {
     endpoint: string;

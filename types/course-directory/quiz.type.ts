@@ -95,6 +95,16 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
+export interface QuizDeleteSafety {
+  quizId: string;
+  status: QuizStatus;
+  learnerSessionCount: number;
+  canDeletePermanently: boolean;
+  requiresArchiveFirst: boolean;
+  hasLearnerHistory: boolean;
+  recommendation: string;
+}
+
 export interface CreateQuizPayload {
   title?: string;
   description?: string | null;

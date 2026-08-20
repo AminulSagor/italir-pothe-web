@@ -6,10 +6,17 @@ import toast from "react-hot-toast";
 
 import Button from "@/components/UI/buttons/button";
 import Dialog from "@/components/UI/dialogs/dialog";
-import { grantExternalCourseAccess } from "@/service/course-directory/course-commerce.service";
+import {
+  createCourseManualAccessOption,
+  getCourseManualAccessOptions,
+  grantExternalCourseAccess,
+  updateCourseManualAccessOption,
+} from "@/service/course-directory/course-commerce.service";
 import { getAdminUsers } from "@/service/user-directory/user-directory.service";
 import type {
   AdminExternalPaymentMethod,
+  CourseAccessType,
+  CourseManualAccessOption,
   GrantExternalCourseAccessPayload,
 } from "@/types/course-directory/course-commerce.type";
 import type { AdminUserDirectoryItem } from "@/types/user-directory/user-directory.type";
@@ -57,6 +64,30 @@ export default function ExternalCourseAccessDialog({
   const [paidAt, setPaidAt] = useState(today);
   const [notes, setNotes] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [accessOptions, setAccessOptions] = useState<CourseManualAccessOption[]>([]);
+  const [accessType, setAccessType] = useState<CourseAccessType>("lifetime");
+  const [durationDays, setDurationDays] = useState("30");
+  const [isLoadingAccessOptions, setIsLoadingAccessOptions] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setIsLoadingAccessOptions(true);
+    void getCourseManualAccessOptions(courseId)
+      .then((response) => {
+        if (!active) return;
+        setAccessOptions(response.items);
+      })
+      .catch((error) => {
+        if (active) toast.error(getErrorMessage(error));
+      })
+      .finally(() => {
+        if (active) setIsLoadingAccessOptions(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [courseId, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -104,6 +135,53 @@ export default function ExternalCourseAccessDialog({
     setPaidAt(today());
     setNotes("");
     setConfirmed(false);
+    setAccessOptions([]);
+    setAccessType("lifetime");
+    setDurationDays("30");
+  };
+
+  const resolveAccessOption = async () => {
+    const normalizedDuration =
+      accessType === "time_limited" ? Number(durationDays) : null;
+    const matchesSelection = (option: CourseManualAccessOption) =>
+      option.accessType === accessType &&
+      option.durationDays === normalizedDuration;
+
+    const existing = accessOptions.find(matchesSelection);
+    if (existing?.isActive) return existing;
+
+    if (existing) {
+      const activated = await updateCourseManualAccessOption(
+        courseId,
+        existing.id,
+        { isActive: true },
+      );
+      setAccessOptions((current) =>
+        current.map((option) =>
+          option.id === activated.id ? activated : option,
+        ),
+      );
+      return activated;
+    }
+
+    try {
+      const created = await createCourseManualAccessOption(courseId, {
+        accessType,
+        durationDays: normalizedDuration,
+        isActive: true,
+      });
+      setAccessOptions((current) => [...current, created]);
+      return created;
+    } catch (error) {
+      // A concurrent admin may have created the same option. Re-read once.
+      const refreshed = await getCourseManualAccessOptions(courseId);
+      setAccessOptions(refreshed.items);
+      const concurrentOption = refreshed.items.find(
+        (option) => matchesSelection(option) && option.isActive,
+      );
+      if (concurrentOption) return concurrentOption;
+      throw error;
+    }
   };
 
   const requestClose = () => {
@@ -121,6 +199,16 @@ export default function ExternalCourseAccessDialog({
     }
 
     if (
+      accessType === "time_limited" &&
+      (!Number.isInteger(Number(durationDays)) ||
+        Number(durationDays) < 1 ||
+        Number(durationDays) > 3650)
+    ) {
+      toast.error("Duration must be a whole number between 1 and 3650 days.");
+      return;
+    }
+
+    if (
       Number(paymentAmount) <= 0 ||
       Number(amountEur) <= 0 ||
       !externalReference.trim() ||
@@ -130,21 +218,22 @@ export default function ExternalCourseAccessDialog({
       return;
     }
 
-    const payload: GrantExternalCourseAccessPayload = {
-      userId: selectedUser.id,
-      paymentAmount,
-      paymentCurrency,
-      amountEur,
-      paymentMethod,
-      externalReference: externalReference.trim(),
-      paidAt: new Date(`${paidAt}T00:00:00`).toISOString(),
-      notes: notes.trim() || undefined,
-    };
-
     const toastId = toast.loading("Granting course access...");
     setIsSubmitting(true);
 
     try {
+      const accessOption = await resolveAccessOption();
+      const payload: GrantExternalCourseAccessPayload = {
+        userId: selectedUser.id,
+        paymentAmount,
+        paymentCurrency,
+        amountEur,
+        paymentMethod,
+        externalReference: externalReference.trim(),
+        paidAt: new Date(`${paidAt}T00:00:00`).toISOString(),
+        notes: notes.trim() || undefined,
+        manualAccessOptionId: accessOption.id,
+      };
       const response = await grantExternalCourseAccess(courseId, payload);
       toast.success(response.message, { id: toastId });
       await onGranted(response.enrollmentId);
@@ -188,6 +277,39 @@ export default function ExternalCourseAccessDialog({
           Record only a payment received outside the mobile apps. This does not
           create, verify, refund, or change any Google Play or App Store order.
         </div>
+
+        <Field label="Course access">
+          <div className="grid grid-cols-2 gap-3">
+            <AccessTypeButton
+              selected={accessType === "lifetime"}
+              title="Lifetime"
+              description="Access does not expire"
+              onClick={() => setAccessType("lifetime")}
+            />
+            <AccessTypeButton
+              selected={accessType === "time_limited"}
+              title="Time-limited"
+              description="Access expires after a set duration"
+              onClick={() => setAccessType("time_limited")}
+            />
+          </div>
+        </Field>
+
+        {accessType === "time_limited" && (
+          <Field label="Access duration (days)">
+            <input
+              required
+              type="number"
+              min="1"
+              max="3650"
+              step="1"
+              value={durationDays}
+              disabled={isLoadingAccessOptions}
+              onChange={(event) => setDurationDays(event.target.value)}
+              className={inputClassName}
+            />
+          </Field>
+        )}
 
         <div>
           <label className="text-sm font-semibold text-[#202420]">
@@ -389,7 +511,14 @@ export default function ExternalCourseAccessDialog({
           >
             Cancel
           </Button>
-          <Button type="submit" disabled={isSubmitting || !confirmed}>
+          <Button
+            type="submit"
+            disabled={
+              isSubmitting ||
+              !confirmed ||
+              isLoadingAccessOptions
+            }
+          >
             {isSubmitting ? (
               <Loader2 className="mr-2 size-4 animate-spin" />
             ) : (
@@ -400,6 +529,36 @@ export default function ExternalCourseAccessDialog({
         </div>
       </form>
     </Dialog>
+  );
+}
+
+function AccessTypeButton({
+  selected,
+  title,
+  description,
+  onClick,
+}: {
+  selected: boolean;
+  title: string;
+  description: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={`rounded-xl border p-3 text-left transition ${
+        selected
+          ? "border-[#006B3F] bg-[#F1FBF5] ring-2 ring-[#006B3F]/10"
+          : "border-[#DDE5DE] bg-white hover:border-[#9CB9A8]"
+      }`}
+    >
+      <span className="block text-sm font-bold text-[#202420]">{title}</span>
+      <span className="mt-1 block text-xs font-normal text-black/55">
+        {description}
+      </span>
+    </button>
   );
 }
 

@@ -7,12 +7,15 @@ import toast from "react-hot-toast";
 import { getCourseById } from "@/service/course-directory/course.service";
 import { getLessonDetails } from "@/service/course-directory/lesson.service";
 import {
+  archiveQuiz,
+  checkPermanentDeleteQuiz,
   createQuiz,
   createQuizQuestion,
   deleteQuizQuestion,
   getQuizQuestionDetails,
   getQuizzesByLesson,
   publishQuiz,
+  permanentlyDeleteQuiz,
   reorderQuizQuestions,
   updateQuiz,
   updateQuizQuestion,
@@ -23,6 +26,7 @@ import { createSignedReadUrl } from "@/service/files/file_upload";
 import type { CourseLessonDetails } from "@/types/course-directory/lesson.type";
 import type {
   Quiz,
+  QuizDeleteSafety,
   QuizQuestion,
   QuizQuestionAcceptedAnswer,
   QuizQuestionOption,
@@ -43,6 +47,7 @@ import TrueFalseQuestionConfig from "./question-types/true-false-question-config
 import QuestionConfigurationHeader from "./question-configuration-header";
 import QuizActionPanel from "./quiz-action-panel";
 import QuizBuilderHeader from "./quiz-builder-header";
+import QuizDeleteDialog from "./quiz-delete-dialog";
 import QuizFlowSidebar, { QuizFlowQuestionItem } from "./quiz-flow-sidebar";
 import FillBlanksQuestionConfig from "./question-types/fill-blanks-question-config";
 import WordTranslationQuestionConfig from "./question-types/word-translation-question-config";
@@ -627,6 +632,11 @@ export default function QuizBuilderClient() {
   const [isSavingQuestion, setIsSavingQuestion] = useState(false);
   const [isDeletingQuestion, setIsDeletingQuestion] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isArchivingQuiz, setIsArchivingQuiz] = useState(false);
+  const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
+  const [isQuizDeleteOpen, setIsQuizDeleteOpen] = useState(false);
+  const [quizDeleteSafety, setQuizDeleteSafety] =
+    useState<QuizDeleteSafety | null>(null);
   const [isReordering, setIsReordering] = useState(false);
   const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1256,6 +1266,72 @@ export default function QuizBuilderClient() {
     }
   };
 
+  const handleArchiveQuiz = async () => {
+    if (!quiz) {
+      toast.error("Quiz ID is missing.");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "Archive this quiz? Students will no longer be able to start it, and you can keep its history.",
+      )
+    ) {
+      return;
+    }
+
+    const toastId = toast.loading("Archiving quiz...");
+
+    try {
+      setIsArchivingQuiz(true);
+      await archiveQuiz(quiz.id);
+      toast.success("Quiz archived successfully.", { id: toastId });
+      handleBack();
+    } catch (error) {
+      toast.error(getErrorMessage(error), { id: toastId });
+    } finally {
+      setIsArchivingQuiz(false);
+    }
+  };
+
+  const handleDeleteQuiz = async () => {
+    if (!quiz) {
+      toast.error("Quiz ID is missing.");
+      return;
+    }
+
+    try {
+      setIsDeletingQuiz(true);
+      const safety = await checkPermanentDeleteQuiz(quiz.id);
+      setQuizDeleteSafety(safety);
+      setIsQuizDeleteOpen(true);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsDeletingQuiz(false);
+    }
+  };
+
+  const handlePermanentDeleteQuiz = async () => {
+    if (!quiz || !quizDeleteSafety?.canDeletePermanently) return;
+
+    const toastId = toast.loading("Deleting quiz permanently...");
+
+    try {
+      setIsDeletingQuiz(true);
+      await permanentlyDeleteQuiz(quiz.id);
+      toast.success("Quiz permanently deleted.", { id: toastId });
+      setIsQuizDeleteOpen(false);
+      router.push(
+        `/admin/course-directory/syllabus-builder/lesson-edit?courseId=${courseId}&chapterId=${chapterId}&lessonId=${lessonId}`,
+      );
+    } catch (error) {
+      toast.error(getErrorMessage(error), { id: toastId });
+    } finally {
+      setIsDeletingQuiz(false);
+    }
+  };
+
   const handleBack = () => {
     guardedAction(() => {
       router.push(
@@ -1472,8 +1548,12 @@ export default function QuizBuilderClient() {
           lessonTitle={lesson?.title}
           quizTitle={quiz?.title || lesson?.title}
           isPublishing={isPublishing}
+          isArchiving={isArchivingQuiz}
+          isDeleting={isDeletingQuiz}
           onBack={handleBack}
           onPublish={handlePublishQuiz}
+          onArchive={handleArchiveQuiz}
+          onDelete={handleDeleteQuiz}
         />
 
         {quiz && (
@@ -1596,6 +1676,15 @@ export default function QuizBuilderClient() {
           </div>
         </div>
       </div>
+
+      <QuizDeleteDialog
+        open={isQuizDeleteOpen}
+        quizTitle={quiz?.title || lesson?.title || "this quiz"}
+        deleteSafety={quizDeleteSafety}
+        isDeleting={isDeletingQuiz}
+        onClose={() => setIsQuizDeleteOpen(false)}
+        onDeleteConfirm={handlePermanentDeleteQuiz}
+      />
 
       <UnsavedLessonWarningDialog
         open={isWarningOpen}

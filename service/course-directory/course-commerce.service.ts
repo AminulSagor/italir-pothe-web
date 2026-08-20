@@ -12,6 +12,9 @@ import type {
   CourseEnrollmentSummary,
   CourseProviderProduct,
   CourseProviderProductListResponse,
+  CourseManualAccessOption,
+  CourseManualAccessOptionListResponse,
+  CourseManualAccessOptionPayload,
   CreateCourseProviderProductPayload,
   DeleteCourseProviderProductResponse,
   ExternalCourseAccessGrant,
@@ -79,6 +82,48 @@ export const deleteCourseProviderProduct = async (
 
   return serviceClient.delete<DeleteCourseProviderProductResponse>(
     `/admin/courses/${safeCourseId}/provider-products/${safeMappingId}`,
+  );
+};
+
+export const getCourseManualAccessOptions = async (courseId: string) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+  return serviceClient.get<CourseManualAccessOptionListResponse>(
+    `/admin/courses/${safeCourseId}/manual-access-options`,
+  );
+};
+
+export const createCourseManualAccessOption = async (
+  courseId: string,
+  payload: CourseManualAccessOptionPayload,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+  return serviceClient.post<CourseManualAccessOption>(
+    `/admin/courses/${safeCourseId}/manual-access-options`,
+    payload,
+  );
+};
+
+export const updateCourseManualAccessOption = async (
+  courseId: string,
+  optionId: string,
+  payload: Partial<CourseManualAccessOptionPayload>,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+  const safeOptionId = assertValidUuid(optionId, "Manual access option ID");
+  return serviceClient.patch<CourseManualAccessOption>(
+    `/admin/courses/${safeCourseId}/manual-access-options/${safeOptionId}`,
+    payload,
+  );
+};
+
+export const deleteCourseManualAccessOption = async (
+  courseId: string,
+  optionId: string,
+) => {
+  const safeCourseId = assertValidUuid(courseId, "Course ID");
+  const safeOptionId = assertValidUuid(optionId, "Manual access option ID");
+  return serviceClient.delete<{ message: string; manualAccessOptionId: string }>(
+    `/admin/courses/${safeCourseId}/manual-access-options/${safeOptionId}`,
   );
 };
 
@@ -319,6 +364,14 @@ const normalizeExternalGrant = (
     revokeReason: readString(value, ["revokeReason"]) || null,
     createdAt: readString(value, ["createdAt"]) || "",
     updatedAt: readString(value, ["updatedAt"]) || "",
+    accessType:
+      readString(value, ["accessType"]) === "time_limited"
+        ? "time_limited"
+        : "lifetime",
+    durationDays: readValue(value, ["durationDays"]) == null
+      ? null
+      : readNumber(value, ["durationDays"]),
+    expiresAt: readString(value, ["expiresAt"]) || null,
   };
 };
 
@@ -415,6 +468,8 @@ const normalizeEnrollment = (value: unknown): CourseEnrollment => {
       readString(enrollment, ["refundedAt"]) ||
       readString(order, ["refundedAt"]) ||
       null,
+    accessType: readString(enrollment, ["accessType"]) || "lifetime",
+    expiresAt: readString(enrollment, ["expiresAt"]) || null,
   };
 };
 

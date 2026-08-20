@@ -51,6 +51,7 @@ export interface Course {
   isFree: boolean;
   price?: string | number | null;
   couponCode?: string | null;
+  timeLimitedCouponCode?: string | null;
   finalExamTemplateId?: string | null;
   status: CourseStatus;
   publishedAt?: string | null;
@@ -91,6 +92,7 @@ export interface CreateCoursePayload {
   isFree: boolean;
   price: number | null;
   couponCode: string | null;
+  timeLimitedCouponCode: string | null;
   status: CourseStatus;
 }
 

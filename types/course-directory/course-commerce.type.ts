@@ -11,6 +11,7 @@ export type CoursePurchaseVerificationStatus =
 export type CommerceSortOrder = "ASC" | "DESC";
 
 export type CoursePaymentProvider = "google_play" | "app_store";
+export type CourseAccessType = "lifetime" | "time_limited";
 
 export type AdminExternalPaymentMethod =
   | "cash"
@@ -35,6 +36,9 @@ export interface ExternalCourseAccessGrant {
   revokeReason: string | null;
   createdAt: string;
   updatedAt: string;
+  accessType: CourseAccessType;
+  durationDays: number | null;
+  expiresAt: string | null;
 }
 
 export interface GrantExternalCourseAccessPayload {
@@ -46,6 +50,7 @@ export interface GrantExternalCourseAccessPayload {
   externalReference: string;
   paidAt?: string;
   notes?: string;
+  manualAccessOptionId?: string;
 }
 
 export interface GrantExternalCourseAccessResponse {
@@ -54,13 +59,15 @@ export interface GrantExternalCourseAccessResponse {
   grant: ExternalCourseAccessGrant;
 }
 
-export type CourseProviderProductType = "non_consumable";
+export type CourseProviderProductType = "non_consumable" | "subscription";
 
 export interface CourseProviderProduct {
   id: string;
   provider: CoursePaymentProvider;
   productId: string;
   productType: CourseProviderProductType;
+  accessType: CourseAccessType;
+  durationDays: number | null;
   basePlanId: string | null;
   offerId: string | null;
   isActive: boolean;
@@ -76,6 +83,8 @@ export interface CreateCourseProviderProductPayload {
   provider: CoursePaymentProvider;
   productId: string;
   productType?: CourseProviderProductType;
+  accessType?: CourseAccessType;
+  durationDays?: number | null;
   basePlanId?: string | null;
   offerId?: string | null;
   isActive?: boolean;
@@ -84,6 +93,8 @@ export interface CreateCourseProviderProductPayload {
 export interface UpdateCourseProviderProductPayload {
   productId?: string;
   productType?: CourseProviderProductType;
+  accessType?: CourseAccessType;
+  durationDays?: number | null;
   basePlanId?: string | null;
   offerId?: string | null;
   isActive?: boolean;
@@ -97,6 +108,26 @@ export interface CourseProviderProductMutationResponse {
 export interface DeleteCourseProviderProductResponse {
   message: string;
   providerProductId: string;
+}
+
+export interface CourseManualAccessOption {
+  id: string;
+  courseId: string;
+  accessType: CourseAccessType;
+  durationDays: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CourseManualAccessOptionListResponse {
+  items: CourseManualAccessOption[];
+}
+
+export interface CourseManualAccessOptionPayload {
+  accessType: CourseAccessType;
+  durationDays?: number | null;
+  isActive?: boolean;
 }
 
 export type CourseEnrollmentSortBy = "enrolledAt" | "amountPaid";
@@ -241,6 +272,8 @@ export interface CourseEnrollment {
 
   enrolledAt: string | null;
   refundedAt: string | null;
+  accessType: CourseAccessType | string;
+  expiresAt: string | null;
 }
 
 export interface CourseEnrollmentDetails extends CourseEnrollment {

@@ -363,7 +363,7 @@ export default function TemplateFieldSchemaSection({
                                 <code>{field.key}</code>
                                 {field.aiAssist && (
                                   <span className="inline-flex items-center gap-1 rounded-full bg-[#F1E9FF] px-2 py-0.5 text-[#6D3FB3]">
-                                    <Sparkles className="size-3" /> AI summary
+                                    <Sparkles className="size-3" /> {field.aiAssist.replace("-suggestions", "").replaceAll("-", " ")}
                                   </span>
                                 )}
                               </div>

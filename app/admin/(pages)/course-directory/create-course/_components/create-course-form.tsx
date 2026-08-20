@@ -33,6 +33,7 @@ import PricingAccessCard from "./pricing-access-card";
 import SyllabusBuilderCard from "./syllabus-builder-card";
 import RestoreCourseDialog from "./restore-course-dialog";
 import CourseStoreProductsCard from "./course-store-products-card";
+import CourseManualAccessOptionsCard from "./course-manual-access-options-card";
 
 const COURSE_DIRECTORY_PATH = "/admin/course-directory";
 
@@ -70,6 +71,7 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
   const [isFree, setIsFree] = useState(false);
   const [price, setPrice] = useState("0.00");
   const [couponCode, setCouponCode] = useState("");
+  const [timeLimitedCouponCode, setTimeLimitedCouponCode] = useState("");
   const [status, setStatus] = useState<CourseStatus>("draft");
 
   const [deleteSafety, setDeleteSafety] = useState<CourseDeleteSafety | null>(
@@ -113,6 +115,7 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
         );
         setPrice(getCoursePrice(response));
         setCouponCode(response.couponCode || "");
+        setTimeLimitedCouponCode(response.timeLimitedCouponCode || "");
         setStatus((response.status || "draft") as CourseStatus);
       } catch (error) {
         toast.error(getErrorMessage(error));
@@ -142,6 +145,7 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
       isFree,
       price: isFree ? null : safePrice,
       couponCode: couponCode.trim() || null,
+      timeLimitedCouponCode: timeLimitedCouponCode.trim() || null,
       status: payloadStatus,
     };
   };
@@ -159,6 +163,16 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
 
     if (!generatedSlug && !course?.slug) {
       toast.error("Course slug could not be generated.");
+      return false;
+    }
+
+    if (
+      couponCode.trim() &&
+      timeLimitedCouponCode.trim() &&
+      couponCode.trim().toUpperCase() ===
+        timeLimitedCouponCode.trim().toUpperCase()
+    ) {
+      toast.error("Lifetime and time-limited coupon codes must be different.");
       return false;
     }
 
@@ -313,6 +327,7 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
     );
     setPrice(getCoursePrice(refreshedCourse));
     setCouponCode(refreshedCourse.couponCode || "");
+    setTimeLimitedCouponCode(refreshedCourse.timeLimitedCouponCode || "");
     setStatus((refreshedCourse.status || "draft") as CourseStatus);
 
     return refreshedCourse;
@@ -463,16 +478,22 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
             isFree={isFree}
             price={price}
             couponCode={couponCode}
+            timeLimitedCouponCode={timeLimitedCouponCode}
             disabled={isLoading || isSaving}
             courseTitle={title}
             onIsFreeChange={setIsFree}
             onPriceChange={setPrice}
             onCouponCodeChange={setCouponCode}
+            onTimeLimitedCouponCodeChange={setTimeLimitedCouponCode}
           />
 
           <CourseStoreProductsCard
             courseId={activeCourseId || undefined}
             courseTitle={title}
+          />
+
+          <CourseManualAccessOptionsCard
+            courseId={activeCourseId || undefined}
           />
 
           <CourseStatusCard

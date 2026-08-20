@@ -120,8 +120,11 @@ export interface InfluencerProviderMapping {
   courseId?: string | null;
   storePackageId?: string | null;
   provider: InfluencerBillingProvider;
+  accessType?: "lifetime" | "time_limited";
+  durationDays?: number | null;
   regularProviderProductId: string;
   discountedProviderProductId: string;
+  regularProviderBasePlanId?: string | null;
   providerBasePlanId?: string | null;
   providerOfferId?: string | null;
   isActive?: boolean;

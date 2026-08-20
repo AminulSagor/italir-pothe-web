@@ -13,6 +13,7 @@ import {
   updateCourseProviderProduct,
 } from "@/service/course-directory/course-commerce.service";
 import type {
+  CourseAccessType,
   CoursePaymentProvider,
   CourseProviderProduct,
 } from "@/types/course-directory/course-commerce.type";
@@ -30,8 +31,10 @@ interface CourseStoreProductDialogProps {
 
 interface CourseProductDraft {
   provider: CoursePaymentProvider;
-
   productId: string;
+  accessType: CourseAccessType;
+  durationDays: string;
+  basePlanId: string;
   isActive: boolean;
 }
 
@@ -43,6 +46,9 @@ const createDraft = (
   provider: product?.provider || "google_play",
 
   productId: product?.productId || "",
+  accessType: product?.accessType || "lifetime",
+  durationDays: product?.durationDays ? String(product.durationDays) : "",
+  basePlanId: product?.basePlanId || "",
 
   isActive: product?.isActive ?? true,
 });
@@ -108,6 +114,18 @@ export default function CourseStoreProductDialog({
       return false;
     }
 
+    if (draft.accessType === "time_limited") {
+      const durationDays = Number(draft.durationDays);
+      if (!Number.isInteger(durationDays) || durationDays < 1 || durationDays > 3650) {
+        toast.error("Duration must be a whole number between 1 and 3650 days.");
+        return false;
+      }
+      if (draft.provider === "google_play" && !draft.basePlanId.trim()) {
+        toast.error("Google Play time-limited access requires a Base Plan ID.");
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -128,10 +146,20 @@ export default function CourseStoreProductDialog({
       if (product) {
         await updateCourseProviderProduct(courseId, product.id, {
           productId: draft.productId.trim(),
-
-          productType: "non_consumable",
-
-          basePlanId: null,
+          accessType: draft.accessType,
+          durationDays:
+            draft.accessType === "time_limited"
+              ? Number(draft.durationDays)
+              : null,
+          productType:
+            draft.accessType === "time_limited"
+              ? "subscription"
+              : "non_consumable",
+          basePlanId:
+            draft.accessType === "time_limited" &&
+            draft.provider === "google_play"
+              ? draft.basePlanId.trim()
+              : null,
           offerId: null,
 
           isActive: draft.isActive,
@@ -141,10 +169,20 @@ export default function CourseStoreProductDialog({
           provider: draft.provider,
 
           productId: draft.productId.trim(),
-
-          productType: "non_consumable",
-
-          basePlanId: null,
+          accessType: draft.accessType,
+          durationDays:
+            draft.accessType === "time_limited"
+              ? Number(draft.durationDays)
+              : null,
+          productType:
+            draft.accessType === "time_limited"
+              ? "subscription"
+              : "non_consumable",
+          basePlanId:
+            draft.accessType === "time_limited" &&
+            draft.provider === "google_play"
+              ? draft.basePlanId.trim()
+              : null,
           offerId: null,
 
           isActive: draft.isActive,
@@ -219,6 +257,10 @@ export default function CourseStoreProductDialog({
                   ...current,
 
                   provider: event.target.value as CoursePaymentProvider,
+                  basePlanId:
+                    event.target.value === "google_play"
+                      ? current.basePlanId
+                      : "",
                 }))
               }
               className="h-12 w-full rounded-full bg-[#EEF3EC] px-5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-60"
@@ -263,21 +305,76 @@ export default function CourseStoreProductDialog({
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold uppercase text-[#66736A]">
-              Product Type
+              Access Type
             </span>
-
-            <input
-              type="text"
-              value="Non Consumable"
-              disabled
-              className="h-12 w-full rounded-full bg-[#E4EAE4] px-5 text-sm text-[#66736A] outline-none"
-            />
-
-            <p className="mt-2 text-xs leading-5 text-[#8A948D]">
-              A course purchase grants permanent course access, so the product
-              type is fixed as non-consumable.
-            </p>
+            <select
+              value={draft.accessType}
+              disabled={isSubmitting}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  accessType: event.target.value as CourseAccessType,
+                  durationDays:
+                    event.target.value === "lifetime"
+                      ? ""
+                      : current.durationDays,
+                  basePlanId:
+                    event.target.value === "lifetime"
+                      ? ""
+                      : current.basePlanId,
+                }))
+              }
+              className="h-12 w-full rounded-full bg-[#EEF3EC] px-5 text-sm outline-none"
+            >
+              <option value="lifetime">Lifetime</option>
+              <option value="time_limited">Time limited</option>
+            </select>
           </label>
+
+          {draft.accessType === "time_limited" && (
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold uppercase text-[#66736A]">
+                Duration (days)
+              </span>
+              <input
+                type="number"
+                min={1}
+                max={3650}
+                step={1}
+                value={draft.durationDays}
+                disabled={isSubmitting}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    durationDays: event.target.value,
+                  }))
+                }
+                className="h-12 w-full rounded-full bg-[#EEF3EC] px-5 text-sm outline-none"
+              />
+            </label>
+          )}
+
+          {draft.accessType === "time_limited" &&
+            draft.provider === "google_play" && (
+              <label className="block">
+                <span className="mb-2 block text-xs font-bold uppercase text-[#66736A]">
+                  Base Plan ID
+                </span>
+                <input
+                  value={draft.basePlanId}
+                  maxLength={255}
+                  disabled={isSubmitting}
+                  placeholder="Example: access-90-days"
+                  onChange={(event) =>
+                    setDraft((current) => ({
+                      ...current,
+                      basePlanId: event.target.value,
+                    }))
+                  }
+                  className="h-12 w-full rounded-full bg-[#EEF3EC] px-5 text-sm outline-none"
+                />
+              </label>
+            )}
 
           <label className="flex items-center justify-between rounded-full bg-[#EEF3EC] px-5 py-4">
             <div>
@@ -286,8 +383,8 @@ export default function CourseStoreProductDialog({
               </p>
 
               <p className="mt-1 text-xs text-[#8A948D]">
-                Keep the regular course product and its coupon_ product active
-                when coupon checkout is enabled.
+                Keep both regular and coupon mappings active when coupon
+                checkout is enabled.
               </p>
             </div>
 
@@ -313,8 +410,31 @@ export default function CourseStoreProductDialog({
 
             <div className="mt-3 space-y-2 text-sm text-[#4F5B52]">
               <div className="flex items-center justify-between gap-4">
+                <span>Product Type</span>
+                <strong>
+                  {draft.accessType === "lifetime"
+                    ? "Non-consumable"
+                    : "Subscription"}
+                </strong>
+              </div>
+
+              {draft.accessType === "time_limited" && (
+                <p className="pt-2 text-xs leading-5 text-[#8A948D]">
+                  For the discounted mapping, use the same Google product ID
+                  with a <strong>coupon_</strong>-prefixed base plan ID. On
+                  Apple, use a separate <strong>coupon_</strong>-prefixed
+                  product ID with the same duration.
+                </p>
+              )}
+
+              <div className="flex items-center justify-between gap-4">
                 <span>Base Plan ID</span>
-                <strong>Not applicable</strong>
+                <strong>
+                  {draft.accessType === "time_limited" &&
+                  draft.provider === "google_play"
+                    ? draft.basePlanId.trim() || "Required"
+                    : "Not applicable"}
+                </strong>
               </div>
 
               <div className="flex items-center justify-between gap-4">
@@ -333,7 +453,14 @@ export default function CourseStoreProductDialog({
           <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-[#6F4A00]">
             <li>Google Play product ID must exactly match Play Console.</li>
             <li>App Store product ID must exactly match App Store Connect.</li>
-            <li>Lifetime course products must be non-consumable.</li>
+            <li>Lifetime products must be non-consumable.</li>
+            <li>
+              Time-limited Google options must use a prepaid subscription base
+              plan matching the configured duration.
+            </li>
+            <li>
+              Time-limited Apple options must use non-renewing subscriptions.
+            </li>
             <li>
               Do not reuse old product IDs for a different course meaning.
             </li>

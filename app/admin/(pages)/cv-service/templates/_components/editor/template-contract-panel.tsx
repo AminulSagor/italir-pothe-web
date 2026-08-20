@@ -118,10 +118,10 @@ export default function TemplateContractPanel({
         </div>
         <div className="rounded-2xl bg-[#F7F9F6] p-4">
           <p className="flex items-center gap-1.5 text-xs font-bold uppercase text-black/40">
-            <Sparkles className="size-3.5" /> Summary AI
+            <Sparkles className="size-3.5" /> CV AI
           </p>
           <p className="mt-2 break-all text-xs leading-5 text-black/60">
-            {contract.aiAssist.summary}
+            {contract.aiAssist.fieldSuggestions}
           </p>
         </div>
         <div className="rounded-2xl bg-[#F7F9F6] p-4">
