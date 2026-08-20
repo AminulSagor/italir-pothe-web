@@ -24,6 +24,8 @@ const QUIZ_ENDPOINTS = {
   reorderQuizQuestions: (quizId: string) =>
     `/admin/quizzes/${quizId}/questions/reorder`,
   quizQuestion: (questionId: string) => `/admin/quiz-questions/${questionId}`,
+  permanentQuizQuestion: (questionId: string) =>
+    `/admin/quiz-questions/${questionId}/permanent`,
 } as const;
 
 export const getQuizzesByLesson = (lessonId: string) =>
@@ -82,6 +84,11 @@ export const updateQuizQuestion = (
 export const deleteQuizQuestion = (questionId: string) =>
   serviceClient.delete<{ message: string }>(
     QUIZ_ENDPOINTS.quizQuestion(questionId),
+  );
+
+export const permanentlyDeleteQuizQuestion = (questionId: string) =>
+  serviceClient.delete<QuizQuestion[]>(
+    QUIZ_ENDPOINTS.permanentQuizQuestion(questionId),
   );
 
 export const uploadQuizAudio = async (file: File) => {

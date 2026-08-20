@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, GripVertical, Pencil, Plus } from "lucide-react";
+import { GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
 
 import Card from "@/components/UI/cards/card";
 import type { QuizQuestionType } from "@/types/course-directory/quiz.type";
@@ -22,7 +22,9 @@ interface QuizFlowSidebarProps {
   onQuestionSelect: (key: string) => void;
   onAddQuestion: () => void;
   onQuestionReorder?: (draggedKey: string, targetKey: string) => void;
+  onQuestionDelete?: (question: QuizFlowQuestionItem) => void;
   isReordering?: boolean;
+  deletingQuestionId?: string;
 }
 
 export default function QuizFlowSidebar({
@@ -32,7 +34,9 @@ export default function QuizFlowSidebar({
   onQuestionSelect,
   onAddQuestion,
   onQuestionReorder,
+  onQuestionDelete,
   isReordering,
+  deletingQuestionId,
 }: QuizFlowSidebarProps) {
   const [draggedQuestionKey, setDraggedQuestionKey] = useState<string | null>(
     null,
@@ -81,11 +85,8 @@ export default function QuizFlowSidebar({
           const isActive = question.localId === activeQuestionKey;
 
           return (
-            <button
+            <div
               key={`${question.localId}-${question.questionType}`}
-              type="button"
-              disabled={isReordering}
-              onClick={() => onQuestionSelect(question.localId)}
               draggable={
                 Boolean(question.id) &&
                 Boolean(onQuestionReorder) &&
@@ -125,11 +126,6 @@ export default function QuizFlowSidebar({
                 clearDragState();
               }}
               onDragEnd={clearDragState}
-              aria-label={
-                onQuestionReorder
-                  ? `Question ${question.sortOrder ?? index + 1}. Drag to reorder.`
-                  : undefined
-              }
               className={`flex w-full items-center justify-between gap-3 rounded-full px-4 py-3 text-left transition ${
                 isActive
                   ? "bg-[#007A4A] text-white"
@@ -146,7 +142,13 @@ export default function QuizFlowSidebar({
                   : "cursor-default"
               }`}
             >
-              <span className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                disabled={isReordering}
+                onClick={() => onQuestionSelect(question.localId)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left disabled:cursor-not-allowed"
+                aria-label={`Open question ${question.sortOrder ?? index + 1}`}
+              >
                 <span
                   className={`flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
                     isActive
@@ -166,14 +168,29 @@ export default function QuizFlowSidebar({
                     {question.type}
                   </span>
                 </span>
-              </span>
+              </button>
 
               <span className="flex shrink-0 items-center gap-2">
-                {isActive ? (
-                  <Pencil className="size-4" />
-                ) : (
-                  <Check className="size-4 text-[#007A4A]" />
-                )}
+                {isActive ? <Pencil className="size-4" /> : null}
+
+                {question.id && onQuestionDelete ? (
+                  <button
+                    type="button"
+                    disabled={
+                      isReordering || deletingQuestionId === question.id
+                    }
+                    onClick={() => onQuestionDelete(question)}
+                    className={`flex size-7 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                      isActive
+                        ? "text-white/80 hover:bg-white/15 hover:text-white"
+                        : "text-[#C91818] hover:bg-[#FFE1E1]"
+                    }`}
+                    aria-label={`Permanently delete question ${question.sortOrder ?? index + 1}`}
+                    title="Permanently delete question"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                ) : null}
 
                 {onQuestionReorder ? (
                   <GripVertical
@@ -186,7 +203,7 @@ export default function QuizFlowSidebar({
                   />
                 ) : null}
               </span>
-            </button>
+            </div>
           );
         })}
       </div>

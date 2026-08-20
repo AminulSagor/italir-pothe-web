@@ -14,6 +14,7 @@ import {
   deleteQuizQuestion,
   getQuizQuestionDetails,
   getQuizzesByLesson,
+  permanentlyDeleteQuizQuestion,
   publishQuiz,
   permanentlyDeleteQuiz,
   reorderQuizQuestions,
@@ -23,6 +24,7 @@ import {
   uploadQuizImage,
 } from "@/service/course-directory/quiz.service";
 import { createSignedReadUrl } from "@/service/files/file_upload";
+import ConfirmActionDialog from "@/components/UI/dialogs/confirm-action-dialog";
 import type { CourseLessonDetails } from "@/types/course-directory/lesson.type";
 import type {
   Quiz,
@@ -631,6 +633,9 @@ export default function QuizBuilderClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSavingQuestion, setIsSavingQuestion] = useState(false);
   const [isDeletingQuestion, setIsDeletingQuestion] = useState(false);
+  const [deletingQuestionId, setDeletingQuestionId] = useState("");
+  const [questionPendingPermanentDelete, setQuestionPendingPermanentDelete] =
+    useState<QuizFlowQuestionItem | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isArchivingQuiz, setIsArchivingQuiz] = useState(false);
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
@@ -1232,6 +1237,64 @@ export default function QuizBuilderClient() {
     }
   };
 
+  const handleRequestPermanentDeleteQuestion = (
+    question: QuizFlowQuestionItem,
+  ) => {
+    if (hasUnsavedChanges) {
+      toast.error(
+        "Save or discard your current changes before deleting a question.",
+      );
+      return;
+    }
+
+    setQuestionPendingPermanentDelete(question);
+  };
+
+  const handlePermanentDeleteQuestion = async () => {
+    const question = questionPendingPermanentDelete;
+
+    if (!question?.id) return;
+
+    const previousQuestions = sortQuestionForms(questions);
+    const deletedQuestionIndex = previousQuestions.findIndex(
+      (item) => item.id === question.id,
+    );
+    const toastId = toast.loading("Deleting question permanently...");
+
+    try {
+      setDeletingQuestionId(question.id);
+
+      const savedQuestions = await permanentlyDeleteQuizQuestion(question.id);
+      const remainingQuestions = savedQuestions.map(createFormFromQuestion);
+      const nextQuestions = remainingQuestions.length
+        ? remainingQuestions
+        : [createEmptyQuestionForm(1)];
+      const currentActiveQuestion = nextQuestions.find(
+        (item) => item.localId === activeQuestionKey,
+      );
+      const nextActiveQuestion =
+        currentActiveQuestion ||
+        nextQuestions[
+          Math.min(Math.max(deletedQuestionIndex, 0), nextQuestions.length - 1)
+        ];
+
+      setQuestions(nextQuestions);
+      setActiveQuestionKey(nextActiveQuestion.localId);
+      setForm(nextActiveQuestion);
+      setSavedForm(nextActiveQuestion);
+      setSavedSnapshot(createSnapshot(nextActiveQuestion));
+      setQuestionPendingPermanentDelete(null);
+
+      toast.success("Question permanently deleted and order updated.", {
+        id: toastId,
+      });
+    } catch (error) {
+      toast.error(getErrorMessage(error), { id: toastId });
+    } finally {
+      setDeletingQuestionId("");
+    }
+  };
+
   const handlePublishQuiz = async () => {
     if (!quiz) {
       toast.error("Quiz ID is missing.");
@@ -1642,7 +1705,9 @@ export default function QuizBuilderClient() {
             onQuestionSelect={handleSelectQuestion}
             onAddQuestion={handleAddQuestion}
             onQuestionReorder={handleReorderQuestions}
+            onQuestionDelete={handleRequestPermanentDeleteQuestion}
             isReordering={isReordering}
+            deletingQuestionId={deletingQuestionId}
           />
 
           <div className="space-y-6">
@@ -1684,6 +1749,19 @@ export default function QuizBuilderClient() {
         isDeleting={isDeletingQuiz}
         onClose={() => setIsQuizDeleteOpen(false)}
         onDeleteConfirm={handlePermanentDeleteQuiz}
+      />
+
+      <ConfirmActionDialog
+        open={Boolean(questionPendingPermanentDelete)}
+        title="Permanently delete this question?"
+        description={`Question ${questionPendingPermanentDelete?.sortOrder ?? ""} will be permanently removed. Any learner answers linked to it will also be deleted, and the remaining question numbers will be updated. This cannot be undone.`}
+        confirmLabel="Delete permanently"
+        isSubmitting={Boolean(deletingQuestionId)}
+        danger
+        onCancel={() => {
+          if (!deletingQuestionId) setQuestionPendingPermanentDelete(null);
+        }}
+        onConfirm={handlePermanentDeleteQuestion}
       />
 
       <UnsavedLessonWarningDialog
