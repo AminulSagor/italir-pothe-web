@@ -18,7 +18,7 @@ export const supportEmail =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective July 23, 2026 · Last updated July 23, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated August 22, 2026",
   introduction:
     "Italir Pothe respects your privacy. This Privacy Policy explains how Italir Pothe collects, uses, stores, protects and shares information when you use the Italir Pothe mobile application, public website, backend services, courses, AI learning tools, messaging, calls, webinars, CV tools, examinations, certificates, rewards, purchases, customer support and related services. In this Privacy Policy, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -265,6 +265,7 @@ export const privacyPolicy: LegalDocument = {
       title: "2.12 Device and technical information",
       paragraphs: [
         "The current Android application does not request access to your precise GPS location, address-book contacts, SMS messages or health data.",
+        "We use Firebase Crashlytics, a Google Firebase service, to identify, diagnose and fix application crashes and stability problems. Crashlytics may process crash reports, stack traces, app and operating-system versions, device model and state, installation identifiers, crash timestamps and related diagnostic information.",
       ],
       bullets: [
         "Device or installation identifier.",
@@ -365,6 +366,7 @@ export const privacyPolicy: LegalDocument = {
       bullets: [
         "Hosting and infrastructure providers supporting application hosting, databases, file storage, content delivery, security, monitoring, email, SMS, backups and infrastructure.",
         "Firebase Cloud Messaging for push-notification tokens and related technical data.",
+        "Firebase Crashlytics for crash reports, application stability monitoring and related device and diagnostic information.",
         "Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support.",
         "Agora for audio, video and connection information used during calls or webinars.",
         "LiveKit and configured AI, speech, transcription or voice providers for live audio, transcripts, prompts, conversation context and session information.",
