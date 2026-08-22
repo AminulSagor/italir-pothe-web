@@ -618,6 +618,7 @@ export default function QuizBuilderClient() {
   const [courseTitle, setCourseTitle] = useState("");
   const [lesson, setLesson] = useState<CourseLessonDetails | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [unlockPercentInput, setUnlockPercentInput] = useState("80");
   const [questions, setQuestions] = useState<QuestionForm[]>([]);
   const [activeQuestionKey, setActiveQuestionKey] = useState("");
   const [form, setForm] = useState<QuestionForm>(() =>
@@ -733,6 +734,7 @@ export default function QuizBuilderClient() {
         setLesson(lessonResponse);
         setCourseTitle(courseResponse?.title || "");
         setQuiz(readyQuiz);
+        setUnlockPercentInput(String(readyQuiz.unlockVideoWatchPercent || 80));
         setQuestions(loadedQuestions);
         setActiveQuestionKey(loadedQuestions[0].localId);
         setForm(loadedQuestions[0]);
@@ -1307,16 +1309,26 @@ export default function QuizBuilderClient() {
     }
 
     const toastId = toast.loading("Publishing quiz...");
+    const unlockVideoWatchPercent = Math.min(
+      100,
+      Math.max(
+        1,
+        Number.parseInt(unlockPercentInput, 10) ||
+          quiz.unlockVideoWatchPercent ||
+          80,
+      ),
+    );
 
     try {
       setIsPublishing(true);
+      setUnlockPercentInput(String(unlockVideoWatchPercent));
 
       await updateQuiz(quiz.id, {
         title: quiz.title || lesson?.title || "Lesson Quiz",
         description: quiz.description || "Basic quiz for greetings lesson.",
         sortOrder: quiz.sortOrder || 1,
         unlockRequirementEnabled: quiz.unlockRequirementEnabled,
-        unlockVideoWatchPercent: quiz.unlockVideoWatchPercent,
+        unlockVideoWatchPercent,
         status: quiz.status || "draft",
       });
 
@@ -1673,13 +1685,28 @@ export default function QuizBuilderClient() {
                     type="number"
                     min={1}
                     max={100}
-                    value={quiz.unlockVideoWatchPercent}
+                    step={1}
+                    inputMode="numeric"
+                    value={unlockPercentInput}
                     onChange={(event) => {
+                      const value = event.target.value;
+
+                      if (value === "" || /^\d{0,3}$/.test(value)) {
+                        setUnlockPercentInput(value);
+                      }
+                    }}
+                    onBlur={() => {
                       const value = Math.min(
                         100,
-                        Math.max(1, Number(event.target.value) || 80),
+                        Math.max(
+                          1,
+                          Number.parseInt(unlockPercentInput, 10) ||
+                            quiz.unlockVideoWatchPercent ||
+                            80,
+                        ),
                       );
 
+                      setUnlockPercentInput(String(value));
                       setQuiz((current) =>
                         current
                           ? {
