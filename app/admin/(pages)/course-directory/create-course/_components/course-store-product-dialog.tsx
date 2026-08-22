@@ -421,7 +421,7 @@ export default function CourseStoreProductDialog({
               {draft.accessType === "time_limited" && (
                 <p className="pt-2 text-xs leading-5 text-[#8A948D]">
                   For the discounted mapping, use the same Google product ID
-                  with a <strong>coupon_</strong>-prefixed base plan ID. On
+                  with a <strong>coupon-</strong>-prefixed base plan ID. On
                   Apple, use a separate <strong>coupon_</strong>-prefixed
                   product ID with the same duration.
                 </p>
@@ -465,8 +465,11 @@ export default function CourseStoreProductDialog({
               Do not reuse old product IDs for a different course meaning.
             </li>
             <li>
-              Coupon course products must use coupon_ prefix. Example:
-              coupon_italian_a1_course.
+              Google Play time-limited coupon base plans must use the coupon-
+              prefix. Example: coupon-prepaid-3m.
+            </li>
+            <li>
+              Lifetime and App Store coupon product IDs use the coupon_ prefix.
             </li>
             <li>
               Regular and coupon-prefixed mappings can both stay active for the

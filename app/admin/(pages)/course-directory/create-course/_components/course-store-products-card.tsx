@@ -41,7 +41,7 @@ const formatProvider = (provider: CourseProviderProduct["provider"]) => {
 
 const isCouponMapping = (product: CourseProviderProduct) =>
   product.productId.toLowerCase().startsWith("coupon_") ||
-  Boolean(product.basePlanId?.toLowerCase().startsWith("coupon_"));
+  Boolean(product.basePlanId && /^coupon[-_]/i.test(product.basePlanId));
 
 export default function CourseStoreProductsCard({
   courseId,

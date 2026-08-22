@@ -1315,6 +1315,8 @@ export default function QuizBuilderClient() {
         title: quiz.title || lesson?.title || "Lesson Quiz",
         description: quiz.description || "Basic quiz for greetings lesson.",
         sortOrder: quiz.sortOrder || 1,
+        unlockRequirementEnabled: quiz.unlockRequirementEnabled,
+        unlockVideoWatchPercent: quiz.unlockVideoWatchPercent,
         status: quiz.status || "draft",
       });
 
