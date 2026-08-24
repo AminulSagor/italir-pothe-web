@@ -617,28 +617,42 @@ export default function InfluencerPartnerForm(
         return false;
       }
 
-      if (
-        mapping.discountedProviderProductId.trim() ===
-        mapping.regularProviderProductId.trim()
-      ) {
-        toast.error(
-          `Regular and discounted product IDs must be different in mapping row ${rowNumber}.`,
-        );
+      const usesNativeAppleOffer =
+        mapping.provider === "app_store" &&
+        Boolean(mapping.providerOfferId.trim());
 
-        return false;
-      }
+      if (usesNativeAppleOffer) {
+        if (
+          mapping.discountedProviderProductId.trim() !==
+          mapping.regularProviderProductId.trim()
+        ) {
+          toast.error(
+            `Apple promotional offers must use the same regular and discounted subscription product ID in mapping row ${rowNumber}.`,
+          );
+          return false;
+        }
+      } else {
+        if (
+          mapping.discountedProviderProductId.trim() ===
+          mapping.regularProviderProductId.trim()
+        ) {
+          toast.error(
+            `Regular and discounted product IDs must be different in mapping row ${rowNumber}.`,
+          );
+          return false;
+        }
 
-      if (
-        !mapping.discountedProviderProductId
-          .trim()
-          .toLowerCase()
-          .startsWith("coupon_")
-      ) {
-        toast.error(
-          `Discounted product ID should start with coupon_ in mapping row ${rowNumber}.`,
-        );
-
-        return false;
+        if (
+          !mapping.discountedProviderProductId
+            .trim()
+            .toLowerCase()
+            .startsWith("coupon_")
+        ) {
+          toast.error(
+            `Discounted product ID should start with coupon_ in mapping row ${rowNumber}.`,
+          );
+          return false;
+        }
       }
     }
 
@@ -1291,12 +1305,26 @@ export default function InfluencerPartnerForm(
                   />
 
                   <InputField
-                    label="Offer ID"
+                    label={
+                      mapping.provider === "app_store"
+                        ? "Apple Promotional Offer ID"
+                        : "Offer ID"
+                    }
                     value={mapping.providerOfferId}
-                    placeholder="Optional"
+                    placeholder={
+                      mapping.provider === "app_store"
+                        ? "Optional; subscriptions only"
+                        : "Optional"
+                    }
                     onChange={(value) =>
                       updateProviderMapping(index, {
                         providerOfferId: value,
+                        ...(mapping.provider === "app_store" && value.trim()
+                          ? {
+                              discountedProviderProductId:
+                                mapping.regularProviderProductId,
+                            }
+                          : {}),
                       })
                     }
                   />
@@ -1320,7 +1348,8 @@ export default function InfluencerPartnerForm(
                 must use 20%.
               </li>
               <li>
-                Regular and discounted provider product IDs must be different.
+                Separate discounted products use coupon_ IDs. Apple subscription
+                promotional offers use the same product ID plus an Offer ID.
               </li>
               <li>
                 Do not reuse old product IDs for a different package/course

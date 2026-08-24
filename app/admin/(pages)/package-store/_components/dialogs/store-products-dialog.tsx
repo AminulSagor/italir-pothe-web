@@ -553,13 +553,22 @@ export default function StoreProductsDialog({
                   }
                 >
                   <span className="mb-2 block text-xs font-medium text-[#5F675F]">
-                    OFFER ID (OPTIONAL)
+                    {draft.provider === "app_store" &&
+                    expectedProductType === "subscription"
+                      ? "APPLE COUPON PROMOTIONAL OFFER ID (OPTIONAL)"
+                      : "OFFER ID (OPTIONAL)"}
                   </span>
 
                   <input
                     value={draft.offerId}
                     maxLength={255}
                     disabled={isSubmitting}
+                    placeholder={
+                      draft.provider === "app_store" &&
+                      expectedProductType === "subscription"
+                        ? "App Store Connect promotional offer ID"
+                        : undefined
+                    }
                     onChange={(event) =>
                       updateDraft("offerId", event.target.value)
                     }
@@ -608,8 +617,9 @@ export default function StoreProductsDialog({
                     meaning.
                   </li>
                   <li>
-                    Coupon/discount products must use coupon_ prefix. Example:
-                    coupon_ai_bundle_001.
+                    Consumable coupon products use a separate coupon_ product
+                    ID. Apple subscription coupons use the regular product ID
+                    plus its promotional offer ID.
                   </li>
                   <li>
                     Regular and coupon-prefixed mappings can both stay active
