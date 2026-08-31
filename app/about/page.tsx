@@ -99,7 +99,7 @@ export default function AboutPage() {
             </p>
 
             <div className="mt-8">
-              <DownloadAppButton label="App Coming Soon" size="lg" />
+              <DownloadAppButton label="Get it on Google Play" size="lg" />
             </div>
           </div>
 

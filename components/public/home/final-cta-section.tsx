@@ -16,12 +16,12 @@ export function FinalCtaSection() {
         </h2>
 
         <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#5F6C65]">
-          The mobile app is coming soon. In the meantime, explore our learning
-          programs and printed Italian-language resources.
+          The Android app is available now on Google Play. The iOS version is
+          coming soon.
         </p>
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <DownloadAppButton label="App Coming Soon" size="lg" />
+          <DownloadAppButton label="Get it on Google Play" size="lg" />
 
           <Link
             href="/books"

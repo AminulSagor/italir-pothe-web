@@ -1,9 +1,9 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
   BadgeCheck,
   BookOpenCheck,
-  PlayCircle,
   Trophy,
 } from "lucide-react";
 
@@ -36,7 +36,11 @@ export function HeroSection() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <DownloadAppButton label="Get the App" showArrow size="lg" />
+            <DownloadAppButton
+              label="Get it on Google Play"
+              showArrow
+              size="lg"
+            />
             <Link
               className="inline-flex h-[3.25rem] items-center justify-center gap-2 rounded-full border border-[#BFD3C6] bg-white px-7 text-base font-bold text-[#25302B] transition hover:border-[#7CAC8D] hover:bg-[#EEF6F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A7C58] focus-visible:ring-offset-2"
               href="/courses"
@@ -65,76 +69,16 @@ export function HeroSection() {
           <div className="absolute -left-8 top-16 h-36 w-36 rounded-full bg-[#BDF3CF] blur-3xl" />
           <div className="absolute -right-6 bottom-12 h-40 w-40 rounded-full bg-[#E1F6B8] blur-3xl" />
 
-          <div className="relative mx-auto w-[290px] rounded-[3rem] border-[10px] border-[#17211D] bg-white p-3 shadow-[0_35px_80px_rgba(18,52,35,0.25)] sm:w-[330px]">
-            <div className="mx-auto mb-3 h-5 w-28 rounded-full bg-[#17211D]" />
-            <div className="overflow-hidden rounded-[2.2rem] bg-[#F3F8F4]">
-              <div className="bg-gradient-to-br from-[#006B3F] to-[#0A7C58] px-5 pb-7 pt-6 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/70">
-                  Today&apos;s learning
-                </p>
-                <h2 className="mt-2 text-2xl font-black tracking-[-0.04em]">
-                  Ciao! Ready to continue?
-                </h2>
-                <div className="mt-5 rounded-2xl bg-white/12 p-4 backdrop-blur">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span>Course progress</span>
-                    <span>62%</span>
-                  </div>
-                  <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20">
-                    <div className="h-full w-[62%] rounded-full bg-[#75FF33]" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3 p-5">
-                <div className="flex w-full items-center gap-4 rounded-2xl bg-white p-4 text-left shadow-sm ring-1 ring-[#E0E9E3]">
-                  <span className="grid size-11 place-items-center rounded-2xl bg-[#E5F7EC] text-[#087448]">
-                    <PlayCircle aria-hidden="true" size={23} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-xs font-bold uppercase tracking-[0.12em] text-[#7A877F]">
-                      Continue lesson
-                    </span>
-                    <span className="mt-1 block truncate text-sm font-black text-[#223029]">
-                      Everyday conversations
-                    </span>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-[#E0E9E3]">
-                    <p className="text-xs font-bold text-[#7A877F]">
-                      Current streak
-                    </p>
-                    <p className="mt-2 text-2xl font-black text-[#17211D]">
-                      7 days
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-[#E8F5ED] p-4 ring-1 ring-[#D2E9DA]">
-                    <p className="text-xs font-bold text-[#54705F]">Total XP</p>
-                    <p className="mt-2 text-2xl font-black text-[#087448]">
-                      1,240
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl bg-[#17211D] p-4 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold text-white/60">
-                        Upcoming
-                      </p>
-                      <p className="mt-1 text-sm font-black">
-                        Live speaking webinar
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-[#75FF33] px-3 py-1 text-xs font-black text-[#17211D]">
-                      Soon
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="relative mx-auto w-[290px] overflow-hidden rounded-[3rem] border-[10px] border-[#17211D] bg-white shadow-[0_35px_80px_rgba(18,52,35,0.25)] sm:w-[330px]">
+            <Image
+              alt="Italir Pothe Android app home screen showing learning progress and quick tools"
+              className="h-auto w-full"
+              height={2622}
+              priority
+              sizes="(min-width: 640px) 310px, 270px"
+              src="/images/italir-pothe-app-home.jpeg"
+              width={1206}
+            />
           </div>
         </div>
       </div>

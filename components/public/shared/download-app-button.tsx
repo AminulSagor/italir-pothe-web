@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { ArrowRight, Smartphone } from "lucide-react";
 
-import { ComingSoonDialog } from "@/components/public/shared/coming-soon-dialog";
+const GOOGLE_PLAY_URL =
+  "https://play.google.com/store/apps/details?id=com.shafacode.italir_pothe&pcampaignid=web_share";
 
 interface DownloadAppButtonProps {
   label?: string;
@@ -16,10 +16,10 @@ interface DownloadAppButtonProps {
 
 const variantClasses = {
   primary:
-    "bg-[#006B3F] text-white shadow-[0_12px_30px_rgba(0,107,63,0.22)] hover:bg-[#005832]",
-  light: "bg-white text-[#0A6C45] shadow-lg hover:bg-[#EFF7F1]",
+    "bg-[#006B3F] !text-white shadow-[0_12px_30px_rgba(0,107,63,0.22)] hover:bg-[#005832]",
+  light: "bg-white !text-[#0A6C45] shadow-lg hover:bg-[#EFF7F1]",
   outline:
-    "border border-[#BFD3C6] bg-white text-[#25302B] hover:border-[#7CAC8D] hover:bg-[#F4F8F5]",
+    "border border-[#BFD3C6] bg-white !text-[#25302B] hover:border-[#7CAC8D] hover:bg-[#F4F8F5]",
 };
 
 const sizeClasses = {
@@ -28,32 +28,24 @@ const sizeClasses = {
 };
 
 export function DownloadAppButton({
-  label = "Download App",
+  label = "Get it on Google Play",
   variant = "primary",
   size = "md",
   className = "",
   showArrow = false,
   onPress,
 }: DownloadAppButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const closeDialog = useCallback(() => setIsOpen(false), []);
-
   return (
-    <>
-      <button
-        className={`inline-flex items-center justify-center gap-2 rounded-full font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A7C58] focus-visible:ring-offset-2 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-        onClick={() => {
-          onPress?.();
-          setIsOpen(true);
-        }}
-        type="button"
-      >
-        <Smartphone aria-hidden="true" size={18} />
-        {label}
-        {showArrow && <ArrowRight aria-hidden="true" size={18} />}
-      </button>
-
-      <ComingSoonDialog onClose={closeDialog} open={isOpen} />
-    </>
+    <a
+      className={`inline-flex items-center justify-center gap-2 rounded-full font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A7C58] focus-visible:ring-offset-2 ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      href={GOOGLE_PLAY_URL}
+      onClick={onPress}
+      rel="noopener noreferrer"
+      target="_blank"
+    >
+      <Smartphone aria-hidden="true" size={18} />
+      {label}
+      {showArrow && <ArrowRight aria-hidden="true" size={18} />}
+    </a>
   );
 }
