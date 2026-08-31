@@ -13,6 +13,7 @@ import {
   Package,
   ShieldAlert,
   ShieldCheck,
+  Smartphone,
   Trophy,
   UserRound,
   UserRoundX,
@@ -157,6 +158,11 @@ export const adminNavigation: NavigationGroup[] = [
         title: "Notification",
         href: "/admin/notification-management",
         icon: Bell,
+      },
+      {
+        title: "App Update Management",
+        href: "/admin/app-update-management",
+        icon: Smartphone,
       },
       {
         title: "Analytics",

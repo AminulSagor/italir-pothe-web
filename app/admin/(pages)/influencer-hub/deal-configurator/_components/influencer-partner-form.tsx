@@ -52,6 +52,7 @@ interface ProviderMappingForm {
   discountedProviderProductId: string;
   providerBasePlanId: string;
   providerOfferId: string;
+  appStoreOfferType: "promotional_offer" | "offer_code";
   isActive: boolean;
 }
 
@@ -123,6 +124,7 @@ const initialProviderMappings: ProviderMappingForm[] = [
     discountedProviderProductId: "",
     providerBasePlanId: "",
     providerOfferId: "",
+    appStoreOfferType: "offer_code",
     isActive: true,
   },
 ];
@@ -266,6 +268,7 @@ const createProviderMappingsFromResponse = (
     discountedProviderProductId: mapping.discountedProviderProductId || "",
     providerBasePlanId: mapping.providerBasePlanId || "",
     providerOfferId: mapping.providerOfferId || "",
+    appStoreOfferType: mapping.appStoreOfferType || "promotional_offer",
     isActive: mapping.isActive ?? true,
   }));
 };
@@ -433,6 +436,7 @@ export default function InfluencerPartnerForm(
         discountedProviderProductId: "",
         providerBasePlanId: "",
         providerOfferId: "",
+        appStoreOfferType: "offer_code",
         isActive: true,
       },
     ]);
@@ -681,6 +685,10 @@ export default function InfluencerPartnerForm(
       discountedProviderProductId: mapping.discountedProviderProductId.trim(),
       providerBasePlanId: mapping.providerBasePlanId.trim() || null,
       providerOfferId: mapping.providerOfferId.trim() || null,
+      appStoreOfferType:
+        mapping.provider === "app_store" && mapping.providerOfferId.trim()
+          ? mapping.appStoreOfferType
+          : null,
       isActive: mapping.isActive,
     }));
 
@@ -1304,16 +1312,41 @@ export default function InfluencerPartnerForm(
                     }
                   />
 
+                  {mapping.provider === "app_store" ? (
+                    <SelectField
+                      label="Apple Discount Mechanism"
+                      value={mapping.appStoreOfferType}
+                      options={[
+                        ["offer_code", "Offer Code (typed coupon)"],
+                        [
+                          "promotional_offer",
+                          "Promotional Offer (eligible subscribers)",
+                        ],
+                      ]}
+                      onChange={(value) =>
+                        updateProviderMapping(index, {
+                          appStoreOfferType: value as
+                            | "promotional_offer"
+                            | "offer_code",
+                        })
+                      }
+                    />
+                  ) : null}
+
                   <InputField
                     label={
                       mapping.provider === "app_store"
-                        ? "Apple Promotional Offer ID"
+                        ? mapping.appStoreOfferType === "offer_code"
+                          ? "Apple Offer Code Reference Name"
+                          : "Apple Promotional Offer ID"
                         : "Offer ID"
                     }
                     value={mapping.providerOfferId}
                     placeholder={
                       mapping.provider === "app_store"
-                        ? "Optional; subscriptions only"
+                        ? mapping.appStoreOfferType === "offer_code"
+                          ? "e.g. streak20"
+                          : "Eligible current/previous subscribers"
                         : "Optional"
                     }
                     onChange={(value) =>

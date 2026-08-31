@@ -18,7 +18,7 @@ export const supportEmail =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective July 23, 2026 · Last updated August 22, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated August 31, 2026",
   introduction:
     "Italir Pothe respects your privacy. This Privacy Policy explains how Italir Pothe collects, uses, stores, protects and shares information when you use the Italir Pothe mobile application, public website, backend services, courses, AI learning tools, messaging, calls, webinars, CV tools, examinations, certificates, rewards, purchases, customer support and related services. In this Privacy Policy, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -50,6 +50,7 @@ export const privacyPolicy: LegalDocument = {
       title: "2.1 Account and authentication information",
       paragraphs: [
         "We may collect account and authentication information when you register, sign in, verify your account or use protected services.",
+        "If you use Sign in with Apple, Google Sign-In or Facebook Login, the provider authenticates you and may give us information you authorize, such as your provider account identifier, name, email address or profile image. Apple may provide a private relay email address when you choose to hide your email.",
         "We do not store your password as readable plain text.",
       ],
       bullets: [
@@ -65,6 +66,7 @@ export const privacyPolicy: LegalDocument = {
         "Learner level.",
         "Account-security and login information.",
         "Authentication tokens and session information.",
+        "Third-party sign-in provider and provider account identifier.",
       ],
     },
     {
@@ -209,12 +211,12 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "2.9 Purchase and entitlement information",
       paragraphs: [
-        "Google Play processes your payment method.",
-        "Italir Pothe does not receive your complete payment-card number, bank-account credentials or Google Play password.",
+        "Apple App Store or Google Play processes in-app payment methods on the applicable platform.",
+        "Italir Pothe does not receive your complete payment-card number, bank-account credentials or app-store password.",
       ],
       bullets: [
-        "Google Play product ID.",
-        "Purchase token.",
+        "Apple App Store or Google Play product ID.",
+        "Purchase token, receipt or signed transaction information.",
         "Order or transaction number.",
         "Purchase provider.",
         "Product type.",
@@ -223,7 +225,7 @@ export const privacyPolicy: LegalDocument = {
         "Subscription or entitlement status.",
         "Refund, cancellation and chargeback information.",
         "Coupon, referral or promotional information.",
-        "Obfuscated account identifier used for transaction verification.",
+        "App account token or obfuscated account identifier used for transaction verification.",
         "Purchased course, package or digital entitlement.",
         "AI text-token balance.",
         "AI voice-time balance.",
@@ -264,12 +266,12 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "2.12 Device and technical information",
       paragraphs: [
-        "The current Android application does not request access to your precise GPS location, address-book contacts, SMS messages or health data.",
+        "The current Android and iOS applications do not request access to your precise GPS location, address-book contacts, SMS messages or health data.",
         "We use Firebase Crashlytics, a Google Firebase service, to identify, diagnose and fix application crashes and stability problems. Crashlytics may process crash reports, stack traces, app and operating-system versions, device model and state, installation identifiers, crash timestamps and related diagnostic information.",
       ],
       bullets: [
         "Device or installation identifier.",
-        "Firebase push-notification token.",
+        "Firebase Cloud Messaging, Apple Push Notification service or VoIP push token.",
         "Device platform and operating system.",
         "App version.",
         "Browser type when using the website.",
@@ -287,7 +289,7 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "3. Device permissions",
       paragraphs: [
-        "Depending on the feature you use, Italir Pothe may request access to notifications, microphone, camera, photos, selected files and call-related Android functionality.",
+        "Depending on the feature you use and your device platform, Italir Pothe may request access to notifications, microphone, camera, photos, selected files and call-related functionality.",
         "You may refuse or revoke optional permissions through your device settings.",
         "A feature may not work when its required permission is disabled.",
       ],
@@ -296,7 +298,7 @@ export const privacyPolicy: LegalDocument = {
         "Microphone: Used for AI voice conversations, speaking practice, speaking examinations, audio messages, calls and webinar speaker participation.",
         "Camera: Used for profile photographs, selected image uploads, video calls and webinar speaker participation.",
         "Photos and selected files: Used for profile photos, evidence, attachments, CV information, messages, reports, generated CVs, certificates and learning PDFs.",
-        "Call-related and foreground-service access: Used to maintain incoming or active voice and video calls and display call notifications where permitted by Android.",
+        "Call-related and background access: CallKit, VoIP pushes and audio background mode on iOS, and call notifications and foreground services on Android, may be used to present and maintain incoming or active voice and video calls as permitted by the platform.",
       ],
     },
     {
@@ -311,7 +313,7 @@ export const privacyPolicy: LegalDocument = {
         "Generate CVs and downloadable documents.",
         "Operate messages, calls and webinars.",
         "Deliver notifications.",
-        "Process purchases and verify Google Play transactions.",
+        "Process purchases and verify Apple App Store or Google Play transactions.",
         "Grant courses, subscriptions, credits and other digital entitlements.",
         "Issue and verify certificates.",
         "Operate leaderboards, streaks, rewards and daily challenges.",
@@ -361,13 +363,16 @@ export const privacyPolicy: LegalDocument = {
       paragraphs: [
         "We do not sell personal information.",
         "We do not provide personal information to advertisers for unrelated cross-service behavioral advertising.",
+        "The mobile applications do not use personal information to track you across apps and websites owned by other companies for targeted advertising. If this practice changes, we will update this policy and obtain any consent required by the platform or applicable law.",
         "We may share limited information with providers and authorized people where reasonably necessary to provide, secure and support Italir Pothe.",
       ],
       bullets: [
         "Hosting and infrastructure providers supporting application hosting, databases, file storage, content delivery, security, monitoring, email, SMS, backups and infrastructure.",
-        "Firebase Cloud Messaging for push-notification tokens and related technical data.",
+        "Apple for Sign in with Apple, App Store and StoreKit purchases, Apple Push Notification service, VoIP notifications and related platform services.",
+        "Google and Meta when you choose Google Sign-In or Facebook Login.",
+        "Firebase Cloud Messaging for push-notification tokens and related technical data on supported platforms.",
         "Firebase Crashlytics for crash reports, application stability monitoring and related device and diagnostic information.",
-        "Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support.",
+        "Apple App Store and Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support on the applicable platform.",
         "Agora for audio, video and connection information used during calls or webinars.",
         "LiveKit and configured AI, speech, transcription or voice providers for live audio, transcripts, prompts, conversation context and session information.",
         "Other users who receive information you intentionally share, including messages, attachments, profile details, call participation, webinar participation, leaderboard details and community messages.",
@@ -410,7 +415,7 @@ export const privacyPolicy: LegalDocument = {
       title: "10. Cookies and local device storage",
       paragraphs: [
         "The website and app may use cookies, secure storage, local storage or similar technology.",
-        "We do not currently use third-party advertising SDKs in the Android application.",
+        "We do not currently use third-party advertising SDKs in the Android or iOS applications.",
         "This policy will be updated before such advertising technology is introduced.",
       ],
       bullets: [
@@ -452,7 +457,7 @@ export const privacyPolicy: LegalDocument = {
         "After a verified deletion request, we will delete or anonymize personal information associated with the account that is no longer necessary for legal, security, fraud-prevention or transaction-record purposes.",
         "Messages already delivered to another user may remain in that user’s conversation where necessary for conversation integrity, reporting or safety.",
         "Where reasonably possible, the deleted account’s identity will be removed or anonymized.",
-        "Deleting an Italir Pothe account does not automatically cancel an active Google Play subscription. Subscriptions must be cancelled through Google Play.",
+        "Deleting an Italir Pothe account does not automatically cancel an active Apple App Store or Google Play subscription. You must cancel through the subscription settings of the store where you purchased it.",
       ],
       bullets: [
         "Account and profile information.",
@@ -530,7 +535,7 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "17. Changes to this policy",
       paragraphs: [
-        "We may update this Privacy Policy when features, data practices, service providers, security requirements, applicable laws or Google Play requirements change.",
+        "We may update this Privacy Policy when features, data practices, service providers, security requirements, applicable laws or Apple App Store or Google Play requirements change.",
         "We will update the effective date.",
         "We will provide additional notice inside the app, by email or through another appropriate method when a material change requires notice.",
       ],
@@ -549,7 +554,7 @@ export const privacyPolicy: LegalDocument = {
 
 export const termsOfService: LegalDocument = {
   title: "Terms & Conditions",
-  effectiveDate: "Effective July 23, 2026 · Last updated July 23, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated August 31, 2026",
   introduction:
     "These Terms and Conditions govern your access to and use of the Italir Pothe mobile application, website, backend services, courses, AI tools, messaging, calls, webinars, examinations, certificates, CV tools, purchases, rewards and related services. In these Terms, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -775,8 +780,8 @@ export const termsOfService: LegalDocument = {
     {
       title: "14. Purchases and payment processing",
       paragraphs: [
-        "Android purchases may be processed through Google Play.",
-        "Google Play processes your payment method. Its payment, cancellation and refund terms may also apply.",
+        "Digital purchases made in the iOS app are processed through Apple’s App Store, and digital purchases made in the Android app are processed through Google Play.",
+        "The applicable store processes your payment method. Its payment, cancellation and refund terms also apply, including the Apple Media Services Terms and Conditions for App Store purchases.",
         "Italir Pothe may receive transaction information necessary to verify payment, grant access, manage subscriptions, process refunds and prevent fraud.",
       ],
       bullets: [
@@ -794,20 +799,22 @@ export const termsOfService: LegalDocument = {
       title: "15. Subscriptions",
       paragraphs: [
         "When a product is described as a subscription, it may renew automatically until cancelled.",
-        "You should cancel an active subscription through Google Play before deleting your account.",
+        "You should cancel an active subscription through Apple App Store or Google Play, as applicable, before deleting your account.",
       ],
       bullets: [
-        "Renewal may be charged through Google Play.",
+        "Payment is charged to your Apple ID or Google Play account when you confirm the purchase.",
+        "Renewal may be charged through the store where you subscribed.",
         "The renewal price and period are shown before confirmation.",
-        "You are responsible for cancelling through Google Play before the next billing date.",
+        "You are responsible for cancelling through your Apple App Store or Google Play subscription settings before the next billing date.",
         "Removing the app does not automatically cancel a subscription.",
-        "Deleting an Italir Pothe account does not automatically cancel a Google Play subscription.",
+        "Deleting an Italir Pothe account does not automatically cancel an Apple App Store or Google Play subscription.",
+        "Eligible subscriptions and non-consumable purchases may be restored using Restore Purchases. Consumable credits generally cannot be restored by the store after they have been consumed.",
       ],
     },
     {
       title: "16. Refunds and payment reversals",
       paragraphs: [
-        "Refund requests are handled according to Google Play rules, the terms displayed with the product and applicable consumer-protection law.",
+        "Refund requests for store purchases are handled under Apple App Store or Google Play rules, the terms displayed with the product and applicable consumer-protection law. Apple purchase refund requests must be submitted through Apple’s refund process; Google Play purchase refund requests must use Google Play’s applicable process.",
         "Contact support if payment was completed but the purchased entitlement was not added to your account.",
       ],
       bullets: [
@@ -831,7 +838,7 @@ export const termsOfService: LegalDocument = {
     {
       title: "18. Device permissions",
       paragraphs: [
-        "Some features require access to notifications, microphone, camera, photos, selected files or call-related Android functionality.",
+        "Some features require access to notifications, microphone, camera, photos, selected files or platform call-related functionality on iOS or Android.",
         "Permissions are requested for the relevant feature.",
         "You may refuse or revoke optional permissions, but the related feature may stop working.",
         "You must not use microphone, camera or communication features to violate another person’s privacy or legal rights.",
@@ -860,6 +867,7 @@ export const termsOfService: LegalDocument = {
         "To the extent permitted by law, Italir Pothe is not responsible for third-party content, availability, independent data practices, transactions, security incidents, policies or services outside our reasonable control.",
       ],
       bullets: [
+        "Apple App Store, StoreKit, Sign in with Apple, Apple Push Notification service and CallKit.",
         "Google Play.",
         "Firebase.",
         "Agora.",
@@ -870,6 +878,16 @@ export const termsOfService: LegalDocument = {
         "WhatsApp.",
         "Facebook.",
         "External book stores.",
+      ],
+    },
+    {
+      title: "21.1 Additional terms for Apple users",
+      paragraphs: [
+        "If you download or use Italir Pothe through Apple’s App Store, these additional terms apply. These Terms are between you and Italir Pothe, not Apple. Italir Pothe, not Apple, is solely responsible for the app and its content, maintenance, support and any claims relating to the app, subject to applicable law.",
+        "Apple has no obligation to provide maintenance or support. If the app fails to conform to an applicable warranty, you may notify Apple and Apple may refund the purchase price, if any, as provided by its rules. To the maximum extent permitted by law, Apple has no other warranty obligation regarding the app.",
+        "You receive a non-transferable license to use the app on Apple-branded products you own or control, subject to Apple’s Usage Rules, including any permitted Family Sharing or volume-purchase use.",
+        "You represent that you are not located in a country subject to a United States government embargo or designated as supporting terrorism and are not listed on a United States government prohibited or restricted-party list.",
+        "You must comply with applicable third-party terms when using the app. Apple and its subsidiaries are third-party beneficiaries of these Terms and may enforce these Apple-specific terms against you.",
       ],
     },
     {
@@ -888,7 +906,7 @@ export const termsOfService: LegalDocument = {
         "Identity verification may be required.",
         "Account deletion may permanently remove account access, learning progress, AI history, CV information, messages, unused digital balances, course access, rewards, examination history and certificate access.",
         "Certain limited records may be retained when necessary for legal compliance, security, payment records, fraud prevention or disputes, as explained in the Privacy Policy.",
-        "Account deletion does not automatically cancel a Google Play subscription.",
+        "Account deletion does not automatically cancel an Apple App Store or Google Play subscription.",
       ],
     },
     {
@@ -928,7 +946,7 @@ export const termsOfService: LegalDocument = {
     {
       title: "28. Changes to these Terms",
       paragraphs: [
-        "We may update these Terms when services, features, payment products, providers, security requirements, applicable laws or Google Play requirements change.",
+        "We may update these Terms when services, features, payment products, providers, security requirements, applicable laws or Apple App Store or Google Play requirements change.",
         "We will update the effective date. Additional notice may be provided by email, notification or an in-app message when a material change requires notice.",
         "Continuing to use the service after updated Terms take effect means you accept the updated Terms, except where applicable law requires separate consent.",
       ],

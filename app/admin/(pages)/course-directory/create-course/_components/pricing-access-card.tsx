@@ -185,8 +185,8 @@ const PricingAccessCard = ({
               className="w-full rounded-full bg-[#EEF3EC] px-5 py-3 text-sm font-bold text-[#202420] outline-none placeholder:text-black/35 disabled:cursor-not-allowed disabled:opacity-60"
             />
             <p className="mt-2 text-xs leading-5 text-[#8A948D]">
-              Applies only to configured duration purchase mappings. Use a
-              different code from the lifetime coupon.
+              Applies only to configured duration purchase mappings. You may
+              use the same campaign code as the lifetime coupon.
             </p>
           </div>
         </div>

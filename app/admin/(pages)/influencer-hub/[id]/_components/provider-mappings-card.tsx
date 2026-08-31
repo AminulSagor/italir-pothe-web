@@ -118,6 +118,9 @@ export default function ProviderMappingsCard({
 
                   <p className="mt-1">
                     Offer: {mapping.providerOfferId || "—"}
+                    {mapping.appStoreOfferType
+                      ? ` (${mapping.appStoreOfferType.replaceAll("_", " ")})`
+                      : ""}
                   </p>
                 </td>
 

@@ -127,6 +127,7 @@ export interface InfluencerProviderMapping {
   regularProviderBasePlanId?: string | null;
   providerBasePlanId?: string | null;
   providerOfferId?: string | null;
+  appStoreOfferType?: "promotional_offer" | "offer_code" | null;
   isActive?: boolean;
 }
 

@@ -165,16 +165,6 @@ const CreateCourseForm = ({ courseId = "" }: CreateCourseFormProps) => {
       return false;
     }
 
-    if (
-      couponCode.trim() &&
-      timeLimitedCouponCode.trim() &&
-      couponCode.trim().toUpperCase() ===
-        timeLimitedCouponCode.trim().toUpperCase()
-    ) {
-      toast.error("Lifetime and time-limited coupon codes must be different.");
-      return false;
-    }
-
     return true;
   };
 
