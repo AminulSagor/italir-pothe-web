@@ -19,7 +19,6 @@ import {
 import type {
   AppUpdateConfiguration,
   AppUpdatePlatform,
-  AppUpdateType,
 } from "@/types/app-update/app-update.type";
 
 type Drafts = Record<AppUpdatePlatform, AppUpdateConfiguration>;
@@ -34,7 +33,7 @@ const createDefaultConfiguration = (
   platform,
   latestVersion: "1.0.0",
   minimumSupportedVersion: "1.0.0",
-  updateType: "DISABLED",
+  updateType: "OPTIONAL",
   title: "Update available",
   message:
     platform === "android"
@@ -200,6 +199,21 @@ export default function AppUpdateManagementPage() {
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
+  const updateEnabled = (enabled: boolean) => {
+    setDrafts((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        [selectedPlatform]: {
+          ...current[selectedPlatform],
+          enabled,
+          // Kept only for compatibility with already-published app builds.
+          updateType: enabled ? "OPTIONAL" : "DISABLED",
+        },
+      };
+    });
+  };
+
   const handleSave = async () => {
     if (!configuration) return;
 
@@ -281,8 +295,8 @@ export default function AppUpdateManagementPage() {
             App Update Management
           </h1>
           <p className="mt-3 max-w-2xl leading-7 text-[#637168]">
-            Control optional and required updates independently for Android and
-            iOS. Disabled configurations never interrupt app startup.
+            Set the newest and oldest supported versions for Android and iOS.
+            The app automatically chooses the correct update experience.
           </p>
         </div>
 
@@ -333,14 +347,12 @@ export default function AppUpdateManagementPage() {
                 </span>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-extrabold ${
-                    item?.enabled && item.updateType !== "DISABLED"
+                    item?.enabled
                       ? "bg-[#DDF5E5] text-[#087448]"
                       : "bg-gray-100 text-gray-500"
                   }`}
                 >
-                  {item?.enabled && item.updateType !== "DISABLED"
-                    ? item.updateType
-                    : "INACTIVE"}
+                  {item?.enabled ? "ACTIVE" : "INACTIVE"}
                 </span>
               </div>
             </button>
@@ -362,7 +374,7 @@ export default function AppUpdateManagementPage() {
           <button
             aria-checked={configuration.enabled}
             className="flex items-center gap-3 font-bold text-[#26332C]"
-            onClick={() => updateField("enabled", !configuration.enabled)}
+            onClick={() => updateEnabled(!configuration.enabled)}
             role="switch"
             type="button"
           >
@@ -409,21 +421,6 @@ export default function AppUpdateManagementPage() {
           </label>
 
           <label className="font-bold text-[#27342D]">
-            Update type
-            <select
-              className={fieldClass}
-              onChange={(event) =>
-                updateField("updateType", event.target.value as AppUpdateType)
-              }
-              value={configuration.updateType}
-            >
-              <option value="OPTIONAL">OPTIONAL</option>
-              <option value="REQUIRED">REQUIRED</option>
-              <option value="DISABLED">DISABLED</option>
-            </select>
-          </label>
-
-          <label className="font-bold text-[#27342D]">
             Update title
             <input
               className={fieldClass}
@@ -460,10 +457,10 @@ export default function AppUpdateManagementPage() {
         <div className="mt-7 flex items-start gap-3 rounded-2xl bg-[#F1F8F3] p-4 text-sm leading-6 text-[#4D5E54]">
           <CheckCircle2 className="mt-0.5 shrink-0 text-[#087448]" size={19} />
           <p>
-            <strong>Required</strong> blocks versions below the minimum.
-            <strong> Optional</strong> appears only when the latest version is
-            newer and can be dismissed for the current session. Disabled or
-            switched-off configurations show nothing.
+            Versions below the <strong>minimum supported version</strong> must
+            update. Versions between minimum and latest receive an optional
+            update. Users on the latest version see nothing. Switching this
+            configuration off disables all update prompts.
           </p>
         </div>
       </section>
