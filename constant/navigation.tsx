@@ -123,6 +123,11 @@ export const adminNavigation: NavigationGroup[] = [
         icon: UserRound,
       },
       {
+        title: "Device Requests",
+        href: "/admin/device-requests",
+        icon: Smartphone,
+      },
+      {
         title: "League & Gamification",
         href: "/admin/league-gamification",
         icon: Trophy,
