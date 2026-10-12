@@ -18,7 +18,7 @@ export const supportEmail =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective July 23, 2026 · Last updated August 31, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated October 13, 2026",
   introduction:
     "Italir Pothe respects your privacy. This Privacy Policy explains how Italir Pothe collects, uses, stores, protects and shares information when you use the Italir Pothe mobile application, public website, backend services, courses, AI learning tools, messaging, calls, webinars, CV tools, examinations, certificates, rewards, purchases, customer support and related services. In this Privacy Policy, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -124,7 +124,7 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "2.5 AI Tutor and AI-learning information",
       paragraphs: [
-        "AI input may be processed by contracted AI, speech-recognition, speech-generation, transcription and real-time voice providers.",
+        "AI input may be processed by Google Gemini, OpenAI, LiveKit and the configured speech-recognition, speech-generation, transcription and real-time voice providers. Italir Pothe asks for explicit permission before first sharing information with these providers. You may decline or later withdraw permission without losing access to non-AI features.",
         "Do not provide government identification numbers, payment-card details, medical information or other highly sensitive information that is unnecessary for language learning.",
       ],
       bullets: [
@@ -368,13 +368,15 @@ export const privacyPolicy: LegalDocument = {
       ],
       bullets: [
         "Hosting and infrastructure providers supporting application hosting, databases, file storage, content delivery, security, monitoring, email, SMS, backups and infrastructure.",
-        "Apple for Sign in with Apple, App Store and StoreKit purchases, Apple Push Notification service, VoIP notifications and related platform services.",
+        "Apple for Sign in with Apple authentication, App Store and StoreKit transaction processing, Apple Push Notification service delivery, PushKit VoIP tokens and incoming-call notifications, and CallKit system call presentation.",
         "Google and Meta when you choose Google Sign-In or Facebook Login.",
         "Firebase Cloud Messaging for push-notification tokens and related technical data on supported platforms.",
         "Firebase Crashlytics for crash reports, application stability monitoring and related device and diagnostic information.",
         "Apple App Store and Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support on the applicable platform.",
         "Agora for audio, video and connection information used during calls or webinars.",
-        "LiveKit and configured AI, speech, transcription or voice providers for live audio, transcripts, prompts, conversation context and session information.",
+        "Google Gemini for AI Tutor prompts, conversation context, live voice audio, transcripts, language-level answers and generated tutoring responses.",
+        "OpenAI for CV-assistant prompts, CV text, selected CV documents or images, and generated or edited CV content.",
+        "LiveKit and configured speech, transcription or voice providers for live audio, transcripts, prompts, conversation context and session information.",
         "Other users who receive information you intentionally share, including messages, attachments, profile details, call participation, webinar participation, leaderboard details and community messages.",
         "Authorized teachers, moderators and support staff who need information to review examinations, provide support, moderate content, investigate reports or manage purchases, certificates and rewards.",
         "Authorities or other parties where disclosure is required by law or reasonably necessary to protect safety, investigate fraud, enforce agreements or protect users and the public.",
@@ -455,8 +457,9 @@ export const privacyPolicy: LegalDocument = {
         `You may request permanent account deletion inside the app through Settings → Delete Account, through the Italir Pothe public account-deletion webpage or by emailing ${supportEmail}.`,
         "We may verify your identity before completing the request.",
         "After a verified deletion request, we will delete or anonymize personal information associated with the account that is no longer necessary for legal, security, fraud-prevention or transaction-record purposes.",
-        "Messages already delivered to another user may remain in that user’s conversation where necessary for conversation integrity, reporting or safety.",
-        "Where reasonably possible, the deleted account’s identity will be removed or anonymized.",
+        "Messages, message attachments and webinar chat messages you authored are deleted from other users’ conversation and webinar views when your account is deleted.",
+        "Where a report, dispute or safety investigation requires limited evidence to be retained, we restrict access to that evidence and delete or anonymize it when the retention purpose ends.",
+        "The deleted account’s identity is removed or anonymized in records that must be retained.",
         "Deleting an Italir Pothe account does not automatically cancel an active Apple App Store or Google Play subscription. You must cancel through the subscription settings of the store where you purchased it.",
       ],
       bullets: [
@@ -554,7 +557,7 @@ export const privacyPolicy: LegalDocument = {
 
 export const termsOfService: LegalDocument = {
   title: "Terms & Conditions",
-  effectiveDate: "Effective July 23, 2026 · Last updated August 31, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated October 13, 2026",
   introduction:
     "These Terms and Conditions govern your access to and use of the Italir Pothe mobile application, website, backend services, courses, AI tools, messaging, calls, webinars, examinations, certificates, CV tools, purchases, rewards and related services. In these Terms, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -715,7 +718,7 @@ export const termsOfService: LegalDocument = {
         "User content includes information you submit through messages, calls, webinar chat, examinations, AI prompts, reports, reviews, CV tools, profile photos, audio, images, documents and other uploads.",
         "You retain ownership of your original user content.",
         "You grant Italir Pothe a limited, worldwide, non-exclusive license to host, store, process, reproduce, transmit, adapt, moderate and display user content only as reasonably necessary to provide and secure the service.",
-        "This license ends when the content is deleted, except where continued processing is reasonably necessary for legal obligations, safety, fraud prevention, dispute resolution, backup cycles or content already delivered to another user.",
+        "This license ends when the content is deleted. Limited continued processing is permitted only where reasonably necessary for legal obligations, safety, fraud prevention, dispute resolution or temporary backup cycles.",
       ],
       bullets: [
         "Deliver content to intended recipients.",
@@ -802,7 +805,7 @@ export const termsOfService: LegalDocument = {
         "You should cancel an active subscription through Apple App Store or Google Play, as applicable, before deleting your account.",
       ],
       bullets: [
-        "Payment is charged to your Apple ID or Google Play account when you confirm the purchase.",
+        "Payment is charged to your Apple Account or Google Play account when you confirm the purchase.",
         "Renewal may be charged through the store where you subscribed.",
         "The renewal price and period are shown before confirmation.",
         "You are responsible for cancelling through your Apple App Store or Google Play subscription settings before the next billing date.",
@@ -815,6 +818,7 @@ export const termsOfService: LegalDocument = {
       title: "16. Refunds and payment reversals",
       paragraphs: [
         "Refund requests for store purchases are handled under Apple App Store or Google Play rules, the terms displayed with the product and applicable consumer-protection law. Apple purchase refund requests must be submitted through Apple’s refund process; Google Play purchase refund requests must use Google Play’s applicable process.",
+        "For Apple purchases, request a refund at reportaproblem.apple.com. Cancelling automatic renewal is separate from requesting a refund.",
         "Contact support if payment was completed but the purchased entitlement was not added to your account.",
       ],
       bullets: [
@@ -867,7 +871,7 @@ export const termsOfService: LegalDocument = {
         "To the extent permitted by law, Italir Pothe is not responsible for third-party content, availability, independent data practices, transactions, security incidents, policies or services outside our reasonable control.",
       ],
       bullets: [
-        "Apple App Store, StoreKit, Sign in with Apple, Apple Push Notification service and CallKit.",
+        "Apple App Store, StoreKit, Sign in with Apple, Apple Push Notification service, PushKit and CallKit.",
         "Google Play.",
         "Firebase.",
         "Agora.",
@@ -904,7 +908,7 @@ export const termsOfService: LegalDocument = {
         "You may stop using Italir Pothe at any time.",
         `You may request permanent account deletion from Settings inside the app, through the public account-deletion webpage or by contacting ${supportEmail}.`,
         "Identity verification may be required.",
-        "Account deletion may permanently remove account access, learning progress, AI history, CV information, messages, unused digital balances, course access, rewards, examination history and certificate access.",
+        "Account deletion permanently removes account access and user-authored messages, message attachments and webinar chat. It also deletes or anonymizes associated profile information, learning progress, AI history, CV information and other personal data unless limited retention is necessary for a purpose described below.",
         "Certain limited records may be retained when necessary for legal compliance, security, payment records, fraud prevention or disputes, as explained in the Privacy Policy.",
         "Account deletion does not automatically cancel an Apple App Store or Google Play subscription.",
       ],

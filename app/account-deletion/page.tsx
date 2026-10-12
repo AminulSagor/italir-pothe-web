@@ -88,9 +88,56 @@ export default function AccountDeletionPage() {
                 </p>
 
                 <p className="mt-4 leading-7 text-[#444B47]">
+                  Messages, message attachments and webinar chat messages you
+                  authored are deleted from other users&apos; views.
+                </p>
+
+                <p className="mt-4 leading-7 text-[#444B47]">
                   Limited transaction, security, legal or fraud-prevention
                   records may be retained where required.
                 </p>
+              </section>
+
+              <section className="rounded-[1.75rem] border border-[#E2E7E3] bg-white p-6 shadow-sm">
+                <h2 className="text-xl font-black text-[#075F3A]">
+                  Cancel store subscriptions separately
+                </h2>
+
+                <p className="mt-4 leading-7 text-[#444B47]">
+                  Deleting your Italir Pothe account does not cancel an active
+                  Apple App Store or Google Play subscription. Store billing
+                  can continue until you cancel through the store where you
+                  subscribed.
+                </p>
+
+                <div className="mt-4 flex flex-col items-start gap-3">
+                  <a
+                    className="font-bold text-[#0A7C58] hover:underline"
+                    href="https://apps.apple.com/account/subscriptions"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Manage Apple subscriptions
+                  </a>
+
+                  <a
+                    className="font-bold text-[#0A7C58] hover:underline"
+                    href="https://play.google.com/store/account/subscriptions"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Manage Google Play subscriptions
+                  </a>
+
+                  <a
+                    className="font-bold text-[#0A7C58] hover:underline"
+                    href="https://reportaproblem.apple.com/"
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Request an Apple purchase refund
+                  </a>
+                </div>
               </section>
 
               <section className="rounded-[1.75rem] border border-[#E2E7E3] bg-white p-6 shadow-sm">
