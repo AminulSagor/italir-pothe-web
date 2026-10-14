@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Noto_Sans_Bengali,
+} from "next/font/google";
 
 import "./globals.css";
 
@@ -13,6 +17,13 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
+});
+
+const notoSansBengali = Noto_Sans_Bengali({
+  variable: "--font-noto-sans-bengali",
+  subsets: ["bengali"],
+  display: "swap",
+  fallback: ["sans-serif"],
 });
 
 const siteUrl =
@@ -114,7 +125,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${notoSansBengali.variable}`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-background text-foreground antialiased">
