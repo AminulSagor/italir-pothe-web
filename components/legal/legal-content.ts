@@ -18,7 +18,7 @@ export const supportEmail =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective July 23, 2026 · Last updated October 13, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated October 24, 2026",
   introduction:
     "Italir Pothe respects your privacy. This Privacy Policy explains how Italir Pothe collects, uses, stores, protects and shares information when you use the Italir Pothe mobile application, public website, backend services, courses, AI learning tools, messaging, calls, webinars, CV tools, examinations, certificates, rewards, purchases, customer support and related services. In this Privacy Policy, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -124,7 +124,7 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "2.5 AI Tutor and AI-learning information",
       paragraphs: [
-        "AI input may be processed by Google Gemini, OpenAI, LiveKit and the configured speech-recognition, speech-generation, transcription and real-time voice providers. Italir Pothe asks for explicit permission before first sharing information with these providers. You may decline or later withdraw permission without losing access to non-AI features.",
+        "AI input may be processed by Google Gemini and OpenAI. On iOS, live AI voice tutoring connects directly to Google Gemini and does not use Pipecat or LiveKit. OpenAI remains in use for AI text responses, level-test transcription, language and speech processing, and CV assistance. The published legacy Android AI voice path may additionally use Pipecat with LiveKit transport and OpenAI speech and language services. Italir Pothe asks for explicit permission before first sharing information with these providers. You may decline or later withdraw permission without losing access to non-AI features.",
         "Do not provide government identification numbers, payment-card details, medical information or other highly sensitive information that is unnecessary for language learning.",
       ],
       bullets: [
@@ -375,8 +375,8 @@ export const privacyPolicy: LegalDocument = {
         "Apple App Store and Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support on the applicable platform.",
         "Agora for audio, video and connection information used during calls or webinars.",
         "Google Gemini for AI Tutor prompts, conversation context, live voice audio, transcripts, language-level answers and generated tutoring responses.",
-        "OpenAI for CV-assistant prompts, CV text, selected CV documents or images, and generated or edited CV content.",
-        "LiveKit and configured speech, transcription or voice providers for live audio, transcripts, prompts, conversation context and session information.",
+        "OpenAI for AI Tutor text prompts and responses, level-test audio and transcripts, speech recognition, language processing, speech generation, CV-assistant prompts, CV text, selected CV documents or images, and generated or edited CV content.",
+        "LiveKit for real-time voice audio and technical session information only when the legacy Android AI voice path is used; the iOS AI voice path does not use LiveKit.",
         "Other users who receive information you intentionally share, including messages, attachments, profile details, call participation, webinar participation, leaderboard details and community messages.",
         "Authorized teachers, moderators and support staff who need information to review examinations, provide support, moderate content, investigate reports or manage purchases, certificates and rewards.",
         "Authorities or other parties where disclosure is required by law or reasonably necessary to protect safety, investigate fraud, enforce agreements or protect users and the public.",
@@ -458,9 +458,11 @@ export const privacyPolicy: LegalDocument = {
         "We may verify your identity before completing the request.",
         "After a verified deletion request, we will delete or anonymize personal information associated with the account that is no longer necessary for legal, security, fraud-prevention or transaction-record purposes.",
         "Messages, message attachments and webinar chat messages you authored are deleted from other users’ conversation and webinar views when your account is deleted.",
+        "Eligible account-owned uploads and generated CV or resume files are placed in a durable deletion queue. Failed storage deletions are retried automatically. Files still shared with other users and limited report, certificate or other service records that must remain available are detached from the deleted identity and retained only for the applicable sharing, safety or recordkeeping purpose.",
         "Where a report, dispute or safety investigation requires limited evidence to be retained, we restrict access to that evidence and delete or anonymize it when the retention purpose ends.",
         "The deleted account’s identity is removed or anonymized in records that must be retained.",
         "Deleting an Italir Pothe account does not automatically cancel an active Apple App Store or Google Play subscription. You must cancel through the subscription settings of the store where you purchased it.",
+        "When AI permission is withdrawn or an account is deleted, Italir Pothe invalidates active server-side AI sessions and the app stops active microphone capture, playback and provider connections when it receives the revocation. Another signed-in device checks account-level permission periodically during an active voice session, so its direct provider connection may take a short time to stop.",
       ],
       bullets: [
         "Account and profile information.",
@@ -875,7 +877,7 @@ export const termsOfService: LegalDocument = {
         "Google Play.",
         "Firebase.",
         "Agora.",
-        "LiveKit.",
+        "LiveKit for the legacy Android AI voice path.",
         "AI, transcription and speech providers.",
         "Hosting and file-storage providers.",
         "Email and SMS providers.",

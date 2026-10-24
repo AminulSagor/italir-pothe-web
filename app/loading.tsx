@@ -27,14 +27,14 @@ export default function Loading() {
               </span>
 
               <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-black/40">
-                Administration
+                Learning platform
               </span>
             </span>
           </div>
 
           <div className="hidden items-center gap-2 rounded-full border border-white bg-white/70 px-4 py-2 text-xs font-medium text-black/45 shadow-sm sm:flex">
             <ShieldCheck className="size-4 text-[#006B3F]" />
-            Secure Workspace
+            Secure service
           </div>
         </header>
 
@@ -51,12 +51,11 @@ export default function Loading() {
             </div>
 
             <h1 className="mt-8 text-2xl font-bold tracking-[-0.02em] text-[#16251B] sm:text-3xl">
-              Preparing your workspace
+              Preparing Italir Pothe
             </h1>
 
             <p className="mx-auto mt-3 max-w-[420px] text-sm leading-6 text-[#69736C] sm:text-base">
-              Loading the latest administration data and getting everything
-              ready.
+              Loading the latest page and getting everything ready.
             </p>
 
             <div className="mx-auto mt-8 flex w-fit items-center gap-2">

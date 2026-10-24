@@ -11,9 +11,17 @@ export const metadata: Metadata = {
     "Permanently delete an Italir Pothe account using email or phone verification.",
 };
 
-export default function AccountDeletionPage() {
-  return (
-    <PublicPageShell>
+type AccountDeletionPageProps = {
+  searchParams: Promise<{
+    embedded?: string;
+  }>;
+};
+
+export default async function AccountDeletionPage({
+  searchParams,
+}: AccountDeletionPageProps) {
+  const params = await searchParams;
+  const content = (
       <section className="bg-[#F4FAF5] px-4 py-12 text-[#25302B] sm:px-6 sm:py-16 lg:px-8">
         <div className="mx-auto max-w-5xl">
           <nav
@@ -161,6 +169,11 @@ export default function AccountDeletionPage() {
           </div>
         </div>
       </section>
-    </PublicPageShell>
   );
+
+  if (params.embedded === "true") {
+    return <main>{content}</main>;
+  }
+
+  return <PublicPageShell>{content}</PublicPageShell>;
 }
