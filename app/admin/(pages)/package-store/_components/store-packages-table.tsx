@@ -84,6 +84,10 @@ const getColumnLabels = (packageType: StorePackageType) => {
     ];
   }
 
+  if (packageType === "ad_free") {
+    return ["PACKAGE NAME", "PRICE", "HIGHLIGHT BADGE", "ACTIONS"];
+  }
+
   return [
     "PACKAGE NAME",
     "PROTECTION",

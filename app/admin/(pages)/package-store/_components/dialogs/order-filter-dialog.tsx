@@ -82,6 +82,7 @@ export default function OrderFilterDialog({
             { label: "AI Bundles", value: "ai_bundle" },
             { label: "Streak Freezes", value: "streak_freeze" },
             { label: "CV Credits", value: "cv_credit" },
+            { label: "Ad-Free", value: "ad_free" },
           ]}
         />
 

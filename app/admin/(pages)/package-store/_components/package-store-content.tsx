@@ -7,6 +7,7 @@ import AiBundlesTable from "./ai-bundles-table";
 import CvCreditsTable from "./cv-credits-table";
 import OrderHistoryTable from "./order-history-table";
 import StreakFreezesTable from "./streak-freezes-table";
+import AdFreeTable from "./ad-free-table";
 
 interface PackageStoreContentProps {
   activeTab?: string;
@@ -69,6 +70,17 @@ export default function PackageStoreContent({
         dateTo={dateTo}
         sortBy={sortBy}
         sortOrder={sortOrder}
+      />
+    );
+  }
+
+  if (activeTab === "ad-free") {
+    return (
+      <AdFreeTable
+        search={search}
+        page={page}
+        status={status}
+        provider={provider}
       />
     );
   }

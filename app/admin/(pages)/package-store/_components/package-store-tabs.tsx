@@ -1,10 +1,7 @@
 import Link from "next/link";
 
 export type PackageStoreTab =
-  | "ai-bundles"
-  | "streak-freezes"
-  | "cv-credits"
-  | "order-history";
+  "ai-bundles" | "streak-freezes" | "cv-credits" | "ad-free" | "order-history";
 
 interface Props {
   activeTab?: string;
@@ -17,6 +14,7 @@ const tabs: Array<{
   { label: "AI Bundles", value: "ai-bundles" },
   { label: "Streak Freezes", value: "streak-freezes" },
   { label: "CV Credits", value: "cv-credits" },
+  { label: "Ad-Free", value: "ad-free" },
   { label: "Order History", value: "order-history" },
 ];
 

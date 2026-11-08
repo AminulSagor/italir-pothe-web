@@ -141,7 +141,8 @@ export default function OrderHistoryTable({
     const normalizedPackageType: StorePackageType | undefined =
       packageType === "ai_bundle" ||
       packageType === "streak_freeze" ||
-      packageType === "cv_credit"
+      packageType === "cv_credit" ||
+      packageType === "ad_free"
         ? packageType
         : undefined;
 

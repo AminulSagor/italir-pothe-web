@@ -1,4 +1,8 @@
-export type StorePackageType = "ai_bundle" | "streak_freeze" | "cv_credit";
+export type StorePackageType =
+  | "ai_bundle"
+  | "streak_freeze"
+  | "cv_credit"
+  | "ad_free";
 
 export type StorePackageStatus = "published" | "archived";
 
@@ -8,7 +12,7 @@ export type StoreMarketingBadge =
   | "most_popular"
   | "best_value";
 
-export type StoreBillingModel = "one_time" | "monthly";
+export type StoreBillingModel = "one_time" | "monthly" | "yearly";
 
 export type StreakProtectionMode = "finite" | "monthly_unlimited";
 
@@ -146,6 +150,7 @@ export interface CreateStorePackagePayload {
   couponsEnabled?: boolean;
   couponCode?: string;
   sortOrder?: number;
+  providerProducts?: CreateStoreProviderProductPayload[];
 }
 
 export interface UpdateStorePackagePayload {
@@ -170,6 +175,12 @@ export interface ReorderStorePackagesPayload {
     packageId: string;
     sortOrder: number;
   }>;
+}
+
+export interface SetStorePackageAvailabilityResponse {
+  message: string;
+  packageId: string;
+  enabled: boolean;
 }
 
 export interface CvEconomyConfiguration {

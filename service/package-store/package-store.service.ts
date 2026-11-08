@@ -17,6 +17,7 @@ import type {
   StorePackageQuery,
   StoreProviderProduct,
   StoreProviderProductListResponse,
+  SetStorePackageAvailabilityResponse,
   UpdateCvEconomyConfigurationPayload,
   UpdateStorePackagePayload,
   UpdateStoreProviderProductPayload,
@@ -116,6 +117,17 @@ export const archiveStorePackage = async (packageId: string) => {
 
   return serviceClient.delete<PackageStoreMessageResponse>(
     `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}`,
+  );
+};
+
+export const setStorePackageAvailability = async (
+  packageId: string,
+  enabled: boolean,
+) => {
+  const safePackageId = assertValidUuid(packageId, "Package ID");
+  return serviceClient.patch<SetStorePackageAvailabilityResponse>(
+    `${PACKAGE_STORE_BASE_PATH}/packages/${safePackageId}/availability`,
+    { enabled },
   );
 };
 
