@@ -18,7 +18,7 @@ export const supportEmail =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective July 23, 2026 · Last updated October 24, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated November 16, 2026",
   introduction:
     "Italir Pothe respects your privacy. This Privacy Policy explains how Italir Pothe collects, uses, stores, protects and shares information when you use the Italir Pothe mobile application, public website, backend services, courses, AI learning tools, messaging, calls, webinars, CV tools, examinations, certificates, rewards, purchases, customer support and related services. In this Privacy Policy, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -287,6 +287,23 @@ export const privacyPolicy: LegalDocument = {
       ],
     },
     {
+      title: "2.13 Advertising and rewarded-ad information",
+      paragraphs: [
+        "The Android application uses the Google Mobile Ads SDK through Google AdMob and may use Meta Audience Network through AdMob mediation to display banner, native and rewarded advertisements. Advertising availability, format and provider may vary by region, device, consent choice, account status and technical availability.",
+        "Google, Meta and participating advertising partners may automatically process information needed to request, deliver, measure and protect advertisements. Depending on the user's choices and applicable law, ads may be personalized, non-personalized, contextual or limited.",
+        "When you choose to watch a rewarded advertisement, Italir Pothe creates a server-side reward session and uses Google AdMob server-side verification to confirm completion before granting the stated access, credit or benefit. The verification record may include an internal user identifier, random reward-session identifier, reward placement, related lesson or feature identifier, advertising transaction identifier, verification status and relevant timestamps. We use this information to grant the requested benefit, prevent duplicate rewards, investigate failures and detect fraud or abuse.",
+        "Google's privacy information is available at https://policies.google.com/privacy and Meta's privacy information is available at https://www.facebook.com/privacy/policy/.",
+      ],
+      bullets: [
+        "Android Advertising ID, app-set ID and other device or app identifiers where available and permitted.",
+        "IP address, which may be used to estimate a device's general location.",
+        "Device, operating-system, application, language and network information.",
+        "Advertisement requests, impressions, views, clicks, rewarded-video completion and other interactions.",
+        "Application and SDK diagnostics, performance information, crash information and fraud-prevention signals.",
+        "Consent choices and signals used to determine whether advertising may be requested or personalized.",
+      ],
+    },
+    {
       title: "3. Device permissions",
       paragraphs: [
         "Depending on the feature you use and your device platform, Italir Pothe may request access to notifications, microphone, camera, photos, selected files and call-related functionality.",
@@ -318,6 +335,8 @@ export const privacyPolicy: LegalDocument = {
         "Issue and verify certificates.",
         "Operate leaderboards, streaks, rewards and daily challenges.",
         "Deliver physical or digital rewards.",
+        "Request, display, measure and protect advertising, including banner, native and rewarded ads.",
+        "Create, verify and audit rewarded-ad sessions and grant the associated access, credit or benefit.",
         "Respond to support, reports, appeals and deletion requests.",
         "Detect spam, fraud, cheating, misuse and security threats.",
         "Moderate content and protect users.",
@@ -362,14 +381,15 @@ export const privacyPolicy: LegalDocument = {
       title: "7. How we share information",
       paragraphs: [
         "We do not sell personal information.",
-        "We do not provide personal information to advertisers for unrelated cross-service behavioral advertising.",
-        "The mobile applications do not use personal information to track you across apps and websites owned by other companies for targeted advertising. If this practice changes, we will update this policy and obtain any consent required by the platform or applicable law.",
+        "We do not directly provide advertisers with your account profile, messages, course answers, CV content or AI conversations for their own unrelated advertising purposes.",
+        "The Android application uses Google AdMob and may use Meta Audience Network through mediation. These providers and participating advertising partners may process the advertising and technical information described in section 2.13 under their own privacy terms. Where required, Italir Pothe requests consent before requesting personalized advertising and respects applicable device and privacy choices.",
         "We may share limited information with providers and authorized people where reasonably necessary to provide, secure and support Italir Pothe.",
       ],
       bullets: [
         "Hosting and infrastructure providers supporting application hosting, databases, file storage, content delivery, security, monitoring, email, SMS, backups and infrastructure.",
         "Apple for Sign in with Apple authentication, App Store and StoreKit transaction processing, Apple Push Notification service delivery, PushKit VoIP tokens and incoming-call notifications, and CallKit system call presentation.",
         "Google and Meta when you choose Google Sign-In or Facebook Login.",
+        "Google AdMob, Meta Audience Network and participating mediation or advertising partners for ad delivery, measurement, frequency control, consent handling, server-side reward verification, security and fraud prevention in the Android application.",
         "Firebase Cloud Messaging for push-notification tokens and related technical data on supported platforms.",
         "Firebase Crashlytics for crash reports, application stability monitoring and related device and diagnostic information.",
         "Apple App Store and Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support on the applicable platform.",
@@ -417,8 +437,8 @@ export const privacyPolicy: LegalDocument = {
       title: "10. Cookies and local device storage",
       paragraphs: [
         "The website and app may use cookies, secure storage, local storage or similar technology.",
-        "We do not currently use third-party advertising SDKs in the Android or iOS applications.",
-        "This policy will be updated before such advertising technology is introduced.",
+        "The Android application uses third-party advertising technology. Depending on applicable law and your privacy choices, Google, Meta and participating advertising partners may use device storage, identifiers or similar technologies for ad delivery, frequency control, measurement, security and fraud prevention.",
+        "Non-personalized or limited ads may still use information or device storage for purposes such as frequency capping, aggregated reporting, security and fraud prevention. Declining personalized advertising does not necessarily remove all advertisements.",
       ],
       bullets: [
         "Keep you signed in.",
@@ -427,6 +447,7 @@ export const privacyPolicy: LegalDocument = {
         "Maintain purchase-recovery information.",
         "Protect accounts and prevent fraud.",
         "Preserve necessary session information.",
+        "Store or communicate advertising consent and privacy-choice signals.",
       ],
     },
     {
@@ -437,6 +458,7 @@ export const privacyPolicy: LegalDocument = {
         "Learning progress, AI history and CV information may remain until deletion or until no longer needed.",
         "Purchase and accounting records may be retained for legally required periods.",
         "Security and diagnostic logs may be retained for a shorter operational period unless needed for investigation.",
+        "Rewarded-ad session and verification records may be retained as reasonably necessary to grant benefits, prevent duplicate grants, resolve disputes, maintain security and detect fraud or abuse.",
         "Moderation and fraud records may be retained where necessary to protect users and prevent repeated abuse.",
         "Backup copies may remain temporarily until replaced through ordinary backup cycles.",
       ],
@@ -486,6 +508,7 @@ export const privacyPolicy: LegalDocument = {
         "Your available rights depend on the law that applies to you.",
         "You may update available profile information from Settings.",
         "You may control camera, microphone, notification, photo and file permissions through your device settings.",
+        "Where required, you may review or change advertising consent choices through Advertising privacy options in the app. You may also reset or delete the Android Advertising ID through your device's privacy settings.",
         `To submit a privacy request, contact ${supportEmail}. We may request reasonable information to verify your identity and protect the account.`,
       ],
       bullets: [
@@ -559,7 +582,7 @@ export const privacyPolicy: LegalDocument = {
 
 export const termsOfService: LegalDocument = {
   title: "Terms & Conditions",
-  effectiveDate: "Effective July 23, 2026 · Last updated October 13, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated November 16, 2026",
   introduction:
     "These Terms and Conditions govern your access to and use of the Italir Pothe mobile application, website, backend services, courses, AI tools, messaging, calls, webinars, examinations, certificates, CV tools, purchases, rewards and related services. In these Terms, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -842,6 +865,16 @@ export const termsOfService: LegalDocument = {
       ],
     },
     {
+      title: "17.1 Advertising and rewarded features",
+      paragraphs: [
+        "The Android application may display banner, native and rewarded advertisements supplied through Google AdMob and participating mediation partners, including Meta Audience Network. Advertising may vary by account, region, device, consent choice, inventory and technical availability.",
+        "A rewarded advertisement is optional unless you choose to use a feature offered through the ad-supported path. Before the advertisement begins, the app will describe the specific access, credit or benefit available for successful completion. For a free course video, one rewarded advertisement may unlock playback through the first 60% and a second rewarded advertisement may unlock the remaining 40%.",
+        "A reward is granted only after the advertising provider reports completion and, where used, Italir Pothe's backend successfully verifies the server-side reward session. Closing an advertisement early, verification failure, network interruption, expired sessions, duplicate transactions, abuse or unavailable inventory may prevent the benefit from being granted.",
+        "Advertising inventory is supplied by third parties and is not guaranteed. If an ad is unavailable or verification remains pending, you may try again later or use another available access option. We may reject duplicate, manipulated, automated or fraudulent reward claims.",
+        "Where offered, an active ad-free entitlement removes eligible in-app advertising according to the product description. It does not remove third-party content, external promotions or notices that are not advertisements covered by that entitlement.",
+      ],
+    },
+    {
       title: "18. Device permissions",
       paragraphs: [
         "Some features require access to notifications, microphone, camera, photos, selected files or platform call-related functionality on iOS or Android.",
@@ -875,6 +908,8 @@ export const termsOfService: LegalDocument = {
       bullets: [
         "Apple App Store, StoreKit, Sign in with Apple, Apple Push Notification service, PushKit and CallKit.",
         "Google Play.",
+        "Google AdMob and the Google Mobile Ads SDK.",
+        "Meta Audience Network through advertising mediation.",
         "Firebase.",
         "Agora.",
         "LiveKit for the legacy Android AI voice path.",
