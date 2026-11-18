@@ -18,7 +18,7 @@ export const supportEmail =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  effectiveDate: "Effective July 23, 2026 · Last updated November 16, 2026",
+  effectiveDate: "Effective July 23, 2026 · Last updated November 19, 2026",
   introduction:
     "Italir Pothe respects your privacy. This Privacy Policy explains how Italir Pothe collects, uses, stores, protects and shares information when you use the Italir Pothe mobile application, public website, backend services, courses, AI learning tools, messaging, calls, webinars, CV tools, examinations, certificates, rewards, purchases, customer support and related services. In this Privacy Policy, “Italir Pothe,” “we,” “us,” and “our” refer to the operator of the Italir Pothe service.",
 
@@ -268,6 +268,7 @@ export const privacyPolicy: LegalDocument = {
       paragraphs: [
         "The current Android and iOS applications do not request access to your precise GPS location, address-book contacts, SMS messages or health data.",
         "We use Firebase Crashlytics, a Google Firebase service, to identify, diagnose and fix application crashes and stability problems. Crashlytics may process crash reports, stack traces, app and operating-system versions, device model and state, installation identifiers, crash timestamps and related diagnostic information.",
+        "When advertising is shown, the Google Mobile Ads SDK and, on Android, the Meta Audience Network mediation adapter also collect device and technical information directly, including advertising identifiers, IP address, device and app information, ad interactions and diagnostics. Section 2.13 describes this advertising information.",
       ],
       bullets: [
         "Device or installation identifier.",
@@ -289,13 +290,16 @@ export const privacyPolicy: LegalDocument = {
     {
       title: "2.13 Advertising and rewarded-ad information",
       paragraphs: [
-        "The Android application uses the Google Mobile Ads SDK through Google AdMob and may use Meta Audience Network through AdMob mediation to display banner, native and rewarded advertisements. Advertising availability, format and provider may vary by region, device, consent choice, account status and technical availability.",
-        "Google, Meta and participating advertising partners may automatically process information needed to request, deliver, measure and protect advertisements. Depending on the user's choices and applicable law, ads may be personalized, non-personalized, contextual or limited.",
+        "Italir Pothe uses the Google Mobile Ads SDK (Google AdMob) to display banner, native and rewarded advertisements in the mobile app where advertising is enabled for that platform.",
+        "On Android, banner and native ad requests may also be filled by Meta Audience Network through AdMob mediation. Rewarded advertisements are served by Google AdMob only and do not use Meta Audience Network.",
+        "Advertising availability, format and provider may vary by region, device, consent choice, account status and technical availability. Users with an active Ad-Free subscription, or another entitlement that removes ads, are not shown banner, native or rewarded advertisements.",
+        "Google, Meta and participating advertising partners collect information directly from the app through their SDKs to request, deliver, measure and protect advertisements. Where you consent, or where consent is not legally required, they may use your device's advertising identifier and related information to show personalized ads, which can be based on activity across other apps and websites. Otherwise, ads may be non-personalized, contextual or limited, which may still use information for frequency capping, aggregated reporting, security and fraud prevention.",
+        "The iOS app does not request App Tracking Transparency permission, so it does not access the iOS advertising identifier (IDFA) or track you across apps and websites owned by other companies.",
         "When you choose to watch a rewarded advertisement, Italir Pothe creates a server-side reward session and uses Google AdMob server-side verification to confirm completion before granting the stated access, credit or benefit. The verification record may include an internal user identifier, random reward-session identifier, reward placement, related lesson or feature identifier, advertising transaction identifier, verification status and relevant timestamps. We use this information to grant the requested benefit, prevent duplicate rewards, investigate failures and detect fraud or abuse.",
         "Google's privacy information is available at https://policies.google.com/privacy and Meta's privacy information is available at https://www.facebook.com/privacy/policy/.",
       ],
       bullets: [
-        "Android Advertising ID, app-set ID and other device or app identifiers where available and permitted.",
+        "Android Advertising ID, app set ID and other device or app identifiers where available and permitted.",
         "IP address, which may be used to estimate a device's general location.",
         "Device, operating-system, application, language and network information.",
         "Advertisement requests, impressions, views, clicks, rewarded-video completion and other interactions.",
@@ -382,14 +386,15 @@ export const privacyPolicy: LegalDocument = {
       paragraphs: [
         "We do not sell personal information.",
         "We do not directly provide advertisers with your account profile, messages, course answers, CV content or AI conversations for their own unrelated advertising purposes.",
-        "The Android application uses Google AdMob and may use Meta Audience Network through mediation. These providers and participating advertising partners may process the advertising and technical information described in section 2.13 under their own privacy terms. Where required, Italir Pothe requests consent before requesting personalized advertising and respects applicable device and privacy choices.",
+        "The mobile app uses Google AdMob and, on Android, Meta Audience Network through AdMob mediation for banner and native ads. These providers and participating advertising partners collect the advertising and technical information described in section 2.13 directly through their SDKs and process it under their own privacy terms. Where required, Italir Pothe asks for consent through Google's consent message before advertising can be personalized, and respects applicable device and privacy choices.",
         "We may share limited information with providers and authorized people where reasonably necessary to provide, secure and support Italir Pothe.",
       ],
       bullets: [
         "Hosting and infrastructure providers supporting application hosting, databases, file storage, content delivery, security, monitoring, email, SMS, backups and infrastructure.",
         "Apple for Sign in with Apple authentication, App Store and StoreKit transaction processing, Apple Push Notification service delivery, PushKit VoIP tokens and incoming-call notifications, and CallKit system call presentation.",
         "Google and Meta when you choose Google Sign-In or Facebook Login.",
-        "Google AdMob, Meta Audience Network and participating mediation or advertising partners for ad delivery, measurement, frequency control, consent handling, server-side reward verification, security and fraud prevention in the Android application.",
+        "Google AdMob for banner, native and rewarded ad delivery, measurement, frequency control, consent handling, server-side reward verification, security and fraud prevention in the mobile app.",
+        "Meta Audience Network, through AdMob mediation on Android, for banner and native ad delivery, measurement, security and fraud prevention.",
         "Firebase Cloud Messaging for push-notification tokens and related technical data on supported platforms.",
         "Firebase Crashlytics for crash reports, application stability monitoring and related device and diagnostic information.",
         "Apple App Store and Google Play for payments, purchase verification, subscriptions, refunds, fraud prevention and transaction support on the applicable platform.",
@@ -437,7 +442,7 @@ export const privacyPolicy: LegalDocument = {
       title: "10. Cookies and local device storage",
       paragraphs: [
         "The website and app may use cookies, secure storage, local storage or similar technology.",
-        "The Android application uses third-party advertising technology. Depending on applicable law and your privacy choices, Google, Meta and participating advertising partners may use device storage, identifiers or similar technologies for ad delivery, frequency control, measurement, security and fraud prevention.",
+        "The mobile app uses third-party advertising technology. Depending on applicable law and your privacy choices, Google, Meta (on Android) and participating advertising partners may use device storage, identifiers or similar technologies for ad delivery, frequency control, measurement, security and fraud prevention.",
         "Non-personalized or limited ads may still use information or device storage for purposes such as frequency capping, aggregated reporting, security and fraud prevention. Declining personalized advertising does not necessarily remove all advertisements.",
       ],
       bullets: [
@@ -508,7 +513,8 @@ export const privacyPolicy: LegalDocument = {
         "Your available rights depend on the law that applies to you.",
         "You may update available profile information from Settings.",
         "You may control camera, microphone, notification, photo and file permissions through your device settings.",
-        "Where required, you may review or change advertising consent choices through Advertising privacy options in the app. You may also reset or delete the Android Advertising ID through your device's privacy settings.",
+        "Where Google's consent requirements apply to you, for example in the European Economic Area, the United Kingdom, Switzerland or certain US states, the app shows a consent or privacy message managed through Google's User Messaging Platform before advertising is requested, and Settings shows Advertising privacy options so you can review or change your choice at any time.",
+        "On Android, you can reset or delete your Advertising ID through your device's privacy settings. An active Ad-Free subscription removes advertisements from the app.",
         `To submit a privacy request, contact ${supportEmail}. We may request reasonable information to verify your identity and protect the account.`,
       ],
       bullets: [
