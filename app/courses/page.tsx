@@ -34,8 +34,8 @@ export default function CoursesPage() {
       <PageHero
         actions={
           <>
-            <DownloadAppButton label="Get it on Google Play" size="lg" />
-            <DownloadAppButton store="app-store" variant="outline" size="lg" />
+            <DownloadAppButton size="lg" />
+            <DownloadAppButton store="app-store" size="lg" />
             <Link
               className="inline-flex h-[3.25rem] items-center justify-center gap-2 rounded-full border border-[#BFD3C6] bg-white px-7 font-bold text-[#25302B] transition hover:bg-[#EEF6F0]"
               href="/certificates/verify"
@@ -103,8 +103,8 @@ export default function CoursesPage() {
             with courses, activities and progress tracking in one place.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <DownloadAppButton label="Get it on Google Play" size="lg" />
-            <DownloadAppButton store="app-store" variant="outline" size="lg" />
+            <DownloadAppButton size="lg" />
+            <DownloadAppButton store="app-store" size="lg" />
           </div>
         </div>
       </section>

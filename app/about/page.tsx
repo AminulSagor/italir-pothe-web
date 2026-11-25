@@ -99,8 +99,8 @@ export default function AboutPage() {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <DownloadAppButton label="Get it on Google Play" size="lg" />
-              <DownloadAppButton store="app-store" variant="outline" size="lg" />
+              <DownloadAppButton size="lg" />
+              <DownloadAppButton store="app-store" size="lg" />
             </div>
           </div>
 

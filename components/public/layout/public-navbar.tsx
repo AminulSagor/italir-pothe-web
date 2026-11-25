@@ -59,12 +59,8 @@ export function PublicNavbar() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <DownloadAppButton label="Google Play" />
-          <DownloadAppButton
-            label="App Store"
-            store="app-store"
-            variant="outline"
-          />
+          <DownloadAppButton />
+          <DownloadAppButton store="app-store" />
         </div>
 
         <button
@@ -120,7 +116,6 @@ export function PublicNavbar() {
               onPress={() => setIsMenuOpen(false)}
               size="lg"
               store="app-store"
-              variant="outline"
             />
           </nav>
         </div>

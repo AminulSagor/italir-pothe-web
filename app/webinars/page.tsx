@@ -25,8 +25,8 @@ export default function WebinarsPage() {
       <PageHero
         actions={
           <>
-            <DownloadAppButton label="Get it on Google Play" size="lg" />
-            <DownloadAppButton store="app-store" variant="outline" size="lg" />
+            <DownloadAppButton size="lg" />
+            <DownloadAppButton store="app-store" size="lg" />
           </>
         }
         description="Interactive online sessions for practical language learning, career preparation and direct questions."
@@ -75,8 +75,8 @@ export default function WebinarsPage() {
               </div>
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-0">
-              <DownloadAppButton label="Get it on Google Play" variant="light" />
-              <DownloadAppButton label="App Store" store="app-store" variant="light" />
+              <DownloadAppButton />
+              <DownloadAppButton store="app-store" />
             </div>
           </div>
         </div>

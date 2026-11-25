@@ -20,12 +20,8 @@ export function FinalCtaSection() {
         </p>
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <DownloadAppButton label="Get it on Google Play" size="lg" />
-          <DownloadAppButton
-            store="app-store"
-            variant="outline"
-            size="lg"
-          />
+          <DownloadAppButton size="lg" />
+          <DownloadAppButton store="app-store" size="lg" />
 
           <Link
             href="/books"
