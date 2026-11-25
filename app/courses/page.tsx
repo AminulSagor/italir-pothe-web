@@ -35,6 +35,7 @@ export default function CoursesPage() {
         actions={
           <>
             <DownloadAppButton label="Get it on Google Play" size="lg" />
+            <DownloadAppButton store="app-store" variant="outline" size="lg" />
             <Link
               className="inline-flex h-[3.25rem] items-center justify-center gap-2 rounded-full border border-[#BFD3C6] bg-white px-7 font-bold text-[#25302B] transition hover:bg-[#EEF6F0]"
               href="/certificates/verify"
@@ -95,14 +96,15 @@ export default function CoursesPage() {
       <section className="bg-[#F3F8F4] py-20 sm:py-24">
         <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-3xl font-black tracking-[-0.045em] text-[#17211D] sm:text-4xl">
-            Continue learning in the Android app
+            Continue learning in the Italir Pothe app
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-[#5F6C65]">
-            Italir Pothe is available now on Google Play with courses,
-            activities and progress tracking in one place.
+            Italir Pothe is available on Google Play and the Apple App Store
+            with courses, activities and progress tracking in one place.
           </p>
-          <div className="mt-8">
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <DownloadAppButton label="Get it on Google Play" size="lg" />
+            <DownloadAppButton store="app-store" variant="outline" size="lg" />
           </div>
         </div>
       </section>

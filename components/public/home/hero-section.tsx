@@ -41,6 +41,11 @@ export function HeroSection() {
               showArrow
               size="lg"
             />
+            <DownloadAppButton
+              store="app-store"
+              variant="outline"
+              size="lg"
+            />
             <Link
               className="inline-flex h-[3.25rem] items-center justify-center gap-2 rounded-full border border-[#BFD3C6] bg-white px-7 text-base font-bold text-[#25302B] transition hover:border-[#7CAC8D] hover:bg-[#EEF6F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A7C58] focus-visible:ring-offset-2"
               href="/courses"

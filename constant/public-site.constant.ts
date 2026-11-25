@@ -13,6 +13,9 @@ export const PUBLIC_SITE_CONFIG = {
     process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "hello@italirpothe.com",
   youtubeUrl: "https://www.youtube.com/@italirpothe",
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "https://italirpothe.com",
+  googlePlayUrl:
+    "https://play.google.com/store/apps/details?id=com.shafacode.italir_pothe&pcampaignid=web_share",
+  appStoreUrl: "https://apps.apple.com/app/id6789636668",
 
   facebookPageUrl: "https://www.facebook.com/ItalirPothe",
   facebookGroupUrl: "https://www.facebook.com/groups/1816913385931720",
