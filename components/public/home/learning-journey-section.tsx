@@ -43,7 +43,7 @@ export function LearningJourneySection() {
 
           <Link
             href="/courses"
-            className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#0A7C58] px-6 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-[#086747] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] focus-visible:ring-offset-2"
+            className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#067647] to-[#0A8F65] px-6 py-3 text-sm font-bold !text-white shadow-[0_10px_24px_rgba(6,118,71,0.22)] transition-all hover:-translate-y-0.5 hover:from-[#055F3A] hover:to-[#087A56] hover:shadow-[0_14px_30px_rgba(6,118,71,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] focus-visible:ring-offset-2"
           >
             View learning programs
             <ArrowRight aria-hidden="true" size={17} />

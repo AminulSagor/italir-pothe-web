@@ -32,7 +32,7 @@ export function CertificateSection() {
           </div>
 
           <Link
-            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[#006B3F] px-6 font-bold text-white transition hover:bg-[#005832] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0A7C58] focus-visible:ring-offset-2"
+            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#067647] to-[#0A8F65] px-6 font-bold !text-white shadow-[0_10px_24px_rgba(6,118,71,0.22)] transition-all hover:-translate-y-0.5 hover:from-[#055F3A] hover:to-[#087A56] hover:shadow-[0_14px_30px_rgba(6,118,71,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34D399] focus-visible:ring-offset-2"
             href="/certificates/verify"
           >
             Verify a Certificate
